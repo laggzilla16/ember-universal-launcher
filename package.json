@@ -1,0 +1,15 @@
+{
+  "name": "ember-launcher",
+  "version": "1.0.0",
+  "description": "Game launcher with automatic playtime tracking",
+  "main": "main.js",
+  "scripts": { "start": "electron .", "dist": "electron-builder --win" },
+  "devDependencies": { "electron": "^38.0.0", "electron-builder": "^26.0.0" },
+  "build": {
+    "appId": "local.ember.launcher",
+    "productName": "Ember Launcher",
+    "files": ["main.js", "preload.js", "renderer/**"],
+    "win": { "target": ["nsis", "portable"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}
