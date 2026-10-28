@@ -37,3 +37,15 @@ Output is in `dist\` (an NSIS installer and a portable .exe).
 ## Notes
 - Games requiring administrator rights fail to launch unless Ember is also run as administrator.
 - `node:sqlite` is built into the Electron runtime, so there are no native modules to compile.
+
+## Releasing an update (v1.1+)
+Installed copies check GitHub Releases on start (and every 6 h) and offer **Update now** in the app.
+1. Bump `"version"` in `package.json` (e.g. `1.1.1`).
+2. `npm run dist`
+3. On GitHub create a **published** (not draft, not pre-release) Release tagged `v1.1.1` and attach, from `dist\`:
+   `latest.yml`, `Ember-Launcher-Setup-1.1.1.exe`, `Ember-Launcher-Setup-1.1.1.exe.blockmap` (and optionally the Portable exe).
+4. Users on an installed copy see the update banner. Portable copies are sent to the release page.
+
+Copies older than 1.1 have no updater and must be updated manually once by running the new installer.
+
+See `PRIVACY.md` and `TERMS.md` for the policies shown inside the app.

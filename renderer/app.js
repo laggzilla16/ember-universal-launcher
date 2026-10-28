@@ -151,6 +151,54 @@ $('#view').addEventListener('change', e => { if (e.target.id === 'sort') { S.sor
 api.on('run', async () => { await load(); if (S.view === 'hist') S.sessions = await api.sessions(); render(false); });
 api.on('toast', toast);
 
+const vf = v => String(v).replace(/\.0$/, '');
+function showLegal(k, back) {
+  const L = LEGAL[k], d = $('#dlg');
+  d.innerHTML = `<div class="dl legal"><h1>${esc(L.title)}</h1><span class="date">Last updated ${esc(L.date)}</span>
+    ${L.sections.map(([h, ps]) => `<h2>${esc(h)}</h2>${ps.map(p => `<p>${esc(p)}</p>`).join('')}`).join('')}
+    <div class="end"><button class="btn" id="cancel">Close</button></div></div>`;
+  d.onclick = e => { if (e.target.id === 'cancel') d.close(); };
+  d.onclose = () => { d.onclose = null; if (back) welcome(); };
+  d.showModal();
+}
+function welcome() {
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dl"><h1>Welcome to Ember</h1>
+    <p class="lead">Ember launches your games and tracks your playtime. Everything stays on this PC.</p>
+    <p class="lead"><b>Please play fair.</b> Ember is made for games you own, from any store or platform (Steam, Epic, GOG, Xbox, standalone installers, or emulators with your own legal copies). Downloading cracked or pirated games isn't advised: it's illegal in many places, hurts the developers who make them, and cracked files are a common way malware spreads.</p>
+    <p class="lead">By continuing you agree to the <a data-l="terms">Terms of Service</a> and <a data-l="privacy">Privacy Policy</a>.</p>
+    <div class="end"><button class="btn" id="ok">I understand &amp; agree</button></div></div>`;
+  d.oncancel = e => e.preventDefault();
+  d.onclick = e => {
+    const l = e.target.closest('[data-l]');
+    if (l) { d.oncancel = null; return showLegal(l.dataset.l, true); }
+    if (e.target.id === 'ok') { localStorage.setItem('accepted', LEGAL.rev); d.oncancel = null; d.close(); }
+  };
+  d.showModal();
+}
+document.querySelector('.foot').addEventListener('click', e => { const l = e.target.closest('[data-l]'); if (l) showLegal(l.dataset.l); });
+
+// ---- updates
+const upd = $('#upd');
+const later = '<button class="btn ghost" id="u-no">Later</button>';
+let updInfo = {};
+function updUI(u) {
+  if (u.state === 'none') return toast("You're up to date.");
+  if (u.state === 'error') return toast('Could not check for updates. Please try again later.');
+  updInfo = { ...updInfo, ...u }; upd.className = 'show';
+  if (u.state === 'available') upd.innerHTML = `<b>Update available</b><p>Ember v${esc(vf(u.version))} is ready${u.portable ? ' to download' : ''}.</p><div class="ub"><button class="btn" id="u-go">${u.portable ? 'Download' : 'Update now'}</button>${later}</div>`;
+  if (u.state === 'progress') upd.innerHTML = `<b>Downloading update…</b><div class="pb"><u style="width:${u.percent}%"></u></div><p>${u.percent}%</p>`;
+  if (u.state === 'ready') upd.innerHTML = `<b>Update ready</b><p>Restart to finish installing. Otherwise it installs when you next close Ember.</p><div class="ub"><button class="btn" id="u-rs">Restart &amp; install</button>${later}</div>`;
+}
+upd.onclick = e => {
+  if (e.target.id === 'u-no') upd.className = '';
+  if (e.target.id === 'u-go') updInfo.portable ? api.open(updInfo.url) : (updUI({ state: 'progress', percent: 0 }), api.downloadUpdate());
+  if (e.target.id === 'u-rs') api.installUpdate();
+};
+api.on('update', updUI);
+api.version().then(v => { $('#ver').textContent = 'v' + vf(v.v); });
+$('#ver').onclick = () => { toast('Checking for updates…'); api.checkUpdate(); };
+
 function setTheme(t) {
   document.documentElement.dataset.theme = t; localStorage.setItem('theme', t); api.theme(t);
   $('#theme span').textContent = t === 'light' ? 'Dark mode' : 'Light mode';
@@ -163,4 +211,5 @@ setTheme(document.documentElement.dataset.theme);
   await load(); await sleep(Math.max(0, 1500 - (performance.now() - t0)));
   S.loaded = true; render();
   $('#splash').classList.add('hide'); setTimeout(() => $('#splash').remove(), 800);
+  if (localStorage.getItem('accepted') !== LEGAL.rev) setTimeout(welcome, 700);
 })();

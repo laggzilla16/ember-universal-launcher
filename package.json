@@ -1,15 +1,47 @@
 {
   "name": "ember-launcher",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Game launcher with automatic playtime tracking",
   "main": "main.js",
-  "scripts": { "start": "electron .", "dist": "electron-builder --win" },
-  "devDependencies": { "electron": "^38.0.0", "electron-builder": "^26.0.0" },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
   "build": {
     "appId": "local.ember.launcher",
     "productName": "Ember Launcher",
-    "files": ["main.js", "preload.js", "renderer/**"],
-    "win": { "target": ["nsis", "portable"] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Ember-Launcher-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Jellyt16",
+        "repo": "ember-launcher"
+      }
+    ],
+    "portable": {
+      "artifactName": "Ember-Launcher-Portable-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   }
 }

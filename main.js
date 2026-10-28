@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
@@ -126,6 +126,40 @@ h('pick', async kind => {
   return dest;
 });
 
+// ---- Updates: installed copies update in-app via GitHub Releases; portable copies are pointed to the release page.
+const REPO = 'Jellyt16/ember-launcher';
+const portable = !!process.env.PORTABLE_EXECUTABLE_DIR;
+const canAuto = app.isPackaged && !portable;
+let manualCheck = false, updater;
+const newer = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+function initUpdates() {
+  if (!canAuto) return;
+  updater = require('electron-updater').autoUpdater;
+  updater.autoDownload = false;
+  updater.on('update-available', i => send('update', { state: 'available', version: i.version }));
+  updater.on('update-not-available', () => manualCheck && send('update', { state: 'none' }));
+  updater.on('download-progress', p => send('update', { state: 'progress', percent: Math.round(p.percent) }));
+  updater.on('update-downloaded', i => send('update', { state: 'ready', version: i.version }));
+  updater.on('error', e => manualCheck && send('update', { state: 'error', message: e.message }));
+}
+async function checkUpdates(manual) {
+  manualCheck = manual;
+  try {
+    if (canAuto) return void await updater.checkForUpdates();
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'User-Agent': 'ember-launcher' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json(), v = String(j.tag_name).replace(/^v/, '');
+    if (newer(v, app.getVersion())) send('update', { state: 'available', version: v, portable: true, url: j.html_url });
+    else if (manual) send('update', { state: 'none' });
+  } catch (e) { if (manual) send('update', { state: 'error', message: e.message }); }
+}
+h('version', () => ({ v: app.getVersion(), auto: canAuto }));
+h('update:check', () => checkUpdates(true));
+h('update:download', () => updater && updater.downloadUpdate());
+h('update:install', () => updater && updater.quitAndInstall());
+h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) shell.openExternal(url); });
+
 app.on('before-quit', () => {
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
 });
@@ -139,5 +173,8 @@ app.whenReady().then(() => {
   });
   win.loadFile('renderer/index.html');
   win.once('ready-to-show', () => win.show());
+  initUpdates();
+  setTimeout(() => checkUpdates(false), 6000);
+  setInterval(() => checkUpdates(false), 6 * 3600 * 1000);
 });
 app.on('window-all-closed', () => app.quit());

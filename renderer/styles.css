@@ -90,9 +90,20 @@ dialog::backdrop{background:#05060ccc;backdrop-filter:blur(6px)}
 .dl input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none;color:var(--tx)}
 .dl input:focus{border-color:var(--a1)}
 .dl .end{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}.dl .end .btn.danger{margin-right:auto}
-#toast{position:fixed;top:52px;right:20px;display:grid;gap:8px;z-index:20}
+#toast{position:fixed;bottom:96px;right:20px;display:grid;gap:8px;z-index:40}
 #toast div{max-width:360px;padding:12px 16px;border-radius:12px;background:var(--toast);border:1px solid #ff5fa255;animation:pop .3s var(--ease)}
-@media(max-width:760px){body{grid-template-columns:64px 1fr}aside{padding-inline:8px}.brand b,nav span,.theme span{display:none}.theme{justify-content:center}nav button{justify-content:center}nav button.on::before{left:-8px}
+.foot{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 0;color:var(--mu);font-size:12px}
+.foot button{background:none;border:0;color:inherit;cursor:pointer;padding:2px 0;font-size:12px}
+.foot button:hover{color:var(--tx)}.foot .ver{font-weight:650;letter-spacing:.02em}
+#upd{position:fixed;top:50px;right:20px;width:min(340px,calc(100vw - 40px));padding:16px 18px;border-radius:16px;background:var(--panel);border:1px solid var(--a1);box-shadow:0 18px 50px var(--shadow),0 0 30px #7c6cff33;z-index:30;display:none}
+#upd.show{display:block;animation:pop .35s var(--ease)}
+#upd p{color:var(--mu);margin:4px 0 12px}.ub{display:flex;gap:8px}
+.pb{height:6px;border-radius:6px;background:var(--glass2);margin:12px 0 4px;overflow:hidden}
+.pb u{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--a1),var(--a2));transition:width .3s}
+.legal h2{margin:8px 0 0;font-size:15px}.legal p,.lead{color:var(--mu);line-height:1.55}.lead b{color:var(--tx)}
+.legal .date{color:var(--mu);font-size:12.5px;margin-top:-8px}
+.lead a{color:var(--a1);cursor:pointer;text-decoration:underline}
+@media(max-width:760px){.foot span{display:none}.foot{justify-content:center}body{grid-template-columns:64px 1fr}aside{padding-inline:8px}.brand b,nav span,.theme span{display:none}.theme{justify-content:center}nav button{justify-content:center}nav button.on::before{left:-8px}
  main{padding-inline:18px}#bar{left:80px}.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}}
 #splash{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg);transition:opacity .6s ease,visibility .6s}
 #splash.hide{opacity:0;visibility:hidden}
