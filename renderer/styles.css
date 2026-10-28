@@ -103,7 +103,31 @@ dialog::backdrop{background:#05060ccc;backdrop-filter:blur(6px)}
 .legal h2{margin:8px 0 0;font-size:15px}.legal p,.lead{color:var(--mu);line-height:1.55}.lead b{color:var(--tx)}
 .legal .date{color:var(--mu);font-size:12.5px;margin-top:-8px}
 .lead a{color:var(--a1);cursor:pointer;text-decoration:underline}
-@media(max-width:760px){.foot span{display:none}.foot{justify-content:center}body{grid-template-columns:64px 1fr}aside{padding-inline:8px}.brand b,nav span,.theme span{display:none}.theme{justify-content:center}nav button{justify-content:center}nav button.on::before{left:-8px}
+.card.missing .art{filter:grayscale(.9) brightness(.7)}
+.gone{position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:99px;background:#2a1324d9;color:#ffb3cf;font-size:12px;font-weight:600;backdrop-filter:blur(6px)}
+.seg{display:inline-flex;padding:3px;border-radius:12px;background:var(--glass);border:1px solid var(--line-soft)}
+.seg button{border:0;background:none;color:var(--mu);padding:7px 14px;border-radius:9px;cursor:pointer;transition:.2s}
+.seg button:hover{color:var(--tx)}.seg button.on{background:var(--glass2);color:var(--tx)}
+.panel{padding:20px 22px;border-radius:18px;background:linear-gradient(160deg,var(--glass2),var(--glass));border:1px solid var(--line-soft);margin-top:16px}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.panel-h h2{margin:0}
+.chart{display:flex;align-items:flex-end;gap:8px;height:230px}
+.col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.col .v{font-size:11px;color:var(--mu);white-space:nowrap;min-height:14px}
+.col .b{width:100%;max-width:46px;border-radius:8px 8px 3px 3px;background:linear-gradient(var(--a2),var(--a1));transform-origin:bottom;animation:grow .7s var(--ease) backwards;transition:filter .2s}
+.col .b.z{background:var(--glass2)}.col:hover .b{filter:brightness(1.25)}
+.col .l{font-size:11px;color:var(--mu);text-align:center;line-height:1.25;min-height:28px}
+.col.now .l{color:var(--tx);font-weight:650}
+.still .b,.still .rk u{animation:none}
+@keyframes grow{from{transform:scaleY(0)}}
+.rk{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:12px;background:var(--glass);margin-bottom:6px}
+.rk .n{width:24px;text-align:center;font:650 16px "Segoe UI Variable Display","Segoe UI",sans-serif;color:var(--mu)}
+.rk:nth-of-type(1) .n{color:#ffcf5c}.rk:nth-of-type(2) .n{color:#c9cfe8}.rk:nth-of-type(3) .n{color:#e09a6b}
+.rk i{width:38px;height:38px;border-radius:9px;background-size:cover;background-position:center;flex:none}
+.rk div{flex:1;min-width:0}.rk b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rk span{color:var(--mu);font-size:12.5px}
+.rk em{font-style:normal;font-weight:650;font-variant-numeric:tabular-nums}
+.rk u{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--a1),var(--a2));animation:fill2 .8s var(--ease) backwards}
+@keyframes fill2{from{width:0!important}}
+@media(max-width:760px){.chart{gap:3px}.col .v{font-size:9px}.foot span{display:none}.foot{justify-content:center}body{grid-template-columns:64px 1fr}aside{padding-inline:8px}.brand b,nav span,.theme span{display:none}.theme{justify-content:center}nav button{justify-content:center}nav button.on::before{left:-8px}
  main{padding-inline:18px}#bar{left:80px}.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}}
 #splash{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg);transition:opacity .6s ease,visibility .6s}
 #splash.hide{opacity:0;visibility:hidden}

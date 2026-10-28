@@ -49,3 +49,7 @@ Installed copies check GitHub Releases on start (and every 6 h) and offer **Upda
 Copies older than 1.1 have no updater and must be updated manually once by running the new installer.
 
 See `PRIVACY.md` and `TERMS.md` for the policies shown inside the app.
+
+## v1.2
+- **Statistics** tab: daily (14 days) and weekly (8 weeks) playtime charts, today / this week / daily average, and most-played rankings for 7 days, 30 days and all time.
+- Games whose files are gone (uninstalled, moved, drive unplugged) stay in the library, marked *Not installed*, with all playtime, history and stats intact. Click *Locate* to relink them. Only **Remove** deletes a game's history.

@@ -1,5 +1,5 @@
 const $ = s => document.querySelector(s);
-const S = { games: [], running: {}, sessions: [], view: 'dash', q: '', grp: '', sort: 'recent', loaded: false };
+const S = { games: [], running: {}, sessions: [], view: 'dash', q: '', grp: '', sort: 'recent', loaded: false, stats: [], smode: 'daily', rank: '7' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const furl = p => 'file:///' + encodeURI(p.replace(/\\/g, '/')).replace(/#/g, '%23').replace(/'/g, '%27');
 const pad = n => String(n).padStart(2, '0');
@@ -15,11 +15,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function card(g) {
   const run = isRun(g);
-  return `<article class="card ${run ? 'run' : ''}" data-id="${g.id}" tabindex="0">
+  return `<article class="card ${run ? 'run' : ''} ${g.missing ? 'missing' : ''}" data-id="${g.id}" tabindex="0">
     <div class="art" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</div><div class="shade"></div>
-    ${run ? '<div class="live">Playing</div>' : ''}
+    ${run ? '<div class="live">Playing</div>' : ''}${g.missing ? '<div class="gone" title="Game files not found (uninstalled, moved or drive disconnected). Playtime is kept.">Not installed</div>' : ''}
     <div class="meta"><h3>${esc(g.name)}</h3><p data-t="${g.id}">${run ? clock(total(g)) : dur(total(g))}</p></div>
-    <div class="acts"><button class="play">${run ? 'Running' : 'Play'}</button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
+    <div class="acts"><button class="play">${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
 }
 const skel = () => `<div class="grid">${'<div class="sk"></div>'.repeat(8)}</div>`;
 
@@ -64,9 +64,44 @@ function hist() {
   }).join('');
 }
 
-function render(anim = true) {
-  const v = $('#view');
-  v.innerHTML = !S.loaded ? skel() : { dash, lib, hist }[S.view]();
+const dkey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const monday = d => addDays(d, -((d.getDay() + 6) % 7));
+const sumRows = f => S.stats.reduce((a, r) => f(r) ? a + r.ms : a, 0);
+function statsView() {
+  const today = new Date(), tk = dkey(today), mk = dkey(monday(today));
+  const tDay = sumRows(r => r.day === tk), tWeek = sumRows(r => r.day >= mk), l7 = sumRows(r => r.day >= dkey(addDays(today, -6)));
+  const cols = [];
+  if (S.smode === 'daily') for (let i = 13; i >= 0; i--) {
+    const d = addDays(today, -i), k = dkey(d);
+    cols.push({ ms: sumRows(r => r.day === k), now: !i, t: d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
+      l: `${d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3)}<br>${d.getDate()}` });
+  } else for (let i = 7; i >= 0; i--) {
+    const m = monday(addDays(today, -7 * i)), a = dkey(m), b = dkey(addDays(m, 7)), t = 'Week of ' + m.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    cols.push({ ms: sumRows(r => r.day >= a && r.day < b), now: !i, t, l: m.toLocaleDateString(undefined, { month: 'short' }) + '<br>' + m.getDate() });
+  }
+  const max = Math.max(1, ...cols.map(c => c.ms));
+  const n = S.rank === 'all' ? 0 : +S.rank, since = n ? dkey(addDays(today, -(n - 1))) : '', per = {};
+  if (n) S.stats.forEach(r => { if (r.day >= since) per[r.g] = (per[r.g] || 0) + r.ms; });
+  const ranked = S.games.map(g => ({ g, ms: n ? (per[g.id] || 0) : total(g) })).filter(x => x.ms > 0).sort((a, b) => b.ms - a.ms);
+  const sum = ranked.reduce((a, x) => a + x.ms, 0);
+  const seg = (attr, cur, items) => `<div class="seg">${items.map(([v, t]) => `<button data-${attr}="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  return `<h1>Statistics</h1><section class="stats">
+    <div class="stat"><b>${dur(tDay)}</b><span>played today</span></div>
+    <div class="stat"><b>${dur(tWeek)}</b><span>this week (Mon–Sun)</span></div>
+    <div class="stat"><b>${dur(l7 / 7)}</b><span>daily average, last 7 days</span></div></section>
+    <div class="panel"><div class="panel-h"><h2>Playtime</h2>${seg('sm', S.smode, [['daily', 'Daily'], ['weekly', 'Weekly']])}</div>
+      <div class="chart">${cols.map(c => `<div class="col ${c.now ? 'now' : ''}" title="${esc(c.t)}: ${dur(c.ms)}"><span class="v">${c.ms ? dur(c.ms) : ''}</span><div class="b ${c.ms ? '' : 'z'}" style="height:${c.ms ? Math.max(6, c.ms / max * 150) : 4}px"></div><span class="l">${c.l}</span></div>`).join('')}</div></div>
+    <div class="panel"><div class="panel-h"><h2>Most played</h2>${seg('rk', S.rank, [['7', '7 days'], ['30', '30 days'], ['all', 'All time']])}</div>
+      ${ranked.length ? ranked.slice(0, 10).map(({ g, ms }, i) => `<div class="rk"><span class="n">${i + 1}</span><i style="${art(g)}"></i>
+        <div><b>${esc(g.name)}</b><span>${Math.round(ms / sum * 100)}% of playtime${g.missing ? ' · not installed' : ''}</span></div><em>${dur(ms)}</em><u style="width:${Math.max(2, ms / ranked[0].ms * 100)}%"></u></div>`).join('')
+        : '<div class="empty"><p>No playtime recorded in this period yet.</p></div>'}</div>`;
+}
+async function loadStats() { S.stats = await api.stats(); }
+
+function render(anim = true, grow = anim) {
+  const v = $('#view'); v.classList.toggle('still', !grow);
+  v.innerHTML = !S.loaded ? skel() : { dash, lib, stats: statsView, hist }[S.view]();
   if (anim) { v.classList.remove('in'); void v.offsetWidth; v.classList.add('in'); }
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
   bar(); if (anim && S.loaded) count();
@@ -92,10 +127,11 @@ setInterval(() => { // live counters
 }, 1000);
 
 async function load() { const d = await api.games(); S.games = d.games; S.running = d.running; }
-async function go(v) { S.view = v; if (v === 'hist') S.sessions = await api.sessions(); render(); }
+async function go(v) { S.view = v; if (v === 'hist') S.sessions = await api.sessions(); if (v === 'stats') await loadStats(); render(); }
 function toast(m) { const t = document.createElement('div'); t.textContent = m; $('#toast').append(t); setTimeout(() => t.remove(), 5000); }
 
 async function launch(g, c) {
+  if (g.missing) { toast(`${g.name} isn't installed here. Pick its new location; your playtime and stats are kept.`); return edit(g); }
   if (isRun(g)) return toast(`${g.name} is already running.`);
   c.classList.add('launching');
   const r = await api.launch(g.id);
@@ -106,7 +142,7 @@ function edit(g) {
   const d = $('#dlg'), isNew = !g;
   g = g || { name: '', exe: '', args: '', emulator: '', cover: '', track: '', grp: '' };
   const f = (id, label, k, ph = '') => `<label>${label}<span class="in"><input id="f-${id}" value="${esc(g[id])}" placeholder="${ph}">${k ? `<button class="btn ghost" data-f="${id}" data-k="${k}">Browse</button>` : ''}</span></label>`;
-  d.innerHTML = `<div class="dl"><h1>${isNew ? 'Add game' : 'Edit game'}</h1>
+  d.innerHTML = `<div class="dl"><h1>${isNew ? 'Add game' : 'Edit game'}</h1>${g.missing ? '<p class="lead"><b>Game files not found.</b> It may be uninstalled or on a disconnected drive. Playtime, history and stats are kept. Browse to the new location to relink it, or leave it as is to keep it in your library.</p>' : ''}
     ${f('exe', 'Game file (.exe, or a ROM/disc image when using an emulator)', 'file')}
     ${f('name', 'Name', '', 'Defaults to the file name')}
     ${f('cover', 'Cover image', 'image')}
@@ -140,6 +176,8 @@ function edit(g) {
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
 $('#view').addEventListener('click', e => {
   if (e.target.closest('[data-add]')) return edit();
+  const sm = e.target.closest('[data-sm]'); if (sm) { S.smode = sm.dataset.sm; return render(false, true); }
+  const rk = e.target.closest('[data-rk]'); if (rk) { S.rank = rk.dataset.rk; return render(false, true); }
   const gr = e.target.closest('[data-grp]'); if (gr) { S.grp = gr.dataset.grp; return render(false); }
   const c = e.target.closest('.card'); if (!c) return;
   const g = S.games.find(x => x.id == c.dataset.id);
@@ -148,7 +186,11 @@ $('#view').addEventListener('click', e => {
 $('#view').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('card')) e.target.click(); });
 $('#view').addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; $('#grid').innerHTML = gridHtml(); } });
 $('#view').addEventListener('change', e => { if (e.target.id === 'sort') { S.sort = e.target.value; $('#grid').innerHTML = gridHtml(); } });
-api.on('run', async () => { await load(); if (S.view === 'hist') S.sessions = await api.sessions(); render(false); });
+api.on('run', async () => { await load(); if (S.view === 'hist') S.sessions = await api.sessions(); if (S.view === 'stats') await loadStats(); render(false); });
+window.addEventListener('focus', async () => { // pick up reinstalled / reconnected games
+  if (!S.loaded || $('#dlg').open || S.view === 'stats') return; await load(); render(false);
+});
+setInterval(async () => { if (S.view === 'stats' && Object.keys(S.running).length && !$('#dlg').open) { await loadStats(); render(false); } }, 30000);
 api.on('toast', toast);
 
 const vf = v => String(v).replace(/\.0$/, '');

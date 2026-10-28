@@ -1,6 +1,6 @@
 {
   "name": "ember-launcher",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Game launcher with automatic playtime tracking",
   "main": "main.js",
   "scripts": {

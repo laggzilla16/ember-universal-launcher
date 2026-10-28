@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer: r } = require('electron');
 contextBridge.exposeInMainWorld('api', {
-  games: () => r.invoke('games'), sessions: () => r.invoke('sessions'),
+  games: () => r.invoke('games'), stats: () => r.invoke('stats'), sessions: () => r.invoke('sessions'),
   save: g => r.invoke('save', g), remove: i => r.invoke('remove', i),
   launch: i => r.invoke('launch', i), theme: t => r.invoke('theme', t),
   version: () => r.invoke('version'), checkUpdate: () => r.invoke('update:check'),

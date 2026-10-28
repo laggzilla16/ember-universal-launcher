@@ -43,7 +43,8 @@ function launch(id) {
   if (!g) return { ok: false, error: 'Game not found.' };
   if (active.has(id)) return { ok: true };
   const exe = g.emulator || g.exe;
-  if (!fs.existsSync(exe)) return { ok: false, error: 'File not found: ' + exe };
+  if (!fs.existsSync(exe) || (g.emulator && !fs.existsSync(g.exe)))
+    return { ok: false, error: `${g.name}'s files were not found. It may be uninstalled. Edit the game to point to its new location; your playtime is kept.` };
   if (g.emulator && [...active.values()].some(s => s.exe === exe.toLowerCase()))
     return { ok: false, error: 'Another game is already running in this emulator.' };
   const argv = (g.args.match(/"[^"]*"|\S+/g) || []).map(s => s.replace(/^"|"$/g, ''));
@@ -91,11 +92,26 @@ function finish(id, discard, msg) {
 const h = (c, f) => ipcMain.handle(c, (_, ...a) => f(...a));
 h('games', () => ({
   games: all(`SELECT g.*, COALESCE((SELECT SUM(ended-started) FROM sessions WHERE game_id=g.id AND ended IS NOT NULL),0) total,
-    (SELECT MAX(started) FROM sessions WHERE game_id=g.id) last FROM games g`),
+    (SELECT MAX(started) FROM sessions WHERE game_id=g.id) last FROM games g`).map(g => ({ ...g, missing: !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe)) })),
   running: Object.fromEntries([...active].map(([i, s]) => [i, s.started]))
 }));
 h('sessions', () => all(`SELECT s.id, s.game_id, s.started, COALESCE(s.ended,s.beat) ended, s.ended IS NULL live
   FROM sessions s ORDER BY s.started DESC LIMIT 300`));
+// Per-day, per-game playtime for the last 120 days; sessions crossing midnight are split between days.
+const pad2 = n => String(n).padStart(2, '0');
+h('stats', () => {
+  const rows = all('SELECT game_id g, started s, ended e, beat b FROM sessions WHERE COALESCE(ended,beat,started) >= ?', Date.now() - 120 * 864e5);
+  const out = {}, now = Date.now();
+  for (const r of rows) {
+    const end = r.e ?? (active.has(r.g) ? now : (r.b ?? r.s));
+    for (let t = r.s; t < end;) {
+      const d = new Date(t), next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+      const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}|${r.g}`;
+      out[k] = (out[k] || 0) + Math.min(end, next) - t; t = next;
+    }
+  }
+  return Object.entries(out).map(([k, ms]) => { const [day, g] = k.split('|'); return { day, g: +g, ms }; });
+});
 h('save', g => {
   const v = [(g.name || '').trim() || path.parse(g.exe).name, g.exe, g.args || '', g.emulator || '', g.cover || '', g.track || '', g.grp || ''];
   if (g.id) db.prepare('UPDATE games SET name=?,exe=?,args=?,emulator=?,cover=?,track=?,grp=? WHERE id=?').run(...v, g.id);
