@@ -184,7 +184,11 @@ const later = '<button class="btn ghost" id="u-no">Later</button>';
 let updInfo = {};
 function updUI(u) {
   if (u.state === 'none') return toast("You're up to date.");
-  if (u.state === 'error') return toast('Could not check for updates. Please try again later.');
+  if (u.state === 'error') {
+    const m = String(u.message || '');
+    if (/404|latest\.yml|not found/i.test(m)) return toast("You're up to date. No newer release has been published yet.");
+    return toast('Could not check for updates: ' + m.split('\n')[0].slice(0, 120));
+  }
   updInfo = { ...updInfo, ...u }; upd.className = 'show';
   if (u.state === 'available') upd.innerHTML = `<b>Update available</b><p>Ember v${esc(vf(u.version))} is ready${u.portable ? ' to download' : ''}.</p><div class="ub"><button class="btn" id="u-go">${u.portable ? 'Download' : 'Update now'}</button>${later}</div>`;
   if (u.state === 'progress') upd.innerHTML = `<b>Downloading update…</b><div class="pb"><u style="width:${u.percent}%"></u></div><p>${u.percent}%</p>`;

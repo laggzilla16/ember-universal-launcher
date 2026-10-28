@@ -24,5 +24,5 @@ You can edit or remove any game inside the app. To erase everything, uninstall E
 
 ## Changes and contact
 
-If this policy changes, the new version ships with an update and the date above changes. Questions: https://github.com/Jellyt16/ember-launcher/issues
+If this policy changes, the new version ships with an update and the date above changes. Questions: https://github.com/laggzilla16/ember-universal-launcher/issues
 

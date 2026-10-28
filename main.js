@@ -127,7 +127,7 @@ h('pick', async kind => {
 });
 
 // ---- Updates: installed copies update in-app via GitHub Releases; portable copies are pointed to the release page.
-const REPO = 'Jellyt16/ember-launcher';
+const REPO = 'laggzilla16/ember-universal-launcher';
 const portable = !!process.env.PORTABLE_EXECUTABLE_DIR;
 const canAuto = app.isPackaged && !portable;
 let manualCheck = false, updater;

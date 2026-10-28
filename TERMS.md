@@ -32,5 +32,5 @@ Ember may check for and offer updates. These terms may change over time; continu
 
 ## 7. Contact
 
-https://github.com/Jellyt16/ember-launcher/issues
+https://github.com/laggzilla16/ember-universal-launcher/issues
 

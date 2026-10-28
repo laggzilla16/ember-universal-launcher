@@ -37,7 +37,7 @@ const LEGAL = {
    [
     "Changes and contact",
     [
-     "If this policy changes, the new version ships with an update and the date above changes. Questions: https://github.com/Jellyt16/ember-launcher/issues"
+     "If this policy changes, the new version ships with an update and the date above changes. Questions: https://github.com/laggzilla16/ember-universal-launcher/issues"
     ]
    ]
   ]
@@ -87,7 +87,7 @@ const LEGAL = {
    [
     "7. Contact",
     [
-     "https://github.com/Jellyt16/ember-launcher/issues"
+     "https://github.com/laggzilla16/ember-universal-launcher/issues"
     ]
    ]
   ]

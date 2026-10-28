@@ -33,8 +33,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Jellyt16",
-        "repo": "ember-launcher"
+        "owner": "laggzilla16",
+        "repo": "ember-universal-launcher"
       }
     ],
     "portable": {
