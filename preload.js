@@ -5,5 +5,8 @@ contextBridge.exposeInMainWorld('api', {
   launch: i => r.invoke('launch', i), theme: t => r.invoke('theme', t),
   version: () => r.invoke('version'), checkUpdate: () => r.invoke('update:check'),
   downloadUpdate: () => r.invoke('update:download'), installUpdate: () => r.invoke('update:install'), open: u => r.invoke('open', u), pick: k => r.invoke('pick', k),
+  overlayToggle: () => r.invoke('overlay:toggle'),
+  overlaySettings: s => r.invoke('overlay:settings', s),
+  overlayGetSettings: () => r.invoke('overlay:getSettings'),
   on: (c, f) => r.on(c, (_, ...a) => f(...a))
 });

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Ember Overlay</title>
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+  <div id="panel">
+    <div class="ovl-head">
+      <div class="ovl-flame"></div>
+      <span class="ovl-title">Ember</span>
+    </div>
+
+    <div class="metrics">
+      <!-- CPU -->
+      <div class="metric" id="m-cpu">
+        <div class="metric-top">
+          <span class="metric-icon">⬡</span>
+          <span class="metric-label">CPU</span>
+          <span class="metric-value na" id="v-cpu">—</span>
+        </div>
+        <div class="metric-bar-wrap"><div class="metric-bar good" id="b-cpu" style="width:0%"></div></div>
+      </div>
+
+      <!-- GPU -->
+      <div class="metric" id="m-gpu">
+        <div class="metric-top">
+          <span class="metric-icon">⬡</span>
+          <span class="metric-label">GPU</span>
+          <span class="metric-value na" id="v-gpu">—</span>
+        </div>
+        <div class="metric-bar-wrap"><div class="metric-bar good" id="b-gpu" style="width:0%"></div></div>
+      </div>
+
+      <div class="ovl-div"></div>
+
+      <!-- VRAM -->
+      <div class="metric" id="m-vram">
+        <div class="metric-top">
+          <span class="metric-icon">◈</span>
+          <span class="metric-label">VRAM</span>
+          <span class="metric-value na" id="v-vram">—</span>
+        </div>
+        <div class="metric-bar-wrap"><div class="metric-bar good" id="b-vram" style="width:0%"></div></div>
+      </div>
+
+      <!-- RAM -->
+      <div class="metric" id="m-ram">
+        <div class="metric-top">
+          <span class="metric-icon">◈</span>
+          <span class="metric-label">RAM</span>
+          <span class="metric-value na" id="v-ram">—</span>
+        </div>
+        <div class="metric-bar-wrap"><div class="metric-bar good" id="b-ram" style="width:0%"></div></div>
+      </div>
+
+      <div class="ovl-div"></div>
+
+      <!-- CPU Temp -->
+      <div class="metric" id="m-cpuTemp">
+        <div class="metric-top">
+          <span class="metric-icon">🌡</span>
+          <span class="metric-label">CPU °C</span>
+          <span class="metric-value na" id="v-cpuTemp">—</span>
+        </div>
+      </div>
+
+      <!-- GPU Temp -->
+      <div class="metric" id="m-gpuTemp">
+        <div class="metric-top">
+          <span class="metric-icon">🌡</span>
+          <span class="metric-label">GPU °C</span>
+          <span class="metric-value na" id="v-gpuTemp">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ovl-foot">
+      <div class="live-dot"></div>
+      <span class="live-label">Live</span>
+    </div>
+  </div>
+
+  <script src="overlay.js"></script>
+</body>
+</html>

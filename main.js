@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
@@ -6,8 +6,123 @@ const path = require('path'), fs = require('fs');
 if (!app.requestSingleInstanceLock()) app.quit();
 
 const POLL = 4000, GRACE = 15000, NOSHOW = 90000;
-let win, db;
+let win, db, overlayWin;
 const active = new Map(); // gameId -> one tracker per game (prevents duplicate timers)
+
+// ---- Overlay settings
+const OVERLAY_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'overlay-settings.json');
+const DEFAULT_OVERLAY = { enabled: false, metrics: { cpu: true, gpu: true, vram: true, ram: true, cpuTemp: true, gpuTemp: true } };
+let overlaySettings = { ...DEFAULT_OVERLAY };
+let perfTimer = null;
+
+function loadOverlaySettings() {
+  try {
+    const raw = fs.readFileSync(OVERLAY_SETTINGS_PATH(), 'utf8');
+    overlaySettings = { ...DEFAULT_OVERLAY, ...JSON.parse(raw) };
+    overlaySettings.metrics = { ...DEFAULT_OVERLAY.metrics, ...(overlaySettings.metrics || {}) };
+  } catch { overlaySettings = { ...DEFAULT_OVERLAY, metrics: { ...DEFAULT_OVERLAY.metrics } }; }
+}
+
+function saveOverlaySettings() {
+  try { fs.writeFileSync(OVERLAY_SETTINGS_PATH(), JSON.stringify(overlaySettings, null, 2)); } catch {}
+}
+
+// ---- Performance polling via PowerShell
+async function pollMetrics() {
+  const script = `
+$r = @{ cpu=$null; gpu=$null; vramMB=$null; ramUsedGB=$null; ramTotalGB=$null; cpuTemp=$null; gpuTemp=$null }
+try {
+  $r.cpu = [math]::Round((Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average, 1)
+} catch {}
+try {
+  $os = Get-CimInstance Win32_OperatingSystem
+  $r.ramUsedGB = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
+  $r.ramTotalGB = [math]::Round($os.TotalVisibleMemorySize / 1MB, 2)
+} catch {}
+try {
+  $gpuSamples = (Get-Counter '\\GPU Engine(*engtype_3D)\\Utilization Percentage' -ErrorAction Stop).CounterSamples | Where-Object CookedValue -gt 0
+  if ($gpuSamples) { $r.gpu = [math]::Round(($gpuSamples | Measure-Object -Property CookedValue -Sum).Sum, 1) }
+} catch {}
+try {
+  $vramSamples = (Get-Counter '\\GPU Process Memory(*)\\Local Usage' -ErrorAction Stop).CounterSamples
+  if ($vramSamples) { $r.vramMB = [math]::Round(($vramSamples | Measure-Object -Property CookedValue -Sum).Sum / 1MB, 1) }
+} catch {}
+try {
+  $temps = Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace 'root/wmi' -ErrorAction Stop
+  if ($temps) {
+    $kelvin = ($temps | Measure-Object -Property CurrentTemperature -Average).Average
+    $r.cpuTemp = [math]::Round($kelvin / 10.0 - 273.15, 1)
+  }
+} catch {}
+$r | ConvertTo-Json -Compress
+`;
+  return new Promise(res => {
+    execFile('powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', script],
+      { windowsHide: true, maxBuffer: 1 << 20, timeout: 8000 },
+      (err, out) => {
+        if (err || !out) return res(null);
+        try { res(JSON.parse(out.trim())); } catch { res(null); }
+      }
+    );
+  });
+}
+
+function startPerfPolling() {
+  if (perfTimer) return;
+  perfTimer = setInterval(async () => {
+    if (!overlayWin || overlayWin.isDestroyed() || !overlayWin.isVisible()) return;
+    if (!active.size) return;
+    const data = await pollMetrics();
+    if (!data) return;
+    // Compute RAM/VRAM percentages
+    if (data.ramUsedGB != null && data.ramTotalGB) {
+      data.ramPct = Math.round(data.ramUsedGB / data.ramTotalGB * 100);
+    }
+    data.vramPct = null; // can't easily know VRAM total from PDH; omit pct bar fill
+    data.settings = overlaySettings;
+    if (overlayWin && !overlayWin.isDestroyed()) {
+      overlayWin.webContents.send('metrics', data);
+    }
+  }, 1000);
+}
+
+function stopPerfPolling() {
+  if (perfTimer) { clearInterval(perfTimer); perfTimer = null; }
+}
+
+function createOverlayWin() {
+  const { width } = screen.getPrimaryDisplay().workAreaSize;
+  overlayWin = new BrowserWindow({
+    width: 200, height: 320,
+    x: width - 220, y: 60,
+    transparent: true, frame: false,
+    alwaysOnTop: true, skipTaskbar: true,
+    focusable: false, show: false,
+    resizable: false, movable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'renderer', 'overlay-preload.js'),
+      contextIsolation: true, sandbox: true
+    }
+  });
+  overlayWin.setAlwaysOnTop(true, 'screen-saver');
+  overlayWin.setIgnoreMouseEvents(true, { forward: true });
+  overlayWin.loadFile('renderer/overlay.html');
+  overlayWin.on('closed', () => { overlayWin = null; });
+}
+
+function overlayShowIfEnabled() {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  if (overlaySettings.enabled && active.size > 0) {
+    overlayWin.showInactive();
+    startPerfPolling();
+  }
+}
+
+function overlayHide() {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.hide();
+}
 
 function initDb() {
   db = new DatabaseSync(path.join(app.getPath('userData'), 'launcher.db'));
@@ -61,6 +176,8 @@ function launch(id) {
   active.set(id, st);
   setTimeout(() => tick(id), 1500);
   send('run');
+  // Auto-show overlay if enabled
+  overlayShowIfEnabled();
   return { ok: true };
 }
 
@@ -87,6 +204,8 @@ function finish(id, discard, msg) {
   if (discard) db.prepare('DELETE FROM sessions WHERE id=?').run(st.sid);
   else db.prepare('UPDATE sessions SET ended=? WHERE id=?').run(Math.max(st.last, st.started), st.sid);
   send('run'); if (msg) send('toast', msg);
+  // Hide overlay if no more games running
+  if (!active.size) overlayHide();
 }
 
 const h = (c, f) => ipcMain.handle(c, (_, ...a) => f(...a));
@@ -142,6 +261,46 @@ h('pick', async kind => {
   return dest;
 });
 
+// ---- Overlay IPC handlers
+h('overlay:toggle', () => {
+  if (!overlayWin || overlayWin.isDestroyed()) return overlaySettings.enabled;
+  if (overlayWin.isVisible()) {
+    overlayHide();
+    return false;
+  } else {
+    if (active.size > 0) { overlayWin.showInactive(); startPerfPolling(); }
+    return true;
+  }
+});
+
+h('overlay:settings', s => {
+  overlaySettings = { ...overlaySettings, ...s, metrics: { ...overlaySettings.metrics, ...(s.metrics || {}) } };
+  saveOverlaySettings();
+  // Propagate settings to overlay window immediately
+  if (overlayWin && !overlayWin.isDestroyed()) {
+    overlayWin.webContents.send('settings', overlaySettings);
+  }
+  // If overlay was just enabled and a game is running, show it
+  if (overlaySettings.enabled && active.size > 0) {
+    overlayShowIfEnabled();
+  } else if (!overlaySettings.enabled) {
+    overlayHide();
+  }
+  return overlaySettings;
+});
+
+h('overlay:getSettings', () => overlaySettings);
+
+h('overlay:show', () => {
+  overlayShowIfEnabled();
+  return true;
+});
+
+h('overlay:hide', () => {
+  overlayHide();
+  return true;
+});
+
 // ---- Updates: installed copies update in-app via GitHub Releases; portable copies are pointed to the release page.
 const REPO = 'laggzilla16/ember-universal-launcher';
 const portable = !!process.env.PORTABLE_EXECUTABLE_DIR;
@@ -178,9 +337,12 @@ h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) she
 
 app.on('before-quit', () => {
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
+  stopPerfPolling();
+  if (overlayWin && !overlayWin.isDestroyed()) overlayWin.destroy();
 });
 app.whenReady().then(() => {
   initDb();
+  loadOverlaySettings();
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0f1c', show: false,
@@ -188,7 +350,7 @@ app.whenReady().then(() => {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });
   win.loadFile('renderer/index.html');
-  win.once('ready-to-show', () => win.show());
+  win.once('ready-to-show', () => { win.show(); createOverlayWin(); });
   initUpdates();
   setTimeout(() => checkUpdates(false), 6000);
   setInterval(() => checkUpdates(false), 6 * 3600 * 1000);

@@ -1,0 +1,166 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: transparent;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  width: 200px;
+}
+
+#panel {
+  width: 190px;
+  background: rgba(10, 11, 24, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(124, 108, 255, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 1px rgba(124, 108, 255, 0.4);
+  padding: 12px 0 10px;
+  margin: 6px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#panel.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Header */
+.ovl-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 10px;
+  border-bottom: 1px solid rgba(124, 108, 255, 0.18);
+}
+
+.ovl-flame {
+  width: 12px;
+  height: 12px;
+  border-radius: 50% 50% 50% 8%;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, #ff5fa2, #7c6cff);
+  box-shadow: 0 0 10px #ff5fa2aa;
+  flex: none;
+}
+
+.ovl-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7c6cff;
+}
+
+/* Metric rows */
+.metrics {
+  padding: 8px 0 6px;
+}
+
+.metric {
+  padding: 5px 12px 6px;
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.metric-icon {
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  flex: none;
+  color: rgba(142, 148, 187, 0.8);
+}
+
+.metric-label {
+  font-size: 11px;
+  color: #8e94bb;
+  flex: 1;
+  letter-spacing: 0.01em;
+}
+
+.metric-value {
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: #e9ebf8;
+  letter-spacing: 0.01em;
+}
+
+.metric-value.good { color: #3ddc97; }
+.metric-value.warn { color: #ffd166; }
+.metric-value.crit { color: #ff5a5f; }
+.metric-value.na   { color: #8e94bb; }
+
+/* Utilization bar */
+.metric-bar-wrap {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-left: 20px;
+}
+
+.metric-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease, background 0.4s ease;
+  background: #3ddc97;
+}
+
+.metric-bar.good { background: #3ddc97; }
+.metric-bar.warn { background: #ffd166; }
+.metric-bar.crit { background: #ff5a5f; }
+
+/* Divider */
+.ovl-div {
+  height: 1px;
+  background: rgba(124, 108, 255, 0.12);
+  margin: 2px 12px;
+}
+
+/* Footer / LIVE indicator */
+.ovl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px 2px;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3ddc97;
+  animation: pulse 1.6s infinite;
+  flex: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 #3ddc9755; }
+  50%       { opacity: 0.5; transform: scale(0.7); box-shadow: 0 0 0 3px transparent; }
+}
+
+.live-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #3ddc97;
+  opacity: 0.75;
+}
+
+/* Hidden metric row */
+.metric.hidden {
+  display: none;
+}

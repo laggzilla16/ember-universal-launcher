@@ -1,5 +1,5 @@
 const $ = s => document.querySelector(s);
-const S = { games: [], running: {}, sessions: [], view: 'dash', q: '', grp: '', sort: 'recent', loaded: false, stats: [], smode: 'daily', rank: '7' };
+const S = { games: [], running: {}, sessions: [], view: 'dash', q: '', grp: '', sort: 'recent', loaded: false, stats: [], smode: 'daily', rank: '7', overlayOn: false };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const furl = p => 'file:///' + encodeURI(p.replace(/\\/g, '/')).replace(/#/g, '%23').replace(/'/g, '%27');
 const pad = n => String(n).padStart(2, '0');
@@ -113,18 +113,31 @@ function count() {
     requestAnimationFrame(f);
   });
 }
+
 function bar() {
   const b = $('#bar'), g = S.games.find(isRun);
   if (!g) return b.classList.remove('show');
-  b.innerHTML = `<i style="${art(g)}"></i><div><b>${esc(g.name)}</b><span>Session in progress</span></div><em data-s="${S.running[g.id]}">${clock(Date.now() - S.running[g.id])}</em>`;
+  b.innerHTML = `<i style="${art(g)}"></i><div><b>${esc(g.name)}</b><span>Session in progress</span></div><em data-s="${S.running[g.id]}">${clock(Date.now() - S.running[g.id])}</em>
+    <button class="ovl-btn${S.overlayOn ? ' on' : ''}" id="ovl-toggle" title="${S.overlayOn ? 'Hide performance overlay' : 'Show performance overlay'}">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h2l1.5 4L12 7l1.5 5L15 8h2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>`;
   b.classList.add('show');
 }
+
 setInterval(() => { // live counters
   const now = Date.now();
   document.querySelectorAll('[data-t]').forEach(el => { const g = S.games.find(x => x.id == el.dataset.t); if (g) el.textContent = isRun(g) ? clock(total(g)) : dur(total(g)); });
   document.querySelectorAll('[data-s]').forEach(el => el.textContent = clock(now - el.dataset.s));
   const a = $('[data-all]'); if (a && !a.dataset.anim) a.textContent = (S.games.reduce((x, g) => x + total(g), 0) / 3.6e6).toFixed(1);
 }, 1000);
+
+// Overlay toggle handler on #bar
+$('#bar').addEventListener('click', async e => {
+  if (e.target.closest('#ovl-toggle')) {
+    S.overlayOn = await api.overlayToggle();
+    bar();
+  }
+});
 
 async function load() { const d = await api.games(); S.games = d.games; S.running = d.running; }
 async function go(v) { S.view = v; if (v === 'hist') S.sessions = await api.sessions(); if (v === 'stats') await loadStats(); render(); }
@@ -157,7 +170,7 @@ function edit(g) {
     if (b) {
       const p = await api.pick(b.dataset.k); if (!p) return;
       d.querySelector('#f-' + b.dataset.f).value = p;
-      if (b.dataset.f === 'exe' && !v('name')) d.querySelector('#f-name').value = p.split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
+      if (b.dataset.f === 'exe' && !v('name')) d.querySelector('#f-name').value = p.split(/[\\\/]/).pop().replace(/\.[^.]+$/, '');
     }
     if (e.target.id === 'cancel') d.close();
     if (e.target.id === 'del') {
@@ -168,6 +181,78 @@ function edit(g) {
       if (!v('exe')) return toast('Choose a game file first.');
       await api.save({ ...g, name: v('name'), exe: v('exe'), cover: v('cover'), grp: v('grp'), emulator: v('emulator'), args: v('args'), track: v('track') });
       d.close(); await load(); render(false);
+    }
+  };
+  d.showModal();
+}
+
+// ---- Settings dialog
+let overlaySettingsCache = null;
+
+async function openSettings() {
+  overlaySettingsCache = await api.overlayGetSettings();
+  const s = overlaySettingsCache;
+  const d = $('#dlg');
+
+  const tog = (id, checked, label) =>
+    `<label class="tog-row"><span>${label}</span><span class="tog"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''}><span class="tog-thumb"></span></span></label>`;
+
+  d.innerHTML = `<div class="dl settings-dl">
+    <div class="stab-bar">
+      <button class="stab on" data-stab="perf">Performance Overlay</button>
+      <button class="stab" data-stab="general">General</button>
+    </div>
+
+    <div class="stab-panel" id="stab-perf">
+      <div class="tog-section">
+        ${tog('s-enabled', s.enabled, 'Enable Performance Overlay')}
+      </div>
+      <h3 class="tog-head">Visible Metrics</h3>
+      <div class="tog-section">
+        ${tog('s-cpu', s.metrics.cpu, 'CPU Usage')}
+        ${tog('s-gpu', s.metrics.gpu, 'GPU Usage')}
+        ${tog('s-vram', s.metrics.vram, 'VRAM Usage')}
+        ${tog('s-ram', s.metrics.ram, 'RAM Usage')}
+        ${tog('s-cpuTemp', s.metrics.cpuTemp, 'CPU Temperature')}
+        ${tog('s-gpuTemp', s.metrics.gpuTemp, 'GPU Temperature')}
+      </div>
+      <p class="tog-note">Overlay appears automatically when a game launches (if enabled). Use the monitor button in the bottom bar to toggle it while playing.</p>
+    </div>
+
+    <div class="stab-panel hidden" id="stab-general">
+      <div class="empty" style="margin:0"><p>General settings coming soon.</p></div>
+    </div>
+
+    <div class="end">
+      <button class="btn ghost" id="cancel">Cancel</button>
+      <button class="btn" id="save-settings">Save</button>
+    </div>
+  </div>`;
+
+  // Tab switching
+  d.querySelectorAll('.stab').forEach(btn => btn.onclick = () => {
+    d.querySelectorAll('.stab').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    d.querySelectorAll('.stab-panel').forEach(p => p.classList.add('hidden'));
+    d.querySelector('#stab-' + btn.dataset.stab).classList.remove('hidden');
+  });
+
+  d.onclick = async e => {
+    if (e.target.id === 'cancel') { d.close(); return; }
+    if (e.target.id === 'save-settings') {
+      const get = id => d.querySelector('#' + id).checked;
+      const newSettings = {
+        enabled: get('s-enabled'),
+        metrics: {
+          cpu: get('s-cpu'), gpu: get('s-gpu'), vram: get('s-vram'),
+          ram: get('s-ram'), cpuTemp: get('s-cpuTemp'), gpuTemp: get('s-gpuTemp')
+        }
+      };
+      overlaySettingsCache = await api.overlaySettings(newSettings);
+      S.overlayOn = overlaySettingsCache.enabled && Object.keys(S.running).length > 0;
+      bar();
+      d.close();
+      toast('Settings saved.');
     }
   };
   d.showModal();
@@ -250,6 +335,7 @@ function setTheme(t) {
   $('#theme span').textContent = t === 'light' ? 'Dark mode' : 'Light mode';
 }
 $('#theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+$('#settings-btn').onclick = () => openSettings();
 setTheme(document.documentElement.dataset.theme);
 
 (async () => { // startup: splash plays for at least 1.5 s while the library loads
@@ -258,4 +344,7 @@ setTheme(document.documentElement.dataset.theme);
   S.loaded = true; render();
   $('#splash').classList.add('hide'); setTimeout(() => $('#splash').remove(), 800);
   if (localStorage.getItem('accepted') !== LEGAL.rev) setTimeout(welcome, 700);
+  // Sync overlay state
+  const os = await api.overlayGetSettings();
+  S.overlayOn = os.enabled && Object.keys(S.running).length > 0;
 })();
