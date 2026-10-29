@@ -129,7 +129,10 @@ const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings
 let appSettings = { background: true }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
-function trayIcon() { // flame-coloured dot drawn in code (BGRA), so no image asset is needed
+const LOGO = path.join(__dirname, 'renderer', 'assets', 'ember-logo.png');
+function trayIcon() { // the real Ember logo; falls back to a flame-coloured dot drawn in code (BGRA) if the file is missing
+  const logo = nativeImage.createFromPath(LOGO);
+  if (!logo.isEmpty()) return logo.resize({ width: 32, height: 32, quality: 'best' });
   const n = 32, buf = Buffer.alloc(n * n * 4), c = (n - 1) / 2;
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
     const d = Math.hypot(x - c, y - c), a = Math.max(0, Math.min(1, c - d + 0.5)), t = (x + y) / (2 * n), i = (y * n + x) * 4;
@@ -358,7 +361,7 @@ h('import:add', list => {
   return { added, skipped };
 });
 h('theme', t => {
-  const c = t === 'light' ? { color: '#f3f4fb', symbolColor: '#5f6590' } : { color: '#0d0f1c', symbolColor: '#8e94bb' };
+  const c = t === 'light' ? { color: '#f4f0ec', symbolColor: '#6d625a' } : { color: '#0d0e11', symbolColor: '#a59f98' };
   if (win && !win.isDestroyed()) { win.setTitleBarOverlay({ ...c, height: 40 }); win.setBackgroundColor(c.color); }
 });
 h('pick', async kind => {
@@ -463,8 +466,8 @@ app.whenReady().then(() => {
   loadOverlaySettings(); loadAppSettings();
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0f1c', show: false,
-    titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0f1c', symbolColor: '#8e94bb', height: 40 },
+    width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0e11', show: false, icon: LOGO,
+    titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0e11', symbolColor: '#a59f98', height: 40 },
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });
   applyTray();

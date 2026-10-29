@@ -1,8 +1,11 @@
+@font-face{font-family:"Unbounded";src:url("fonts/unbounded.woff2") format("woff2");font-weight:200 900;font-display:swap}
+@font-face{font-family:"Inter";src:url("fonts/inter.woff2") format("woff2");font-weight:100 900;font-display:swap}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   background: transparent;
-  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
@@ -11,18 +14,32 @@ body {
 }
 
 #panel {
+  position: relative;
   width: 190px;
-  background: rgba(10, 11, 24, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(124, 108, 255, 0.3);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 1px rgba(124, 108, 255, 0.4);
+  background: radial-gradient(120% 70% at 18% -12%, #ffb45426, transparent 62%), linear-gradient(150deg, #ffffff18, #ffffff07 55%, #ffffff0d), rgba(14, 15, 19, 0.82);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 #ffffff33, inset 0 -1px 0 #0000004d, 0 12px 34px rgba(0, 0, 0, 0.65);
   padding: 12px 0 10px;
   margin: 6px;
   opacity: 0;
   transform: translateY(-6px);
   transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, #ffffff8c, #ffffff14 26%, #ffffff08 62%, #ffb46a66);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff, #fff) content-box, linear-gradient(#fff, #fff);
+  -webkit-mask-composite: destination-out;
+  mask: linear-gradient(#fff, #fff) content-box, linear-gradient(#fff, #fff);
+  mask-composite: exclude;
 }
 
 #panel.visible {
@@ -34,27 +51,29 @@ body {
 .ovl-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   padding: 0 12px 10px;
-  border-bottom: 1px solid rgba(124, 108, 255, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.ovl-flame {
-  width: 12px;
-  height: 12px;
-  border-radius: 50% 50% 50% 8%;
-  transform: rotate(-45deg);
-  background: linear-gradient(135deg, #ff5fa2, #7c6cff);
-  box-shadow: 0 0 10px #ff5fa2aa;
+.ovl-logo {
+  width: 20px;
+  height: 20px;
   flex: none;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px #ff7a1a88);
 }
 
 .ovl-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-family: "Unbounded", "Segoe UI Variable Display", sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7c6cff;
+  background: linear-gradient(135deg, #ffb454 0%, #ff7a1a 50%, #f0491f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Metric rows */
@@ -78,12 +97,12 @@ body {
   width: 14px;
   text-align: center;
   flex: none;
-  color: rgba(142, 148, 187, 0.8);
+  color: rgba(165, 159, 152, 0.85);
 }
 
 .metric-label {
   font-size: 11px;
-  color: #8e94bb;
+  color: #a59f98;
   flex: 1;
   letter-spacing: 0.01em;
 }
@@ -92,19 +111,19 @@ body {
   font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  color: #e9ebf8;
+  color: #f5efe8;
   letter-spacing: 0.01em;
 }
 
-.metric-value.good { color: #3ddc97; }
-.metric-value.warn { color: #ffd166; }
+.metric-value.good { color: #52d69a; }
+.metric-value.warn { color: #ffb454; }
 .metric-value.crit { color: #ff5a5f; }
-.metric-value.na   { color: #8e94bb; }
+.metric-value.na   { color: #a59f98; }
 
 /* Utilization bar */
 .metric-bar-wrap {
   height: 3px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
   overflow: hidden;
   margin-left: 20px;
@@ -114,17 +133,17 @@ body {
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s ease, background 0.4s ease;
-  background: #3ddc97;
+  background: #52d69a;
 }
 
-.metric-bar.good { background: #3ddc97; }
-.metric-bar.warn { background: #ffd166; }
+.metric-bar.good { background: #52d69a; }
+.metric-bar.warn { background: #ffb454; }
 .metric-bar.crit { background: #ff5a5f; }
 
 /* Divider */
 .ovl-div {
   height: 1px;
-  background: rgba(124, 108, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   margin: 2px 12px;
 }
 
@@ -141,13 +160,13 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #3ddc97;
+  background: #52d69a;
   animation: pulse 1.6s infinite;
   flex: none;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 #3ddc9755; }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 #52d69a55; }
   50%       { opacity: 0.5; transform: scale(0.7); box-shadow: 0 0 0 3px transparent; }
 }
 
@@ -156,11 +175,15 @@ body {
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #3ddc97;
-  opacity: 0.75;
+  color: #52d69a;
+  opacity: 0.85;
 }
 
 /* Hidden metric row */
 .metric.hidden {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
