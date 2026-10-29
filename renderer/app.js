@@ -234,12 +234,34 @@ async function importDlg() {
 let overlaySettingsCache = null;
 
 async function openSettings() {
-  overlaySettingsCache = await api.overlayGetSettings();
-  const s = overlaySettingsCache, app0 = await api.appGetSettings();
+  const initialOverlay = await api.overlayGetSettings();
+  const initialApp = await api.appGetSettings();
+  overlaySettingsCache = JSON.parse(JSON.stringify(initialOverlay));
+  const s = overlaySettingsCache, app0 = { ...initialApp };
   const d = $('#dlg');
 
   const tog = (id, checked, label) =>
     `<label class="tog-row"><span>${label}</span><span class="tog"><input type="checkbox" id="${id}" ${checked ? 'checked' : ''}><span class="tog-thumb"></span></span></label>`;
+
+  const layouts = [
+    ['vertical', 'Vertical', '<svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h6"/></svg>'],
+    ['horizontal', 'Horizontal', '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2.5"/><path d="M6 12h2M11 12h2M16 12h2"/></svg>'],
+    ['compact', 'Compact', '<svg viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="12" rx="3"/><path d="M9 10h2M13 10h2M9 14h2M13 14h2"/></svg>'],
+    ['expanded', 'Expanded', '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>']
+  ];
+
+  const sizes = [
+    ['small', 'Small'],
+    ['medium', 'Medium'],
+    ['large', 'Large']
+  ];
+
+  const positions = [
+    ['top-left', 'Top Left'],
+    ['top-right', 'Top Right'],
+    ['bottom-left', 'Bottom Left'],
+    ['bottom-right', 'Bottom Right']
+  ];
 
   d.innerHTML = `<div class="dl settings-dl">
     <div class="stab-bar">
@@ -251,8 +273,28 @@ async function openSettings() {
       <div class="tog-section">
         ${tog('s-enabled', s.enabled, 'Enable Performance Overlay')}
       </div>
-      <h3 class="tog-head">Visible Metrics</h3>
-      <div class="tog-section">
+
+      <h3 class="tog-head">Overlay Layout</h3>
+      <div class="ovl-layout-grid" id="s-layout-group">
+        ${layouts.map(([val, label, icon]) => `<button type="button" class="ovl-opt-btn ${s.layout === val ? 'on' : ''}" data-layout="${val}">${icon}<span>${label}</span></button>`).join('')}
+      </div>
+
+      <h3 class="tog-head">Overlay Size</h3>
+      <div class="ovl-size-row" id="s-size-group">
+        ${sizes.map(([val, label]) => `<button type="button" class="ovl-opt-btn ${s.size === val ? 'on' : ''}" data-size="${val}"><span>${label}</span></button>`).join('')}
+      </div>
+
+      <h3 class="tog-head">Screen Position</h3>
+      <div class="ovl-pos-grid" id="s-pos-group">
+        ${positions.map(([val, label]) => `<button type="button" class="ovl-pos-btn ${s.position === val ? 'on' : ''}" data-pos="${val}"><span>${label}</span><i class="p-dot"></i></button>`).join('')}
+        <button type="button" class="ovl-pos-btn ovl-pos-custom ${s.position === 'custom' ? 'on' : ''}" data-pos="custom">
+          <i class="p-dot"></i><span>Custom Position (Drag overlay on screen)</span>
+        </button>
+      </div>
+
+      <h3 class="tog-head">Displayed Metrics</h3>
+      <div class="tog-section metrics-grid">
+        ${tog('s-fps', s.metrics.fps !== false, 'FPS Counter')}
         ${tog('s-cpu', s.metrics.cpu, 'CPU Usage')}
         ${tog('s-gpu', s.metrics.gpu, 'GPU Usage')}
         ${tog('s-vram', s.metrics.vram, 'VRAM Usage')}
@@ -260,7 +302,7 @@ async function openSettings() {
         ${tog('s-cpuTemp', s.metrics.cpuTemp, 'CPU Temperature')}
         ${tog('s-gpuTemp', s.metrics.gpuTemp, 'GPU Temperature')}
       </div>
-      <p class="tog-note">Overlay appears automatically when a game launches (if enabled). Use the monitor button in the bottom bar to toggle it while playing.</p>
+      <p class="tog-note">Tip: You can drag the overlay directly to any custom spot on your screen while it is visible. All preferences persist automatically when saved.</p>
     </div>
 
     <div class="stab-panel hidden" id="stab-general">
@@ -276,6 +318,32 @@ async function openSettings() {
     </div>
   </div>`;
 
+  let curLayout = s.layout || 'vertical';
+  let curSize = s.size || 'medium';
+  let curPos = s.position || 'top-right';
+
+  const collectAndApply = async () => {
+    const get = id => !!d.querySelector('#' + id)?.checked;
+    const nextSettings = {
+      enabled: get('s-enabled'),
+      layout: curLayout,
+      size: curSize,
+      position: curPos,
+      metrics: {
+        fps: get('s-fps'),
+        cpu: get('s-cpu'),
+        gpu: get('s-gpu'),
+        vram: get('s-vram'),
+        ram: get('s-ram'),
+        cpuTemp: get('s-cpuTemp'),
+        gpuTemp: get('s-gpuTemp')
+      }
+    };
+    overlaySettingsCache = await api.overlaySettings(nextSettings);
+    S.overlayOn = overlaySettingsCache.enabled;
+    bar();
+  };
+
   // Tab switching
   d.querySelectorAll('.stab').forEach(btn => btn.onclick = () => {
     d.querySelectorAll('.stab').forEach(b => b.classList.remove('on'));
@@ -284,27 +352,61 @@ async function openSettings() {
     d.querySelector('#stab-' + btn.dataset.stab).classList.remove('hidden');
   });
 
+  // Live checkbox changes
+  d.querySelectorAll('#stab-perf input[type="checkbox"]').forEach(cb => {
+    cb.onchange = () => collectAndApply();
+  });
+
   d.onclick = async e => {
-    if (e.target.id === 'cancel') { d.close(); return; }
-    if (e.target.id === 'save-settings') {
-      const get = id => d.querySelector('#' + id).checked;
-      const newSettings = {
-        enabled: get('s-enabled'),
-        metrics: {
-          cpu: get('s-cpu'), gpu: get('s-gpu'), vram: get('s-vram'),
-          ram: get('s-ram'), cpuTemp: get('s-cpuTemp'), gpuTemp: get('s-gpuTemp')
-        }
-      };
-      await api.appSettings({ background: get('s-bg') });
-      overlaySettingsCache = await api.overlaySettings(newSettings);
-      S.overlayOn = overlaySettingsCache.enabled && Object.keys(S.running).length > 0;
+    const lBtn = e.target.closest('[data-layout]');
+    if (lBtn) {
+      curLayout = lBtn.dataset.layout;
+      d.querySelectorAll('[data-layout]').forEach(b => b.classList.toggle('on', b.dataset.layout === curLayout));
+      await collectAndApply();
+      return;
+    }
+    const sBtn = e.target.closest('[data-size]');
+    if (sBtn) {
+      curSize = sBtn.dataset.size;
+      d.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === curSize));
+      await collectAndApply();
+      return;
+    }
+    const pBtn = e.target.closest('[data-pos]');
+    if (pBtn) {
+      curPos = pBtn.dataset.pos;
+      d.querySelectorAll('[data-pos]').forEach(b => b.classList.toggle('on', b.dataset.pos === curPos));
+      await collectAndApply();
+      return;
+    }
+    if (e.target.id === 'cancel') {
+      overlaySettingsCache = await api.overlaySettings(initialOverlay);
+      await api.appSettings(initialApp);
+      S.overlayOn = overlaySettingsCache.enabled;
       bar();
+      d.close();
+      return;
+    }
+    if (e.target.id === 'save-settings') {
+      const get = id => !!d.querySelector('#' + id)?.checked;
+      await api.appSettings({ background: get('s-bg') });
+      await collectAndApply();
       d.close();
       toast('Settings saved.');
     }
   };
   d.showModal();
 }
+
+api.on('overlay:settings-updated', s => {
+  overlaySettingsCache = s;
+  S.overlayOn = !!s.enabled;
+  bar();
+  const d = $('#dlg');
+  if (d && d.open && d.querySelector('#s-pos-group')) {
+    d.querySelectorAll('[data-pos]').forEach(b => b.classList.toggle('on', b.dataset.pos === s.position));
+  }
+});
 
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
 $('#view').addEventListener('click', e => {
@@ -394,6 +496,20 @@ $('#theme').onclick = () => setTheme(document.documentElement.dataset.theme === 
 $('#settings-btn').onclick = () => openSettings();
 setTheme(document.documentElement.dataset.theme);
 
+// ---- Custom Window Controls
+const winMaxBtn = $('#win-max');
+function syncMaxState(isMax) {
+  if (!winMaxBtn) return;
+  winMaxBtn.classList.toggle('is-max', !!isMax);
+  winMaxBtn.title = isMax ? 'Restore' : 'Maximize';
+  winMaxBtn.setAttribute('aria-label', isMax ? 'Restore' : 'Maximize');
+}
+$('#win-min')?.addEventListener('click', () => api.winMin());
+winMaxBtn?.addEventListener('click', async () => syncMaxState(await api.winMax()));
+$('#win-close')?.addEventListener('click', () => api.winClose());
+api.on('win:max', syncMaxState);
+api.winIsMax().then(syncMaxState);
+
 (async () => { // startup: splash plays for at least 1.5 s while the library loads
   const t0 = performance.now();
   await load(); await sleep(Math.max(0, 1500 - (performance.now() - t0)));
@@ -402,5 +518,7 @@ setTheme(document.documentElement.dataset.theme);
   if (localStorage.getItem('accepted') !== LEGAL.rev) setTimeout(welcome, 700);
   // Sync overlay state
   const os = await api.overlayGetSettings();
-  S.overlayOn = os.enabled && Object.keys(S.running).length > 0;
+  overlaySettingsCache = os;
+  S.overlayOn = !!os.enabled;
+  bar();
 })();
