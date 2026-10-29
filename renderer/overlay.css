@@ -3,29 +3,39 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
+html, body {
   background: transparent;
   font-family: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
-  width: 200px;
+  user-select: none;
+  width: max-content;
+  height: max-content;
 }
 
 #panel {
   position: relative;
-  width: 190px;
-  background: radial-gradient(120% 70% at 18% -12%, #ffb45426, transparent 62%), linear-gradient(150deg, #ffffff18, #ffffff07 55%, #ffffff0d), rgba(14, 15, 19, 0.82);
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  width: 196px;
+  background: radial-gradient(120% 70% at 18% -12%, #ffb45426, transparent 62%), linear-gradient(150deg, #ffffff18, #ffffff07 55%, #ffffff0d), rgba(14, 15, 19, 0.92);
   border-radius: 16px;
-  box-shadow: inset 0 1px 0 #ffffff33, inset 0 -1px 0 #0000004d, 0 12px 34px rgba(0, 0, 0, 0.65);
+  box-shadow: inset 0 1px 0 #ffffff33, inset 0 -1px 0 #0000004d, 0 10px 28px rgba(0, 0, 0, 0.65);
   padding: 12px 0 10px;
-  margin: 6px;
+  margin: 8px;
   opacity: 0;
   transform: translateY(-6px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: grab;
+}
+
+#panel:hover {
+  box-shadow: inset 0 1px 0 #ffffff4d, inset 0 -1px 0 #0000004d, 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(255, 138, 43, 0.22);
+}
+
+#panel.dragging {
+  cursor: grabbing;
+  box-shadow: inset 0 1px 0 #ffb45466, 0 16px 38px rgba(0, 0, 0, 0.85), 0 0 22px rgba(255, 122, 26, 0.4);
 }
 
 #panel::before {
@@ -47,21 +57,27 @@ body {
   transform: none;
 }
 
+/* Sizes */
+#panel.size-small  { zoom: 0.85; }
+#panel.size-medium { zoom: 1; }
+#panel.size-large  { zoom: 1.18; }
+
 /* Header */
 .ovl-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 12px 10px;
+  padding: 0 12px 9px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ovl-logo {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   flex: none;
   object-fit: contain;
   filter: drop-shadow(0 0 6px #ff7a1a88);
+  pointer-events: none;
 }
 
 .ovl-title {
@@ -74,22 +90,34 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  flex: 1;
+}
+
+.ovl-grip {
+  font-size: 11px;
+  letter-spacing: -1px;
+  color: rgba(165, 159, 152, 0.45);
+  transition: color 0.2s ease;
+}
+
+#panel:hover .ovl-grip {
+  color: rgba(255, 180, 84, 0.85);
 }
 
 /* Metric rows */
 .metrics {
-  padding: 8px 0 6px;
+  padding: 7px 0 5px;
 }
 
 .metric {
-  padding: 5px 12px 6px;
+  padding: 4px 12px 5px;
 }
 
 .metric-top {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .metric-icon {
@@ -100,11 +128,24 @@ body {
   color: rgba(165, 159, 152, 0.85);
 }
 
+.metric-fps .metric-icon {
+  color: #ffb454;
+}
+
 .metric-label {
   font-size: 11px;
   color: #a59f98;
   flex: 1;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.metric-sub {
+  display: none;
+  font-size: 10px;
+  color: #8c867f;
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
 }
 
 .metric-value {
@@ -113,6 +154,13 @@ body {
   font-variant-numeric: tabular-nums;
   color: #f5efe8;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.metric-fps .metric-value {
+  font-family: "Unbounded", sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
 }
 
 .metric-value.good { color: #52d69a; }
@@ -129,10 +177,13 @@ body {
   margin-left: 20px;
 }
 
+.temp-bar-wrap {
+  display: none;
+}
+
 .metric-bar {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.6s ease, background 0.4s ease;
   background: #52d69a;
 }
 
@@ -144,7 +195,7 @@ body {
 .ovl-div {
   height: 1px;
   background: rgba(255, 255, 255, 0.08);
-  margin: 2px 12px;
+  margin: 3px 12px;
 }
 
 /* Footer / LIVE indicator */
@@ -153,7 +204,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 12px 2px;
+  padding: 5px 12px 2px;
 }
 
 .live-dot {
@@ -161,13 +212,8 @@ body {
   height: 6px;
   border-radius: 50%;
   background: #52d69a;
-  animation: pulse 1.6s infinite;
+  box-shadow: 0 0 6px #52d69a88;
   flex: none;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 #52d69a55; }
-  50%       { opacity: 0.5; transform: scale(0.7); box-shadow: 0 0 0 3px transparent; }
 }
 
 .live-label {
@@ -179,9 +225,184 @@ body {
   opacity: 0.85;
 }
 
-/* Hidden metric row */
-.metric.hidden {
+/* Hidden metric row / divider */
+.metric.hidden, .ovl-div.hidden {
+  display: none !important;
+}
+
+/* =====================================================================
+   LAYOUT: HORIZONTAL
+   Wide HUD strip with metrics side by side
+   ===================================================================== */
+#panel.layout-horizontal {
+  width: max-content;
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 14px;
+  gap: 10px;
+}
+
+#panel.layout-horizontal .ovl-head {
+  padding: 0 10px 0 0;
+  border-bottom: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 6px;
+}
+
+#panel.layout-horizontal .ovl-grip {
   display: none;
+}
+
+#panel.layout-horizontal .metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+}
+
+#panel.layout-horizontal .metric {
+  padding: 2px 4px;
+  min-width: 68px;
+}
+
+#panel.layout-horizontal .metric-top {
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+#panel.layout-horizontal .metric-icon {
+  display: none;
+}
+
+#panel.layout-horizontal .metric-bar-wrap {
+  margin-left: 0;
+}
+
+#panel.layout-horizontal .ovl-div {
+  width: 1px;
+  height: 22px;
+  margin: 0;
+}
+
+#panel.layout-horizontal .ovl-foot {
+  padding: 0 0 0 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#panel.layout-horizontal .live-label {
+  display: none;
+}
+
+/* =====================================================================
+   LAYOUT: COMPACT
+   Minimal corner pill badge with tight 2-column grid and no bars
+   ===================================================================== */
+#panel.layout-compact {
+  width: 168px;
+  padding: 8px 10px;
+  border-radius: 13px;
+}
+
+#panel.layout-compact .ovl-head {
+  padding: 0 2px 5px;
+  margin-bottom: 4px;
+}
+
+#panel.layout-compact .ovl-logo {
+  width: 15px;
+  height: 15px;
+}
+
+#panel.layout-compact .ovl-title {
+  font-size: 8.5px;
+}
+
+#panel.layout-compact .metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 8px;
+  padding: 0;
+}
+
+#panel.layout-compact .metric {
+  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+}
+
+#panel.layout-compact .metric-fps {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(255, 180, 84, 0.14), rgba(255, 122, 26, 0.05));
+}
+
+#panel.layout-compact .metric-top {
+  margin-bottom: 0;
+  gap: 4px;
+}
+
+#panel.layout-compact .metric-icon,
+#panel.layout-compact .metric-bar-wrap,
+#panel.layout-compact .ovl-div,
+#panel.layout-compact .ovl-foot {
+  display: none !important;
+}
+
+#panel.layout-compact .metric-label {
+  font-size: 10px;
+}
+
+#panel.layout-compact .metric-value {
+  font-size: 11px;
+}
+
+/* =====================================================================
+   LAYOUT: EXPANDED
+   Detailed telemetry dashboard with hero FPS + frame time & full bars
+   ===================================================================== */
+#panel.layout-expanded {
+  width: 248px;
+  padding: 13px 0 11px;
+  border-radius: 18px;
+}
+
+#panel.layout-expanded .ovl-head {
+  padding: 0 14px 10px;
+}
+
+#panel.layout-expanded .metrics {
+  padding: 8px 12px 6px;
+  display: grid;
+  gap: 6px;
+}
+
+#panel.layout-expanded .metric {
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#panel.layout-expanded .metric-fps {
+  background: linear-gradient(145deg, rgba(255, 180, 84, 0.16), rgba(232, 64, 31, 0.06));
+  box-shadow: inset 0 0 0 1px rgba(255, 180, 84, 0.24);
+  padding: 9px 11px;
+}
+
+#panel.layout-expanded .metric-fps .metric-value {
+  font-size: 15px;
+}
+
+#panel.layout-expanded .metric-sub {
+  display: inline-block;
+}
+
+#panel.layout-expanded .temp-bar-wrap {
+  display: block;
+}
+
+#panel.layout-expanded .ovl-div {
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
