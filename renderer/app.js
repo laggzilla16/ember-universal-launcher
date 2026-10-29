@@ -144,7 +144,10 @@ async function go(v) { S.view = v; if (v === 'hist') S.sessions = await api.sess
 function toast(m) { const t = document.createElement('div'); t.textContent = m; $('#toast').append(t); setTimeout(() => t.remove(), 5000); }
 
 async function launch(g, c) {
-  if (g.missing) { toast(`${g.name} isn't installed here. Pick its new location; your playtime and stats are kept.`); return edit(g); }
+  if (g.missing) {
+    if (g.method === 'aumid') { toast(`${g.name} is no longer registered in the Windows Start menu. It may have been uninstalled. You can remove it here; your playtime is kept until you do.`); return edit(g); }
+    toast(`${g.name} isn't installed here. Pick its new location; your playtime and stats are kept.`); return edit(g);
+  }
   if (isRun(g)) return toast(`${g.name} is already running.`);
   c.classList.add('launching');
   const r = await api.launch(g.id);
@@ -154,18 +157,21 @@ async function launch(g, c) {
 function edit(g) {
   const d = $('#dlg'), isNew = !g;
   g = g || { name: '', exe: '', args: '', emulator: '', cover: '', track: '', grp: '' };
+  const aum = g.method === 'aumid'; // Windows app: launched by AppID, so no file / emulator / arguments
   const f = (id, label, k, ph = '') => `<label>${label}<span class="in"><input id="f-${id}" value="${esc(g[id])}" placeholder="${ph}">${k ? `<button class="btn ghost" data-f="${id}" data-k="${k}">Browse</button>` : ''}</span></label>`;
-  d.innerHTML = `<div class="dl"><h1>${isNew ? 'Add game' : 'Edit game'}</h1>${g.missing ? '<p class="lead"><b>Game files not found.</b> It may be uninstalled or on a disconnected drive. Playtime, history and stats are kept. Browse to the new location to relink it, or leave it as is to keep it in your library.</p>' : ''}
-    ${f('exe', 'Game file (.exe, or a ROM/disc image when using an emulator)', 'file')}
+  d.innerHTML = `<div class="dl"><h1>${isNew ? 'Add game' : 'Edit game'}</h1>${isNew ? '<button class="btn ghost imp-open" id="to-import">Import Windows Applications</button>' : ''}${g.missing ? (aum ? '<p class="lead"><b>App not found.</b> It is no longer registered in the Windows Start menu, so it may have been uninstalled. Playtime, history and stats are kept until you remove it.</p>' : '<p class="lead"><b>Game files not found.</b> It may be uninstalled or on a disconnected drive. Playtime, history and stats are kept. Browse to the new location to relink it, or leave it as is to keep it in your library.</p>') : ''}
+    ${aum ? `<label>Windows App ID<span class="in"><input value="${esc(g.aumid)}" readonly></span></label>` : f('exe', 'Game file (.exe, or a ROM/disc image when using an emulator)', 'file')}
     ${f('name', 'Name', '', 'Defaults to the file name')}
     ${f('cover', 'Cover image', 'image')}
     ${f('grp', 'Group', '', 'e.g. RPG, Emulated, Favorites')}
-    ${f('emulator', 'Emulator (optional)', 'exe', 'Leave empty for normal PC games')}
-    ${f('args', 'Launch arguments (optional)', '', '-windowed')}
-    ${f('track', 'Process to track (optional)', '', 'e.g. game.exe — for games started through another launcher')}
+    ${aum ? '' : f('emulator', 'Emulator (optional)', 'exe', 'Leave empty for normal PC games')}
+    ${aum ? '' : f('args', 'Launch arguments (optional)', '', '-windowed')}
+    ${f('track', 'Process to track (optional)', '', aum ? 'Only needed if Ember cannot detect the app, e.g. game.exe' : 'e.g. game.exe — for games started through another launcher')}
     <div class="end">${isNew ? '' : '<button class="btn danger" id="del">Remove</button>'}<button class="btn ghost" id="cancel">Cancel</button><button class="btn" id="save">Save</button></div></div>`;
-  const v = id => d.querySelector('#f-' + id).value.trim();
+  const v = id => (d.querySelector('#f-' + id)?.value ?? '').trim();
   d.onclick = async e => {
+    if (e.target.id === 'to-import') return importDlg();
+
     const b = e.target.closest('[data-f]');
     if (b) {
       const p = await api.pick(b.dataset.k); if (!p) return;
@@ -178,7 +184,7 @@ function edit(g) {
       e.target.dataset.sure = 1; e.target.textContent = 'Click again to delete history too';
     }
     if (e.target.id === 'save') {
-      if (!v('exe')) return toast('Choose a game file first.');
+      if (!aum && !v('exe')) return toast('Choose a game file first.');
       await api.save({ ...g, name: v('name'), exe: v('exe'), cover: v('cover'), grp: v('grp'), emulator: v('emulator'), args: v('args'), track: v('track') });
       d.close(); await load(); render(false);
     }
@@ -186,12 +192,50 @@ function edit(g) {
   d.showModal();
 }
 
+// ---- Import Windows applications (Get-StartApps)
+async function importDlg() {
+  const d = $('#dlg'), sel = new Set();
+  let apps = null, q = '';
+  const shell = body => d.innerHTML = `<div class="dl"><h1>Import Windows Applications</h1>${body}</div>`;
+  const back = '<button class="btn ghost" id="imp-back">Back</button>';
+  d.onclick = null;
+  shell('<p class="lead">Reading applications registered in the Windows Start menu…</p><div class="end"><button class="btn ghost" id="imp-back">Cancel</button></div>');
+  d.onclick = e => { if (e.target.id === 'imp-back') d.close(); };
+  const r = await api.importList();
+  if (!d.open) return;
+  if (!r.ok) {
+    shell(`<p class="lead"><b>Couldn't list applications.</b> ${esc(r.error)}</p><div class="end">${back}<button class="btn" id="imp-retry">Try again</button></div>`);
+    d.onclick = e => { if (e.target.id === 'imp-back') edit(); if (e.target.id === 'imp-retry') importDlg(); };
+    return;
+  }
+  apps = r.apps;
+  const shown = () => apps.filter(a => a.name.toLowerCase().includes(q) || a.aumid.toLowerCase().includes(q)).slice(0, 400);
+  const list = () => { const l = shown(); return l.length ? l.map(a => `<label class="imp-row ${a.imported ? 'done' : ''}"><input type="checkbox" data-id="${esc(a.aumid)}" ${a.imported ? 'disabled checked' : sel.has(a.aumid) ? 'checked' : ''}><div><b>${esc(a.name)}</b><span>${a.imported ? 'Already in your library' : esc(a.aumid)}</span></div></label>`).join('')
+    : '<div class="empty" style="padding:24px"><p style="margin:0">No applications match your search.</p></div>'; };
+  const count = () => { const b = d.querySelector('#imp-go'); b.textContent = sel.size ? `Import ${sel.size} selected` : 'Import selected'; b.disabled = !sel.size; };
+  shell(`<p class="lead">Pick the games to add. Store and Xbox games that can't be started from an .exe show up here.</p>
+    <input id="imp-q" class="imp-q" placeholder="Search ${apps.length} applications" autocomplete="off">
+    <div class="imp-list" id="imp-list">${list()}</div>
+    <div class="end">${back}<button class="btn" id="imp-go" disabled>Import selected</button></div>`);
+  d.querySelector('#imp-q').oninput = e => { q = e.target.value.trim().toLowerCase(); d.querySelector('#imp-list').innerHTML = list(); };
+  d.querySelector('#imp-list').onchange = e => { const c = e.target; if (!c.dataset.id) return; c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id); count(); };
+  d.onclick = async e => {
+    if (e.target.id === 'imp-back') return edit();
+    if (e.target.id !== 'imp-go' || !sel.size) return;
+    e.target.disabled = true;
+    const res = await api.importAdd(apps.filter(a => sel.has(a.aumid) && !a.imported).map(({ name, aumid }) => ({ name, aumid })));
+    d.close(); await load(); render(false);
+    toast(res.added ? `Imported ${res.added} application${res.added > 1 ? 's' : ''}.${res.skipped ? ` ${res.skipped} skipped (already added or unavailable).` : ''}` : 'Nothing was imported (already added or unavailable).');
+  };
+  d.querySelector('#imp-q').focus();
+}
+
 // ---- Settings dialog
 let overlaySettingsCache = null;
 
 async function openSettings() {
   overlaySettingsCache = await api.overlayGetSettings();
-  const s = overlaySettingsCache;
+  const s = overlaySettingsCache, app0 = await api.appGetSettings();
   const d = $('#dlg');
 
   const tog = (id, checked, label) =>
@@ -220,7 +264,10 @@ async function openSettings() {
     </div>
 
     <div class="stab-panel hidden" id="stab-general">
-      <div class="empty" style="margin:0"><p>General settings coming soon.</p></div>
+      <div class="tog-section">
+        ${tog('s-bg', app0.background, 'Keep Ember running in the background when closed')}
+      </div>
+      <p class="tog-note">When on, closing the window hides Ember to the system tray (look under the ^ "Show hidden icons" arrow in the taskbar). Playtime keeps being tracked, and the performance overlay still works. Right-click the tray icon and choose Quit Ember to exit completely. When off, closing the window exits Ember.</p>
     </div>
 
     <div class="end">
@@ -248,6 +295,7 @@ async function openSettings() {
           ram: get('s-ram'), cpuTemp: get('s-cpuTemp'), gpuTemp: get('s-gpuTemp')
         }
       };
+      await api.appSettings({ background: get('s-bg') });
       overlaySettingsCache = await api.overlaySettings(newSettings);
       S.overlayOn = overlaySettingsCache.enabled && Object.keys(S.running).length > 0;
       bar();
@@ -312,19 +360,27 @@ let updInfo = {};
 function updUI(u) {
   if (u.state === 'none') return toast("You're up to date.");
   if (u.state === 'error') {
+    if (updInfo.state === 'progress') { updInfo.clicked = false; updUI({ state: 'available', version: updInfo.version }); } // failed download: let the user retry
     const m = String(u.message || '');
     if (/404|latest\.yml|not found/i.test(m)) return toast("You're up to date. No newer release has been published yet.");
     return toast('Could not check for updates: ' + m.split('\n')[0].slice(0, 120));
   }
-  updInfo = { ...updInfo, ...u }; upd.className = 'show';
-  if (u.state === 'available') upd.innerHTML = `<b>Update available</b><p>Ember v${esc(vf(u.version))} is ready${u.portable ? ' to download' : ''}.</p><div class="ub"><button class="btn" id="u-go">${u.portable ? 'Download' : 'Update now'}</button>${later}</div>`;
-  if (u.state === 'progress') upd.innerHTML = `<b>Downloading update…</b><div class="pb"><u style="width:${u.percent}%"></u></div><p>${u.percent}%</p>`;
-  if (u.state === 'ready') upd.innerHTML = `<b>Update ready</b><p>Restart to finish installing. Otherwise it installs when you next close Ember.</p><div class="ub"><button class="btn" id="u-rs">Restart &amp; install</button>${later}</div>`;
+  updInfo = { ...updInfo, ...u };
+  const b = $('#updbtn'), dl = '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>';
+  b.className = 'show' + (u.state === 'ready' ? ' ready' : '');
+  b.disabled = u.state === 'progress';
+  if (u.state === 'available') b.innerHTML = `${dl}<span>Update available${u.portable ? '' : ' · v' + esc(vf(u.version))}</span>`;
+  if (u.state === 'progress') b.innerHTML = `${dl}<span>Downloading… ${u.percent}%</span><u style="width:${u.percent}%"></u>`;
+  if (u.state === 'ready') {
+    if (updInfo.clicked) return api.installUpdate(); // user already asked to update: restart straight away
+    b.innerHTML = `${dl}<span>Restart to update</span>`;
+  }
 }
-upd.onclick = e => {
-  if (e.target.id === 'u-no') upd.className = '';
-  if (e.target.id === 'u-go') updInfo.portable ? api.open(updInfo.url) : (updUI({ state: 'progress', percent: 0 }), api.downloadUpdate());
-  if (e.target.id === 'u-rs') api.installUpdate();
+$('#updbtn').onclick = () => {
+  if (updInfo.state === 'available') {
+    if (updInfo.portable) return api.open(updInfo.url);
+    updInfo.clicked = true; updUI({ state: 'progress', percent: 0 }); api.downloadUpdate();
+  } else if (updInfo.state === 'ready') api.installUpdate();
 };
 api.on('update', updUI);
 api.version().then(v => { $('#ver').textContent = 'v' + vf(v.v); });

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
@@ -124,6 +124,28 @@ function overlayHide() {
   overlayWin.hide();
 }
 
+// ---- Background mode: keep running in the system tray after the window is closed
+const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
+let appSettings = { background: true }, tray = null, quitting = false;
+function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
+function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
+function trayIcon() { // flame-coloured dot drawn in code (BGRA), so no image asset is needed
+  const n = 32, buf = Buffer.alloc(n * n * 4), c = (n - 1) / 2;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const d = Math.hypot(x - c, y - c), a = Math.max(0, Math.min(1, c - d + 0.5)), t = (x + y) / (2 * n), i = (y * n + x) * 4;
+    buf[i] = 255 * (1 - t) + 162 * t; buf[i + 1] = 108 * (1 - t) + 95 * t; buf[i + 2] = 124 * (1 - t) + 255 * t; buf[i + 3] = Math.round(255 * a); // B,G,R,A: purple -> pink
+  }
+  return nativeImage.createFromBitmap(buf, { width: n, height: n });
+}
+function showMain() { if (!win || win.isDestroyed()) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+function applyTray() {
+  if (appSettings.background && !tray) {
+    tray = new Tray(trayIcon()); tray.setToolTip('Ember Launcher');
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open Ember', click: showMain }, { type: 'separator' }, { label: 'Quit Ember', click: () => app.quit() }]));
+    tray.on('click', showMain);
+  } else if (!appSettings.background && tray) { tray.destroy(); tray = null; }
+}
+
 function initDb() {
   db = new DatabaseSync(path.join(app.getPath('userData'), 'launcher.db'));
   db.exec(`PRAGMA journal_mode=WAL;
@@ -133,6 +155,11 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS sessions(id INTEGER PRIMARY KEY, game_id INTEGER NOT NULL,
       started INTEGER NOT NULL, ended INTEGER, beat INTEGER);
     CREATE INDEX IF NOT EXISTS s_game ON sessions(game_id);`);
+  // Backward-compatible migration: Windows (AUMID) apps. Existing rows get '' = classic exe/emulator launch.
+  const cols = db.prepare('PRAGMA table_info(games)').all().map(c => c.name);
+  if (!cols.includes('aumid')) db.exec("ALTER TABLE games ADD COLUMN aumid TEXT DEFAULT ''");
+  if (!cols.includes('method')) db.exec("ALTER TABLE games ADD COLUMN method TEXT DEFAULT ''");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS g_aumid ON games(aumid) WHERE aumid<>''"); // no duplicate imports
   // Crash recovery: sessions left open are closed at their last heartbeat.
   db.prepare('UPDATE sessions SET ended=MAX(started,COALESCE(beat,started)) WHERE ended IS NULL').run();
 }
@@ -153,10 +180,86 @@ function matcher(g) {
   return p => p === exe || (!g.emulator && p.startsWith(dir)) || (t && path.basename(p) === t);
 }
 
+// ---- Windows (Start menu) applications, launched through their registered AppID (AUMID)
+const pending = new Set(); // games whose AUMID launch is still being prepared (blocks double clicks)
+let startIds = null, startIdsAt = 0, startBusy = false; // cache of registered AppIDs, used to flag uninstalled apps
+const validAumid = s => typeof s === 'string' && s.length > 0 && s.length <= 512 && /^[^\x00-\x1f"<>|*?]+$/.test(s);
+const ps = (script, env) => new Promise(res => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+  "[Console]::OutputEncoding=[Text.Encoding]::UTF8;$ErrorActionPreference='Stop';" + script],
+  { windowsHide: true, maxBuffer: 1 << 25, timeout: 30000, env: { ...process.env, ...env } }, (e, out, err) => res({ e, out: out || '', err: err || '' })));
+
+async function listStartApps() {
+  const { e, out, err } = await ps('Get-StartApps | Select-Object Name,AppID | ConvertTo-Json -Compress');
+  if (e) {
+    const m = String(err || e.message);
+    return { ok: false, error: e.killed ? 'Windows took too long to list applications. Please try again.'
+      : /not recognized|CommandNotFound/i.test(m) ? "Get-StartApps isn't available on this version of Windows."
+      : 'Could not read the Windows application list: ' + m.split(/\r?\n/).find(Boolean)?.slice(0, 160) };
+  }
+  let j = [];
+  try { if (out.trim()) j = JSON.parse(out); } catch { return { ok: false, error: 'Could not understand the Windows application list.' }; }
+  const seen = new Map(); // Get-StartApps returns a bare object (not an array) when there is a single result
+  for (const a of Array.isArray(j) ? j : [j]) {
+    const name = String(a?.Name ?? '').trim(), aumid = String(a?.AppID ?? '').trim();
+    if (name && validAumid(aumid) && !seen.has(aumid.toLowerCase())) seen.set(aumid.toLowerCase(), { name, aumid });
+  }
+  const apps = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  startIds = new Set(apps.map(a => a.aumid.toLowerCase())); startIdsAt = Date.now();
+  return { ok: true, apps };
+}
+function refreshStartIds() { // throttled background refresh so uninstalled apps get flagged in the library
+  if (startBusy || Date.now() - startIdsAt < 3e5 || !db.prepare("SELECT 1 FROM games WHERE method='aumid' LIMIT 1").get()) return;
+  startBusy = true; listStartApps().finally(() => { startBusy = false; startIdsAt = Date.now(); });
+}
+// Matches processes that live in the app's package folder (the real game, not the explorer.exe that activated it),
+// plus the optional "process to track" name (needed for desktop-style AppIDs, which have no package folder).
+function aumidMatcher(g, locs) {
+  const dirs = locs.map(l => l.toLowerCase().replace(/[\\/]+$/, '') + path.sep), t = (g.track || '').trim().toLowerCase();
+  return p => dirs.some(d => p.startsWith(d)) || (!!t && path.basename(p) === t);
+}
+async function launchAumid(g) {
+  if (pending.has(g.id)) return { ok: true };
+  pending.add(g.id);
+  try {
+    // One lookup: is the AppID still registered, and where is the package installed (the folder changes on updates).
+    const r = await ps("$ErrorActionPreference='SilentlyContinue';$id=$env:EMBER_AUMID;$r=@{found=$false;loc=@()};"
+      + 'if(Get-StartApps | Where-Object {$_.AppID -eq $id}){$r.found=$true};'
+      + "if($id.Contains('!')){$f=$id.Split('!')[0];$r.loc=@(Get-AppxPackage -Name $f.Split('_')[0] | Where-Object {$_.PackageFamilyName -eq $f} | ForEach-Object {$_.InstallLocation})};"
+      + '$r | ConvertTo-Json -Compress', { EMBER_AUMID: g.aumid });
+    let info = null;
+    try { info = JSON.parse(r.out.trim()); } catch {}
+    if (info && info.found === false)
+      return { ok: false, error: `${g.name} is no longer registered in the Windows Start menu. It may have been uninstalled. Remove it, or import it again after reinstalling.` };
+    if (active.has(g.id)) return { ok: true };
+    const locs = [].concat(info?.loc || []).filter(l => typeof l === 'string' && l);
+    let child;
+    try { child = spawn('explorer.exe', ['shell:AppsFolder\\' + g.aumid], { detached: true, stdio: 'ignore' }); }
+    catch (e) { return { ok: false, error: `Windows could not start ${g.name}: ${e.message}` }; }
+    // explorer.exe often exits with code 1 even when activation worked, so only a spawn failure counts here;
+    // if the game never appears, the session is discarded with a clear message (see tick).
+    child.on('error', e => finish(g.id, true, `Windows could not start ${g.name}: ${e.message}`));
+    return startSession(g.id, g, '', aumidMatcher(g, locs), child);
+  } finally { pending.delete(g.id); }
+}
+
+function startSession(id, g, exeKey, match, child) {
+  child.unref();
+  const now = Date.now();
+  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat) VALUES(?,?,?)').run(id, now, now).lastInsertRowid);
+  const st = { sid, started: now, last: now, seen: false, busy: false, exe: exeKey, match, aumid: g.method === 'aumid' };
+  st.timer = setInterval(() => tick(id), POLL);
+  active.set(id, st);
+  setTimeout(() => tick(id), 1500);
+  send('run');
+  overlayShowIfEnabled(); // auto-show overlay if enabled
+  return { ok: true };
+}
+
 function launch(id) {
   const g = db.prepare('SELECT * FROM games WHERE id=?').get(id);
   if (!g) return { ok: false, error: 'Game not found.' };
   if (active.has(id)) return { ok: true };
+  if (g.method === 'aumid') return launchAumid(g);
   const exe = g.emulator || g.exe;
   if (!fs.existsSync(exe) || (g.emulator && !fs.existsSync(g.exe)))
     return { ok: false, error: `${g.name}'s files were not found. It may be uninstalled. Edit the game to point to its new location; your playtime is kept.` };
@@ -168,17 +271,7 @@ function launch(id) {
   try { child = spawn(exe, argv, { cwd: path.dirname(exe), detached: true, stdio: 'ignore' }); }
   catch (e) { return { ok: false, error: e.message }; }
   child.on('error', e => finish(id, true, `Could not start ${g.name}: ${e.message}. If it needs admin rights, run Ember as administrator.`));
-  child.unref();
-  const now = Date.now();
-  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat) VALUES(?,?,?)').run(id, now, now).lastInsertRowid);
-  const st = { sid, started: now, last: now, seen: false, busy: false, exe: exe.toLowerCase(), match: matcher(g) };
-  st.timer = setInterval(() => tick(id), POLL);
-  active.set(id, st);
-  setTimeout(() => tick(id), 1500);
-  send('run');
-  // Auto-show overlay if enabled
-  overlayShowIfEnabled();
-  return { ok: true };
+  return startSession(id, g, exe.toLowerCase(), matcher(g), child);
 }
 
 async function tick(id) {
@@ -194,7 +287,9 @@ async function tick(id) {
     db.prepare('UPDATE sessions SET beat=? WHERE id=?').run(now, st.sid); // heartbeat
   } else if (st.seen && now - st.last >= GRACE) finish(id);
   else if (!st.seen && now - st.started > NOSHOW)
-    finish(id, true, 'Ember could not detect the game running. Set "Process to track" in the game settings.');
+    finish(id, true, st.aumid
+      ? 'Ember could not detect this Windows app running. It may not support launching this way, or it runs outside its package folder. Set "Process to track" in the game settings.'
+      : 'Ember could not detect the game running. Set "Process to track" in the game settings.');
 }
 
 function finish(id, discard, msg) {
@@ -209,9 +304,9 @@ function finish(id, discard, msg) {
 }
 
 const h = (c, f) => ipcMain.handle(c, (_, ...a) => f(...a));
-h('games', () => ({
+h('games', () => (refreshStartIds(), {
   games: all(`SELECT g.*, COALESCE((SELECT SUM(ended-started) FROM sessions WHERE game_id=g.id AND ended IS NOT NULL),0) total,
-    (SELECT MAX(started) FROM sessions WHERE game_id=g.id) last FROM games g`).map(g => ({ ...g, missing: !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe)) })),
+    (SELECT MAX(started) FROM sessions WHERE game_id=g.id) last FROM games g`).map(g => ({ ...g, missing: g.method === 'aumid' ? !!startIds && !startIds.has(g.aumid.toLowerCase()) : !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe)) })),
   running: Object.fromEntries([...active].map(([i, s]) => [i, s.started]))
 }));
 h('sessions', () => all(`SELECT s.id, s.game_id, s.started, COALESCE(s.ended,s.beat) ended, s.ended IS NULL live
@@ -232,7 +327,7 @@ h('stats', () => {
   return Object.entries(out).map(([k, ms]) => { const [day, g] = k.split('|'); return { day, g: +g, ms }; });
 });
 h('save', g => {
-  const v = [(g.name || '').trim() || path.parse(g.exe).name, g.exe, g.args || '', g.emulator || '', g.cover || '', g.track || '', g.grp || ''];
+  const v = [(g.name || '').trim() || path.parse(g.exe).name || g.aumid || '', g.exe || '', g.args || '', g.emulator || '', g.cover || '', g.track || '', g.grp || ''];
   if (g.id) db.prepare('UPDATE games SET name=?,exe=?,args=?,emulator=?,cover=?,track=?,grp=? WHERE id=?').run(...v, g.id);
   else db.prepare('INSERT INTO games(name,exe,args,emulator,cover,track,grp,added) VALUES(?,?,?,?,?,?,?,?)').run(...v, Date.now());
   return true;
@@ -244,6 +339,24 @@ h('remove', id => {
   return true;
 });
 h('launch', id => launch(id));
+// ---- Import Windows applications (Start menu)
+h('import:list', async () => {
+  const r = await listStartApps();
+  if (!r.ok) return r;
+  const have = new Set(all("SELECT aumid FROM games WHERE method='aumid'").map(x => x.aumid.toLowerCase()));
+  return { ok: true, apps: r.apps.map(a => ({ ...a, imported: have.has(a.aumid.toLowerCase()) })) };
+});
+h('import:add', list => {
+  let added = 0, skipped = 0;
+  const ins = db.prepare("INSERT INTO games(name,exe,args,emulator,cover,track,grp,added,aumid,method) VALUES(?,?,?,?,?,?,?,?,?,?)");
+  const has = db.prepare("SELECT 1 FROM games WHERE lower(aumid)=lower(?) AND method='aumid'");
+  for (const a of (Array.isArray(list) ? list : []).slice(0, 500)) {
+    const aumid = String(a?.aumid ?? '').trim(), name = String(a?.name ?? '').trim() || aumid;
+    if (!validAumid(aumid) || (startIds && !startIds.has(aumid.toLowerCase())) || has.get(aumid)) { skipped++; continue; }
+    try { ins.run(name, '', '', '', '', '', '', Date.now(), aumid, 'aumid'); added++; } catch { skipped++; }
+  }
+  return { added, skipped };
+});
 h('theme', t => {
   const c = t === 'light' ? { color: '#f3f4fb', symbolColor: '#5f6590' } : { color: '#0d0f1c', symbolColor: '#8e94bb' };
   if (win && !win.isDestroyed()) { win.setTitleBarOverlay({ ...c, height: 40 }); win.setBackgroundColor(c.color); }
@@ -290,6 +403,8 @@ h('overlay:settings', s => {
 });
 
 h('overlay:getSettings', () => overlaySettings);
+h('app:getSettings', () => appSettings);
+h('app:settings', s => { appSettings = { ...appSettings, background: !!s.background }; saveAppSettings(); applyTray(); return appSettings; });
 
 h('overlay:show', () => {
   overlayShowIfEnabled();
@@ -335,19 +450,29 @@ h('update:download', () => updater && updater.downloadUpdate());
 h('update:install', () => updater && updater.quitAndInstall());
 h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) shell.openExternal(url); });
 
+app.on('second-instance', showMain);
 app.on('before-quit', () => {
+  quitting = true;
+  if (tray) { tray.destroy(); tray = null; }
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
   stopPerfPolling();
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.destroy();
 });
 app.whenReady().then(() => {
   initDb();
-  loadOverlaySettings();
+  loadOverlaySettings(); loadAppSettings();
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0f1c', show: false,
     titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0f1c', symbolColor: '#8e94bb', height: 40 },
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
+  });
+  applyTray();
+  // Closing the window hides it to the tray when background mode is on; otherwise the app really quits
+  // (the hidden overlay window would otherwise keep the process alive after the main window closes).
+  win.on('close', e => {
+    if (appSettings.background && !quitting) { e.preventDefault(); win.hide(); }
+    else app.quit();
   });
   win.loadFile('renderer/index.html');
   win.once('ready-to-show', () => { win.show(); createOverlayWin(); });
