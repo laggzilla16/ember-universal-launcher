@@ -191,7 +191,7 @@ let overlaySettingsCache = null;
 
 async function openSettings() {
   overlaySettingsCache = await api.overlayGetSettings();
-  const s = overlaySettingsCache;
+  const s = overlaySettingsCache, app0 = await api.appGetSettings();
   const d = $('#dlg');
 
   const tog = (id, checked, label) =>
@@ -220,7 +220,10 @@ async function openSettings() {
     </div>
 
     <div class="stab-panel hidden" id="stab-general">
-      <div class="empty" style="margin:0"><p>General settings coming soon.</p></div>
+      <div class="tog-section">
+        ${tog('s-bg', app0.background, 'Keep Ember running in the background when closed')}
+      </div>
+      <p class="tog-note">When on, closing the window hides Ember to the system tray (look under the ^ "Show hidden icons" arrow in the taskbar). Playtime keeps being tracked, and the performance overlay still works. Right-click the tray icon and choose Quit Ember to exit completely. When off, closing the window exits Ember.</p>
     </div>
 
     <div class="end">
@@ -248,6 +251,7 @@ async function openSettings() {
           ram: get('s-ram'), cpuTemp: get('s-cpuTemp'), gpuTemp: get('s-gpuTemp')
         }
       };
+      await api.appSettings({ background: get('s-bg') });
       overlaySettingsCache = await api.overlaySettings(newSettings);
       S.overlayOn = overlaySettingsCache.enabled && Object.keys(S.running).length > 0;
       bar();
@@ -312,19 +316,27 @@ let updInfo = {};
 function updUI(u) {
   if (u.state === 'none') return toast("You're up to date.");
   if (u.state === 'error') {
+    if (updInfo.state === 'progress') { updInfo.clicked = false; updUI({ state: 'available', version: updInfo.version }); } // failed download: let the user retry
     const m = String(u.message || '');
     if (/404|latest\.yml|not found/i.test(m)) return toast("You're up to date. No newer release has been published yet.");
     return toast('Could not check for updates: ' + m.split('\n')[0].slice(0, 120));
   }
-  updInfo = { ...updInfo, ...u }; upd.className = 'show';
-  if (u.state === 'available') upd.innerHTML = `<b>Update available</b><p>Ember v${esc(vf(u.version))} is ready${u.portable ? ' to download' : ''}.</p><div class="ub"><button class="btn" id="u-go">${u.portable ? 'Download' : 'Update now'}</button>${later}</div>`;
-  if (u.state === 'progress') upd.innerHTML = `<b>Downloading update…</b><div class="pb"><u style="width:${u.percent}%"></u></div><p>${u.percent}%</p>`;
-  if (u.state === 'ready') upd.innerHTML = `<b>Update ready</b><p>Restart to finish installing. Otherwise it installs when you next close Ember.</p><div class="ub"><button class="btn" id="u-rs">Restart &amp; install</button>${later}</div>`;
+  updInfo = { ...updInfo, ...u };
+  const b = $('#updbtn'), dl = '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>';
+  b.className = 'show' + (u.state === 'ready' ? ' ready' : '');
+  b.disabled = u.state === 'progress';
+  if (u.state === 'available') b.innerHTML = `${dl}<span>Update available${u.portable ? '' : ' · v' + esc(vf(u.version))}</span>`;
+  if (u.state === 'progress') b.innerHTML = `${dl}<span>Downloading… ${u.percent}%</span><u style="width:${u.percent}%"></u>`;
+  if (u.state === 'ready') {
+    if (updInfo.clicked) return api.installUpdate(); // user already asked to update: restart straight away
+    b.innerHTML = `${dl}<span>Restart to update</span>`;
+  }
 }
-upd.onclick = e => {
-  if (e.target.id === 'u-no') upd.className = '';
-  if (e.target.id === 'u-go') updInfo.portable ? api.open(updInfo.url) : (updUI({ state: 'progress', percent: 0 }), api.downloadUpdate());
-  if (e.target.id === 'u-rs') api.installUpdate();
+$('#updbtn').onclick = () => {
+  if (updInfo.state === 'available') {
+    if (updInfo.portable) return api.open(updInfo.url);
+    updInfo.clicked = true; updUI({ state: 'progress', percent: 0 }); api.downloadUpdate();
+  } else if (updInfo.state === 'ready') api.installUpdate();
 };
 api.on('update', updUI);
 api.version().then(v => { $('#ver').textContent = 'v' + vf(v.v); });

@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('api', {
   overlayToggle: () => r.invoke('overlay:toggle'),
   overlaySettings: s => r.invoke('overlay:settings', s),
   overlayGetSettings: () => r.invoke('overlay:getSettings'),
+  appGetSettings: () => r.invoke('app:getSettings'), appSettings: s => r.invoke('app:settings', s),
   on: (c, f) => r.on(c, (_, ...a) => f(...a))
 });

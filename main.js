@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
@@ -122,6 +122,28 @@ function overlayShowIfEnabled() {
 function overlayHide() {
   if (!overlayWin || overlayWin.isDestroyed()) return;
   overlayWin.hide();
+}
+
+// ---- Background mode: keep running in the system tray after the window is closed
+const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
+let appSettings = { background: true }, tray = null, quitting = false;
+function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
+function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
+function trayIcon() { // flame-coloured dot drawn in code (BGRA), so no image asset is needed
+  const n = 32, buf = Buffer.alloc(n * n * 4), c = (n - 1) / 2;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const d = Math.hypot(x - c, y - c), a = Math.max(0, Math.min(1, c - d + 0.5)), t = (x + y) / (2 * n), i = (y * n + x) * 4;
+    buf[i] = 255 * (1 - t) + 162 * t; buf[i + 1] = 108 * (1 - t) + 95 * t; buf[i + 2] = 124 * (1 - t) + 255 * t; buf[i + 3] = Math.round(255 * a); // B,G,R,A: purple -> pink
+  }
+  return nativeImage.createFromBitmap(buf, { width: n, height: n });
+}
+function showMain() { if (!win || win.isDestroyed()) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+function applyTray() {
+  if (appSettings.background && !tray) {
+    tray = new Tray(trayIcon()); tray.setToolTip('Ember Launcher');
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open Ember', click: showMain }, { type: 'separator' }, { label: 'Quit Ember', click: () => app.quit() }]));
+    tray.on('click', showMain);
+  } else if (!appSettings.background && tray) { tray.destroy(); tray = null; }
 }
 
 function initDb() {
@@ -290,6 +312,8 @@ h('overlay:settings', s => {
 });
 
 h('overlay:getSettings', () => overlaySettings);
+h('app:getSettings', () => appSettings);
+h('app:settings', s => { appSettings = { ...appSettings, background: !!s.background }; saveAppSettings(); applyTray(); return appSettings; });
 
 h('overlay:show', () => {
   overlayShowIfEnabled();
@@ -335,19 +359,29 @@ h('update:download', () => updater && updater.downloadUpdate());
 h('update:install', () => updater && updater.quitAndInstall());
 h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) shell.openExternal(url); });
 
+app.on('second-instance', showMain);
 app.on('before-quit', () => {
+  quitting = true;
+  if (tray) { tray.destroy(); tray = null; }
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
   stopPerfPolling();
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.destroy();
 });
 app.whenReady().then(() => {
   initDb();
-  loadOverlaySettings();
+  loadOverlaySettings(); loadAppSettings();
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0f1c', show: false,
     titleBarStyle: 'hidden', titleBarOverlay: { color: '#0d0f1c', symbolColor: '#8e94bb', height: 40 },
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
+  });
+  applyTray();
+  // Closing the window hides it to the tray when background mode is on; otherwise the app really quits
+  // (the hidden overlay window would otherwise keep the process alive after the main window closes).
+  win.on('close', e => {
+    if (appSettings.background && !quitting) { e.preventDefault(); win.hide(); }
+    else app.quit();
   });
   win.loadFile('renderer/index.html');
   win.once('ready-to-show', () => { win.show(); createOverlayWin(); });
