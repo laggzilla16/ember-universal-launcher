@@ -1,6 +1,13 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.4.0',
+    items: [
+      'Updates are now seamless. Choosing Update opens a small Ember update window showing real progress (downloaded size, verifying, installing), then Ember installs the update silently and reopens by itself. There is no setup wizard to click through. Your games, settings, startup and tray preferences are never touched.',
+      'If an update download fails, stalls or arrives damaged, Ember explains what happened, keeps your current version working, and lets you try again.'
+    ]
+  },
+  {
     v: '1.3.4',
     items: [
       'New: startup welcome message. When Ember starts with Windows, a small quote or thoughtful phrase fades in at the corner of your screen for a few seconds, then fades away. It never takes focus, never covers fullscreen games, and appears only once per Windows session. Turn it off anytime under Settings > General > Show startup message.'

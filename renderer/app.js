@@ -498,6 +498,7 @@ const later = '<button class="btn ghost" id="u-no">Later</button>';
 let updInfo = {};
 function updUI(u) {
   if (u.state === 'none') return toast("You're up to date.");
+  if (u.state === 'failed') return toast(String(u.message || 'The last update could not be installed.'));
   if (u.state === 'error') {
     if (updInfo.state === 'progress') { updInfo.clicked = false; updUI({ state: 'available', version: updInfo.version }); } // failed download: let the user retry
     const m = String(u.message || '');
