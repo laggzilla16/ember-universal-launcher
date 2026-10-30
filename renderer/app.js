@@ -307,9 +307,17 @@ async function openSettings() {
 
     <div class="stab-panel hidden" id="stab-general">
       <div class="tog-section">
-        ${tog('s-bg', app0.background, 'Keep Ember running in the background when closed')}
+        ${tog('s-startup', app0.launchAtStartup, 'Launch Ember when Windows starts')}
+      </div>
+      <p class="tog-note">When on, Ember starts automatically when you sign into Windows (hidden in the system tray if Minimize to system tray is on). Turn off to stop it launching at sign-in.</p>
+      <div class="tog-section">
+        ${tog('s-bg', app0.background, 'Minimize to system tray')}
       </div>
       <p class="tog-note">When on, closing the window hides Ember to the system tray (look under the ^ "Show hidden icons" arrow in the taskbar). Playtime keeps being tracked, and the performance overlay still works. Right-click the tray icon and choose Quit Ember to exit completely. When off, closing the window exits Ember.</p>
+      <div class="tog-section">
+        ${tog('s-welcome', app0.showStartupMessage !== false, 'Show startup message')}
+      </div>
+      <p class="tog-note">When on, a small quote fades in for a few seconds in the corner of your screen the first time Ember starts with Windows. Shown once per Windows session, never over fullscreen games.</p>
     </div>
 
     <div class="end">
@@ -389,7 +397,7 @@ async function openSettings() {
     }
     if (e.target.id === 'save-settings') {
       const get = id => !!d.querySelector('#' + id)?.checked;
-      await api.appSettings({ background: get('s-bg') });
+      await api.appSettings({ background: get('s-bg'), launchAtStartup: get('s-startup'), showStartupMessage: get('s-welcome') });
       await collectAndApply();
       d.close();
       toast('Settings saved.');
@@ -453,7 +461,36 @@ function welcome() {
   };
   d.showModal();
 }
-document.querySelector('.foot').addEventListener('click', e => { const l = e.target.closest('[data-l]'); if (l) showLegal(l.dataset.l); });
+document.querySelector('.foot').addEventListener('click', e => { const l = e.target.closest('[data-l]'); if (l) showLegal(l.dataset.l); if (e.target.closest('#whatsnew')) showNews(); });
+
+// ---- What's New
+function showNews() {
+  const d = $('#dlg');
+  d.innerHTML = `<div class="dl legal"><h1>What's New</h1>
+    ${CHANGELOG.map(c => `<h2>v${esc(c.v)}</h2>${c.items.map(i => `<p>${esc(i)}</p>`).join('')}`).join('')}
+    <div class="end"><button class="btn" id="cancel">Close</button></div></div>`;
+  d.onclick = e => { if (e.target.id === 'cancel') d.close(); };
+  d.showModal();
+}
+
+// ---- Click outside a popup to dismiss it (same as Cancel/Close; never saves)
+(() => {
+  const d = $('#dlg');
+  let downOutside = false;
+  const outside = e => {
+    if (e.target !== d) return false; // clicks on content bubble from children
+    const r = d.getBoundingClientRect(); // ignore the dialog's own scrollbar
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  d.addEventListener('mousedown', e => { downOutside = outside(e); }); // so a text-selection drag released outside doesn't dismiss
+  d.addEventListener('click', e => {
+    const was = downOutside; downOutside = false;
+    if (!was || !outside(e) || !d.open) return;
+    if (d.oncancel) return; // mandatory dialogs (welcome / terms acceptance) can't be dismissed
+    const c = d.querySelector('#save-settings') && d.querySelector('#cancel');
+    c ? c.click() : d.close(); // Settings: Cancel also reverts live-previewed changes
+  });
+})();
 
 // ---- updates
 const upd = $('#upd');
@@ -485,7 +522,13 @@ $('#updbtn').onclick = () => {
   } else if (updInfo.state === 'ready') api.installUpdate();
 };
 api.on('update', updUI);
-api.version().then(v => { $('#ver').textContent = 'v' + vf(v.v); });
+api.version().then(v => {
+  $('#ver').textContent = 'v' + vf(v.v);
+  // Show What's New once after an update (fresh installs see the welcome dialog instead)
+  const seen = localStorage.getItem('seenVersion');
+  localStorage.setItem('seenVersion', v.v);
+  if (seen !== v.v && localStorage.getItem('accepted') === LEGAL.rev) setTimeout(() => { if (!$('#dlg').open) showNews(); }, 2500);
+});
 $('#ver').onclick = () => { toast('Checking for updates…'); api.checkUpdate(); };
 
 function setTheme(t) {

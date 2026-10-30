@@ -1515,6 +1515,20 @@ dialog::backdrop {
   letter-spacing: .03em
 }
 
+/* Version on the first row; What's New / Privacy / Terms together on the next */
+.foot {
+  flex-wrap: wrap;
+  row-gap: 4px
+}
+
+.foot span {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap
+}
+
 #updbtn {
   position: fixed;
   top: 6px;

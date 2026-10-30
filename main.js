@@ -3,7 +3,8 @@ const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
 
-if (!app.requestSingleInstanceLock()) app.quit();
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) app.quit();
 
 const POLL = 4000, GRACE = 15000, NOSHOW = 90000;
 let win, db, overlayWin;
@@ -846,7 +847,7 @@ function overlayHide() {
 
 // ---- Background mode: keep running in the system tray after the window is closed
 const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { background: true }, tray = null, quitting = false;
+let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
 const LOGO = path.join(__dirname, 'renderer', 'assets', 'ember-logo.png');
@@ -861,6 +862,50 @@ function trayIcon() { // the real Ember logo; falls back to a flame-coloured dot
   return nativeImage.createFromBitmap(buf, { width: n, height: n });
 }
 function showMain() { if (!win || win.isDestroyed()) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
+// ---- Launch when Windows starts (per-user Run registry entry via Electron's login item API)
+const HIDDEN_ARG = '--hidden';
+const startedHidden = process.argv.includes(HIDDEN_ARG);
+function loginOpts() {
+  // Portable builds run from a temp folder; register the real portable exe. Dev runs need the app path as an argument.
+  const exe = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
+  const args = app.isPackaged ? [HIDDEN_ARG] : [app.getAppPath(), HIDDEN_ARG];
+  return { path: exe, args };
+}
+function startupEnabled() { try { return !!app.getLoginItemSettings(loginOpts()).openAtLogin; } catch { return false; } }
+function setStartup(on) {
+  try { app.setLoginItemSettings({ ...loginOpts(), openAtLogin: !!on }); } catch {}
+  return startupEnabled();
+}
+function currentAppSettings() { return { ...appSettings, launchAtStartup: startupEnabled() }; }
+// ---- Startup welcome: a small, non-interactive toast shown once per Windows session on auto-start
+const welcome = require('./welcome.js');
+const WELCOME_STATE = () => path.join(app.getPath('userData'), 'welcome-state.json');
+function showWelcomeWindow(text) {
+  const wa = screen.getPrimaryDisplay().workArea, w = 340, hgt = 100;
+  const ww = new BrowserWindow({
+    width: w, height: hgt, x: wa.x + wa.width - w - 12, y: wa.y + wa.height - hgt - 12,
+    frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
+    skipTaskbar: true, focusable: false, show: false, hasShadow: false, alwaysOnTop: true,
+    webPreferences: { contextIsolation: true, sandbox: true, backgroundThrottling: false }
+  });
+  ww.setIgnoreMouseEvents(true); // clicks pass straight through to whatever is underneath
+  ww.loadFile(path.join(__dirname, 'renderer', 'welcome.html'), { hash: encodeURIComponent(text) });
+  ww.once('ready-to-show', () => {
+    if (ww.isDestroyed()) return;
+    ww.showInactive(); // never takes keyboard focus
+    setTimeout(() => { if (!ww.isDestroyed()) ww.webContents.executeJavaScript('window.fadeOut()').catch(() => {}); }, 5000);
+    setTimeout(() => { if (!ww.isDestroyed()) ww.close(); }, 6200);
+  });
+  ww.on('closed', () => {});
+}
+function maybeShowWelcome() {
+  if (!startedHidden || !appSettings.showStartupMessage) return;
+  welcome.querySession(({ key, busy }) => {
+    if (quitting || busy || active.size) return; // don't disturb fullscreen games / presentations / running games
+    if (!welcome.claimSession(WELCOME_STATE(), key)) return; // already shown in this Windows session
+    showWelcomeWindow(welcome.pickMessage());
+  });
+}
 function applyTray() {
   if (appSettings.background && !tray) {
     tray = new Tray(trayIcon()); tray.setToolTip('Ember Launcher');
@@ -1229,8 +1274,16 @@ ipcMain.on('overlay:drag-end', () => {
 });
 
 h('overlay:getSettings', () => overlaySettings);
-h('app:getSettings', () => appSettings);
-h('app:settings', s => { appSettings = { ...appSettings, background: !!s.background }; saveAppSettings(); applyTray(); return appSettings; });
+h('app:getSettings', () => currentAppSettings());
+h('app:settings', s => {
+  s = s || {};
+  if ('background' in s) appSettings.background = !!s.background;
+  if ('showStartupMessage' in s) appSettings.showStartupMessage = !!s.showStartupMessage;
+  if ('launchAtStartup' in s && !!s.launchAtStartup !== startupEnabled()) setStartup(s.launchAtStartup);
+  appSettings.launchAtStartup = startupEnabled();
+  saveAppSettings(); applyTray();
+  return currentAppSettings();
+});
 
 h('overlay:show', () => {
   overlayShowIfEnabled();
@@ -1276,7 +1329,7 @@ h('update:download', () => updater && updater.downloadUpdate());
 h('update:install', () => updater && updater.quitAndInstall());
 h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) shell.openExternal(url); });
 
-app.on('second-instance', showMain);
+app.on('second-instance', (_e, argv) => { if (!(argv || []).includes(HIDDEN_ARG)) showMain(); });
 app.on('before-quit', () => {
   quitting = true;
   if (dragInterval) { clearInterval(dragInterval); dragInterval = null; }
@@ -1287,8 +1340,10 @@ app.on('before-quit', () => {
   if (overlayWin && !overlayWin.isDestroyed()) overlayWin.destroy();
 });
 app.whenReady().then(() => {
+  if (!gotLock) return;
   initDb();
   loadOverlaySettings(); loadAppSettings();
+  appSettings.launchAtStartup = startupEnabled(); // OS registration is the source of truth
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0e11', show: false, icon: LOGO,
@@ -1305,7 +1360,9 @@ app.whenReady().then(() => {
     else app.quit();
   });
   win.loadFile('renderer/index.html');
-  win.once('ready-to-show', () => { win.show(); createOverlayWin(); });
+  // Auto-start launches hidden in the tray, but only if the tray is enabled (otherwise the window would be unreachable).
+  win.once('ready-to-show', () => { if (!(startedHidden && appSettings.background)) win.show(); createOverlayWin(); });
+  maybeShowWelcome();
   initUpdates();
   setTimeout(() => checkUpdates(false), 6000);
   setInterval(() => checkUpdates(false), 6 * 3600 * 1000);
