@@ -1302,15 +1302,113 @@ const canAuto = app.isPackaged && !portable;
 let manualCheck = false, updater;
 const newer = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number);
   for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+// Update window: the user clicks "Update", the main window hides, and this small window shows real stages until the
+// silent installer replaces the app and relaunches it. Same electron-updater + GitHub Releases pipeline as before.
+const PENDING_UPDATE = () => path.join(app.getPath('userData'), 'pending-update.json'); // lives in userData, never in the install folder
+let flow = null, availableVersion = null, holdMain = false;
+const mb = n => (n / 1048576).toFixed(1);
+function uState(title, detail, percent, stage) {
+  if (flow) flow.last = { title, detail, percent, stage };
+  if (uwin && !uwin.isDestroyed()) uwin.webContents.send('updater:state', { title, detail, percent, stage });
+}
+let uwin = null;
+function openUpdateWin() {
+  if (uwin && !uwin.isDestroyed()) return;
+  uwin = new BrowserWindow({
+    width: 420, height: 270, resizable: false, minimizable: false, maximizable: false, frame: false, center: true,
+    show: false, backgroundColor: '#0d0e11', icon: LOGO, alwaysOnTop: true,
+    webPreferences: { preload: path.join(__dirname, 'preload-updater.js'), contextIsolation: true, sandbox: true }
+  });
+  uwin.loadFile(path.join(__dirname, 'renderer', 'updater.html'));
+  uwin.once('ready-to-show', () => { if (!uwin.isDestroyed()) { uwin.show(); if (flow && flow.last) uState(flow.last.title, flow.last.detail, flow.last.percent, flow.last.stage); } });
+  uwin.on('close', e => {
+    if (flow && flow.installing) return e.preventDefault(); // too late to stop: the installer is about to take over
+    if (flow) endFlow(true); // user closed the window mid-download: cancel and return to the app
+  });
+}
+function closeUpdateWin() { if (uwin && !uwin.isDestroyed()) uwin.destroy(); uwin = null; }
+function endFlow(restore) {
+  if (!flow) return;
+  const f = flow; flow = null;
+  clearInterval(f.watchdog);
+  try { f.token && f.token.cancel(); } catch {}
+  closeUpdateWin();
+  if (restore) { showMain(); if (availableVersion) send('update', { state: 'available', version: availableVersion }); }
+}
+function failFlow(err) {
+  if (!flow || flow.installing) return;
+  clearInterval(flow.watchdog);
+  const m = String((err && err.message) || err || '');
+  let detail = 'Something went wrong while updating. Your games and settings are untouched, and the current version still works.';
+  if (/sha512|checksum|corrupt|verif/i.test(m)) {
+    detail = 'The downloaded update was damaged and has been discarded. Your current version is unchanged. Try again.';
+    try { updater.downloadedUpdateHelper && updater.downloadedUpdateHelper.clear(); } catch {}
+  } else if (/stalled/i.test(m)) detail = 'The download stopped making progress. Check your connection and try again. Your current version is unchanged.';
+  else if (/ENOTFOUND|ETIMEDOUT|ECONN|EAI_AGAIN|net::|HTTP|socket|network/i.test(m)) detail = 'Ember could not reach GitHub. Check your internet connection and try again. Your current version is unchanged.';
+  else if (/ENOSPC/i.test(m)) detail = 'There is not enough free disk space to download the update. Free some space and try again.';
+  uState('Update failed', detail, null, 'error');
+  openUpdateWin();
+}
+async function startFlow() {
+  if (flow || !updater) return;
+  flow = { installing: false, token: null, watchdog: null, last: null, progressAt: Date.now() };
+  if (win && !win.isDestroyed()) win.hide();
+  uState('Preparing update...', '', null, 'prepare');
+  openUpdateWin();
+  try {
+    const { CancellationToken } = require('electron-updater');
+    flow.token = new CancellationToken();
+    flow.watchdog = setInterval(() => { // an interrupted connection can hang silently: give up after 60 s without progress
+      if (flow && !flow.installing && Date.now() - flow.progressAt > 60000) { const f = flow; try { f.token.cancel(); } catch {} failFlow(new Error('stalled')); }
+    }, 5000);
+    if (!availableVersion) await updater.checkForUpdates();
+    flow && (flow.progressAt = Date.now());
+    await updater.downloadUpdate(flow.token);
+  } catch (e) { if (flow && !flow.installing && !/cancel/i.test(String(e && e.message))) failFlow(e); }
+}
+function applyUpdate() {
+  if (!updater || (flow && flow.installing)) return;
+  if (!flow) { flow = { installing: false, token: null, watchdog: null, last: null, progressAt: Date.now() }; if (win && !win.isDestroyed()) win.hide(); openUpdateWin(); }
+  uState('Verifying update...', 'Checking the download is complete and genuine.', null, 'verify'); // electron-updater has already checked the SHA-512 of the file
+  setTimeout(() => {
+    if (!flow) return;
+    flow.installing = true; clearInterval(flow.watchdog);
+    uState('Installing update...', 'Ember will close and reopen automatically. Your games and settings are kept.', null, 'install');
+    try { fs.writeFileSync(PENDING_UPDATE(), JSON.stringify({ from: app.getVersion(), to: availableVersion, at: Date.now() })); } catch {}
+    setTimeout(() => {
+      try { updater.quitAndInstall(true, true); } // silent install (no setup wizard), then relaunch Ember
+      catch (e) { try { fs.unlinkSync(PENDING_UPDATE()); } catch {} flow.installing = false; failFlow(e); }
+    }, 900);
+  }, 700);
+}
+// After relaunch: confirm the update really applied. A marker for another version means the installer failed and the old build is still running.
+function checkPendingUpdate() {
+  let m; try { m = JSON.parse(fs.readFileSync(PENDING_UPDATE(), 'utf8')); } catch { return; }
+  try { fs.unlinkSync(PENDING_UPDATE()); } catch {}
+  if (m && m.to && m.to === app.getVersion()) {
+    holdMain = true; flow = null;
+    uState('Finalizing installation...', '', null, 'finalize'); openUpdateWin();
+    setTimeout(() => uState('Update complete!', 'Ember ' + m.to + ' is ready.', 100, 'done'), 1200);
+    setTimeout(() => { closeUpdateWin(); holdMain = false; if (!(startedHidden && appSettings.background)) { win && !win.isDestroyed() && win.show(); } }, 2800);
+  } else if (m && m.to) {
+    setTimeout(() => send('update', { state: 'failed', message: 'The last update could not be installed, so Ember is still on v' + app.getVersion() + '. Your games and settings are safe. You can try updating again.' }), 4000);
+  }
+}
 function initUpdates() {
   if (!canAuto) return;
   updater = require('electron-updater').autoUpdater;
   updater.autoDownload = false;
-  updater.on('update-available', i => send('update', { state: 'available', version: i.version }));
+  updater.on('update-available', i => { availableVersion = i.version; send('update', { state: 'available', version: i.version }); });
   updater.on('update-not-available', () => manualCheck && send('update', { state: 'none' }));
-  updater.on('download-progress', p => send('update', { state: 'progress', percent: Math.round(p.percent) }));
-  updater.on('update-downloaded', i => send('update', { state: 'ready', version: i.version }));
-  updater.on('error', e => manualCheck && send('update', { state: 'error', message: e.message }));
+  updater.on('download-progress', p => {
+    if (!flow) return;
+    flow.progressAt = Date.now();
+    const pct = Math.min(100, Math.round(p.percent));
+    if (pct >= 100) uState('Verifying update...', 'Checking the download is complete and genuine.', null, 'verify');
+    else uState('Downloading update...', `${mb(p.transferred)} of ${mb(p.total)} MB (${pct}%)`, pct, 'download');
+  });
+  updater.on('update-downloaded', () => { if (flow) applyUpdate(); });
+  updater.on('error', e => { if (flow) return failFlow(e); if (manualCheck) send('update', { state: 'error', message: e.message }); });
 }
 async function checkUpdates(manual) {
   manualCheck = manual;
@@ -1325,8 +1423,10 @@ async function checkUpdates(manual) {
 }
 h('version', () => ({ v: app.getVersion(), auto: canAuto }));
 h('update:check', () => checkUpdates(true));
-h('update:download', () => updater && updater.downloadUpdate());
-h('update:install', () => updater && updater.quitAndInstall());
+h('update:download', () => startFlow());
+h('update:install', () => applyUpdate());
+h('updater:retry', () => { if (!flow) return; endFlow(false); return startFlow(); });
+h('updater:dismiss', () => endFlow(true));
 h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) shell.openExternal(url); });
 
 app.on('second-instance', (_e, argv) => { if (!(argv || []).includes(HIDDEN_ARG)) showMain(); });
@@ -1361,7 +1461,8 @@ app.whenReady().then(() => {
   });
   win.loadFile('renderer/index.html');
   // Auto-start launches hidden in the tray, but only if the tray is enabled (otherwise the window would be unreachable).
-  win.once('ready-to-show', () => { if (!(startedHidden && appSettings.background)) win.show(); createOverlayWin(); });
+  checkPendingUpdate();
+  win.once('ready-to-show', () => { if (!holdMain && !flow && !(startedHidden && appSettings.background)) win.show(); createOverlayWin(); });
   maybeShowWelcome();
   initUpdates();
   setTimeout(() => checkUpdates(false), 6000);
