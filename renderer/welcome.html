@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src 'self'; img-src 'self'">
+<style>
+@font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; }
+body { display: flex; align-items: flex-end; justify-content: flex-end; padding: 12px; box-sizing: border-box; }
+.card {
+  box-sizing: border-box; width: 100%; padding: 16px 20px; border-radius: 14px;
+  font: 500 14px/1.5 "Inter", system-ui, sans-serif; color: #ecebe8;
+  background: rgba(23, 24, 29, .94); border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4); position: relative; overflow: hidden;
+  opacity: 0; transform: translateY(8px); transition: opacity .8s ease, transform .8s ease;
+}
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(135deg, #ffb454 0%, #ff7a1a 48%, #f0491f 100%); }
+.card.in { opacity: 1; transform: none; }
+.card.out { opacity: 0; transform: translateY(4px); transition-duration: .9s; }
+</style>
+</head>
+<body>
+<div class="card" id="c"></div>
+<script>
+const c = document.getElementById('c');
+c.textContent = decodeURIComponent(location.hash.slice(1));
+requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('in')));
+window.fadeOut = () => c.classList.add('out'); // called by main when it is time to leave
+</script>
+</body>
+</html>
