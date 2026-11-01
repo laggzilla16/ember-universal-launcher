@@ -1,11 +1,16 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.4.1',
+    items: [
+      'Redesigned game card playtime badge with a compact liquid-glass pill, clock icon, refined typography and multi-unit formatting for minutes, hours and days.'
+    ]
+  },
+  {
     v: '1.4.0',
     items: [
       'Updates are now seamless. Choosing Update opens a small Ember update window showing real progress (downloaded size, verifying, installing), then Ember installs the update silently and reopens by itself. There is no setup wizard to click through. Your games, settings, startup and tray preferences are never touched.',
-      'If an update download fails, stalls or arrives damaged, Ember explains what happened, keeps your current version working, and lets you try again.',
-      'Redesigned game card playtime badge with a compact liquid-glass pill, clock icon, refined typography and multi-unit formatting for minutes, hours and days.'
+      'If an update download fails, stalls or arrives damaged, Ember explains what happened, keeps your current version working, and lets you try again.'
     ]
   },
   {
