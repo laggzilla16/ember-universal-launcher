@@ -5,6 +5,14 @@ const furl = p => 'file:///' + encodeURI(p.replace(/\\/g, '/')).replace(/#/g, '%
 const pad = n => String(n).padStart(2, '0');
 const clock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
 const dur = ms => { const m = Math.round(ms / 60000); return m < 1 ? (ms > 0 ? '<1m' : '0m') : m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm'; };
+const cardDur = ms => {
+  const m = Math.round(ms / 60000);
+  if (m < 1) return ms > 0 ? '&lt;1<i>m</i>' : '0<i>m</i>';
+  if (m < 60) return `${m}<i>m</i>`;
+  const h = Math.floor(m / 60), rm = pad(m % 60);
+  if (h < 24) return `${h}<i>h</i> ${rm}<i>m</i>`;
+  return `${Math.floor(h / 24)}<i>d</i> ${h % 24}<i>h</i> ${rm}<i>m</i>`;
+};
 const hue = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 const ini = n => n.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
 const isRun = g => g.id in S.running;
@@ -14,11 +22,11 @@ const art = g => g.cover ? `background-image:url('${furl(g.cover)}')`
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function card(g) {
-  const run = isRun(g);
+  const run = isRun(g), t = total(g);
   return `<article class="card ${run ? 'run' : ''} ${g.missing ? 'missing' : ''}" data-id="${g.id}" tabindex="0">
     <div class="art" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</div><div class="shade"></div>
     ${run ? '<div class="live">Playing</div>' : ''}${g.missing ? '<div class="gone" title="Game files not found (uninstalled, moved or drive disconnected). Playtime is kept.">Not installed</div>' : ''}
-    <div class="meta"><h3>${esc(g.name)}</h3><p data-t="${g.id}">${run ? clock(total(g)) : dur(total(g))}</p></div>
+    <div class="meta"><h3>${esc(g.name)}</h3><div class="ptime${!run && t <= 0 ? ' zero' : ''}"><svg class="ptime-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path class="ptime-hand" d="M8 4.8V8l2.2 1.4"/></svg><span class="ptime-val" data-t="${g.id}">${run ? clock(t) : cardDur(t)}</span></div></div>
     <div class="acts"><button class="play">${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
 }
 const skel = () => `<div class="grid">${'<div class="sk"></div>'.repeat(8)}</div>`;
@@ -126,7 +134,13 @@ function bar() {
 
 setInterval(() => { // live counters
   const now = Date.now();
-  document.querySelectorAll('[data-t]').forEach(el => { const g = S.games.find(x => x.id == el.dataset.t); if (g) el.textContent = isRun(g) ? clock(total(g)) : dur(total(g)); });
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const g = S.games.find(x => x.id == el.dataset.t);
+    if (!g) return;
+    const t = total(g), run = isRun(g), html = run ? clock(t) : cardDur(t);
+    if (el.innerHTML !== html) el.innerHTML = html;
+    el.closest('.ptime')?.classList.toggle('zero', !run && t <= 0);
+  });
   document.querySelectorAll('[data-s]').forEach(el => el.textContent = clock(now - el.dataset.s));
   const a = $('[data-all]'); if (a && !a.dataset.anim) a.textContent = (S.games.reduce((x, g) => x + total(g), 0) / 3.6e6).toFixed(1);
 }, 1000);
