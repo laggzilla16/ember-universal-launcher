@@ -1,6 +1,13 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.4.2',
+    items: [
+      'New: native Windows notifications when an Ember update is available, even when minimized to the system tray. You are notified only once per new version, and clicking the notification brings Ember to the foreground and opens What\'s New without starting the update automatically.',
+      'Fixed scrollbar clipping in Settings, What\'s New and other scrollable views, removed the redundant close button from What\'s New, and ensured What\'s New always opens scrolled to the very top.'
+    ]
+  },
+  {
     v: '1.4.1',
     items: [
       'Redesigned game card playtime badge with a compact liquid-glass pill, clock icon, refined typography and multi-unit formatting for minutes, hours and days.'
