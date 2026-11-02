@@ -1,0 +1,27 @@
+{
+  "name": "Ember Liquid Glass Design System",
+  "source": "renderer/styles.css",
+  "typography": {
+    "brand": "Unbounded",
+    "interface": "Inter"
+  },
+  "colors": {
+    "bg": "#0d0e11",
+    "panel": "#17181d",
+    "panel2": "#202127",
+    "tx": "#f5efe8",
+    "mu": "#a59f98",
+    "a1": "#ff8a2b",
+    "a2": "#e8401f",
+    "a3": "#ffb454",
+    "onA": "#2a0c03",
+    "ok": "#52d69a",
+    "dangerTx": "#ffa597"
+  },
+  "radii": {
+    "lg": "22px",
+    "md": "14px",
+    "sm": "10px"
+  }
+}
+

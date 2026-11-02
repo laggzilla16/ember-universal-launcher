@@ -1,0 +1,13 @@
+{
+  "name": "@ember/website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Official website for Ember Universal Launcher — static-first frontend with live GitHub Releases integration",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "node scripts/build.js",
+    "preview": "node scripts/dev.js --dist",
+    "test": "node test/website.test.js"
+  }
+}
+
