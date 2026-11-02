@@ -5,7 +5,13 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win --publish never"
+    "dist": "electron-builder --win --publish never",
+    "dev:desktop": "electron .",
+    "build:desktop": "electron-builder --win --publish never",
+    "dev:website": "node apps/website/scripts/dev.js",
+    "build:website": "node apps/website/scripts/build.js",
+    "preview:website": "node apps/website/scripts/dev.js --dist",
+    "test:website": "node apps/website/test/website.test.js"
   },
   "devDependencies": {
     "electron": "^38.0.0",

@@ -1,0 +1,13 @@
+{
+  "name": "@ember/desktop-workspace",
+  "private": true,
+  "description": "Workspace entry for the Ember Universal Launcher Windows desktop application (Electron entry points reside at repository root to preserve electron-builder and updater paths).",
+  "scripts": {
+    "dev": "npm --prefix ../.. start",
+    "start": "npm --prefix ../.. start",
+    "build": "npm --prefix ../.. run dist",
+    "dist": "npm --prefix ../.. run dist",
+    "test": "node ../../test/version.test.js && node ../../test/update-notify.test.js && node ../../test/welcome.test.js"
+  }
+}
+
