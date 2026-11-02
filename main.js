@@ -1,10 +1,12 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage, Notification } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
+const updateNotify = require('./renderer/update-notify.js');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
+if (process.platform === 'win32') app.setAppUserModelId(updateNotify.APP_ID);
 
 const POLL = 4000, GRACE = 15000, NOSHOW = 90000;
 let win, db, overlayWin;
@@ -847,7 +849,7 @@ function overlayHide() {
 
 // ---- Background mode: keep running in the system tray after the window is closed
 const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true }, tray = null, quitting = false;
+let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '' }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
 const LOGO = path.join(__dirname, 'renderer', 'assets', 'ember-logo.png');
@@ -1300,12 +1302,11 @@ const REPO = 'laggzilla16/ember-universal-launcher';
 const portable = !!process.env.PORTABLE_EXECUTABLE_DIR;
 const canAuto = app.isPackaged && !portable;
 let manualCheck = false, updater;
-const newer = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number);
-  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+const newer = updateNotify.newer;
 // Update window: the user clicks "Update", the main window hides, and this small window shows real stages until the
 // silent installer replaces the app and relaunches it. Same electron-updater + GitHub Releases pipeline as before.
 const PENDING_UPDATE = () => path.join(app.getPath('userData'), 'pending-update.json'); // lives in userData, never in the install folder
-let flow = null, availableVersion = null, holdMain = false;
+let flow = null, availableVersion = null, availablePortable = false, availableUrl = null, holdMain = false;
 const mb = n => (n / 1048576).toFixed(1);
 function uState(title, detail, percent, stage) {
   if (flow) flow.last = { title, detail, percent, stage };
@@ -1333,7 +1334,32 @@ function endFlow(restore) {
   clearInterval(f.watchdog);
   try { f.token && f.token.cancel(); } catch {}
   closeUpdateWin();
-  if (restore) { showMain(); if (availableVersion) send('update', { state: 'available', version: availableVersion }); }
+  if (restore) { showMain(); if (availableVersion) send('update', { state: 'available', version: availableVersion, ...(availablePortable ? { portable: true, url: availableUrl } : {}) }); }
+}
+function focusUpdateSection() {
+  showMain();
+  if (availableVersion && !flow) {
+    const info = { state: 'available', version: availableVersion, ...(availablePortable ? { portable: true, url: availableUrl } : {}) };
+    send('update', info);
+    send('update:focus', info);
+  }
+}
+function onUpdateAvailable(version, isPortable = false, url = null) {
+  const v = updateNotify.cleanVersion(version);
+  if (!v) return;
+  availableVersion = v;
+  availablePortable = !!isPortable;
+  availableUrl = url || null;
+  send('update', { state: 'available', version: v, ...(availablePortable ? { portable: true, url: availableUrl } : {}) });
+  updateNotify.notifyIfNewUpdate({
+    version: v,
+    currentVersion: app.getVersion(),
+    getLastNotified: () => appSettings.lastNotifiedVersion,
+    setLastNotified: nv => { appSettings.lastNotifiedVersion = nv; saveAppSettings(); },
+    NotificationClass: Notification,
+    icon: LOGO,
+    onClick: () => focusUpdateSection()
+  });
 }
 function failFlow(err) {
   if (!flow || flow.installing) return;
@@ -1398,7 +1424,7 @@ function initUpdates() {
   if (!canAuto) return;
   updater = require('electron-updater').autoUpdater;
   updater.autoDownload = false;
-  updater.on('update-available', i => { availableVersion = i.version; send('update', { state: 'available', version: i.version }); });
+  updater.on('update-available', i => onUpdateAvailable(i.version, false, null));
   updater.on('update-not-available', () => manualCheck && send('update', { state: 'none' }));
   updater.on('download-progress', p => {
     if (!flow) return;
@@ -1417,7 +1443,7 @@ async function checkUpdates(manual) {
     const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'User-Agent': 'ember-launcher' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json(), v = String(j.tag_name).replace(/^v/, '');
-    if (newer(v, app.getVersion())) send('update', { state: 'available', version: v, portable: true, url: j.html_url });
+    if (newer(v, app.getVersion())) onUpdateAvailable(v, true, j.html_url);
     else if (manual) send('update', { state: 'none' });
   } catch (e) { if (manual) send('update', { state: 'error', message: e.message }); }
 }

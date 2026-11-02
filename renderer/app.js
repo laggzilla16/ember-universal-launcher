@@ -39,7 +39,7 @@ function dash() {
     <div class="stat"><b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b><span>hours played</span></div>
     <div class="stat"><b data-count="${S.games.length}">${S.games.length}</b><span>games in library</span></div>
     ${rg ? `<div class="stat now"><span>Playing now</span><b data-s="${S.running[rg.id]}">${clock(Date.now() - S.running[rg.id])}</b><span>${esc(rg.name)}</span></div>`
-         : `<div class="stat"><b>—</b><span>nothing running</span></div>`}</section>
+      : `<div class="stat"><b>—</b><span>nothing running</span></div>`}</section>
     <h2>Recently played</h2>${recent.length ? `<div class="grid">${recent.map(card).join('')}</div>`
       : `<div class="empty"><p>Games you play show up here.</p><button class="btn" data-add>Add a game</button></div>`}`;
 }
@@ -48,8 +48,10 @@ function filtered() {
   const k = { recent: (a, b) => (b.last || 0) - (a.last || 0) || b.added - a.added, name: (a, b) => a.name.localeCompare(b.name), played: (a, b) => total(b) - total(a) }[S.sort];
   return S.games.filter(g => (!S.grp || g.grp === S.grp) && g.name.toLowerCase().includes(S.q.toLowerCase())).sort(k);
 }
-const gridHtml = () => { const l = filtered(); return l.length ? l.map(card).join('')
-  : `<div class="empty" style="grid-column:1/-1"><p>${S.games.length ? 'No games match your search.' : 'Your library is empty.'}</p>${S.games.length ? '' : '<button class="btn" data-add>Add your first game</button>'}</div>`; };
+const gridHtml = () => {
+  const l = filtered(); return l.length ? l.map(card).join('')
+    : `<div class="empty" style="grid-column:1/-1"><p>${S.games.length ? 'No games match your search.' : 'Your library is empty.'}</p>${S.games.length ? '' : '<button class="btn" data-add>Add your first game</button>'}</div>`;
+};
 function lib() {
   const groups = [...new Set(S.games.map(g => g.grp).filter(Boolean))].sort();
   return `<h1>Library</h1><div class="bar"><input id="q" placeholder="Search games" value="${esc(S.q)}">
@@ -82,8 +84,10 @@ function statsView() {
   const cols = [];
   if (S.smode === 'daily') for (let i = 13; i >= 0; i--) {
     const d = addDays(today, -i), k = dkey(d);
-    cols.push({ ms: sumRows(r => r.day === k), now: !i, t: d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
-      l: `${d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3)}<br>${d.getDate()}` });
+    cols.push({
+      ms: sumRows(r => r.day === k), now: !i, t: d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
+      l: `${d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 3)}<br>${d.getDate()}`
+    });
   } else for (let i = 7; i >= 0; i--) {
     const m = monday(addDays(today, -7 * i)), a = dkey(m), b = dkey(addDays(m, 7)), t = 'Week of ' + m.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     cols.push({ ms: sumRows(r => r.day >= a && r.day < b), now: !i, t, l: m.toLocaleDateString(undefined, { month: 'short' }) + '<br>' + m.getDate() });
@@ -103,7 +107,7 @@ function statsView() {
     <div class="panel"><div class="panel-h"><h2>Most played</h2>${seg('rk', S.rank, [['7', '7 days'], ['30', '30 days'], ['all', 'All time']])}</div>
       ${ranked.length ? ranked.slice(0, 10).map(({ g, ms }, i) => `<div class="rk"><span class="n">${i + 1}</span><i style="${art(g)}"></i>
         <div><b>${esc(g.name)}</b><span>${Math.round(ms / sum * 100)}% of playtime${g.missing ? ' · not installed' : ''}</span></div><em>${dur(ms)}</em><u style="width:${Math.max(2, ms / ranked[0].ms * 100)}%"></u></div>`).join('')
-        : '<div class="empty"><p>No playtime recorded in this period yet.</p></div>'}</div>`;
+      : '<div class="empty"><p>No playtime recorded in this period yet.</p></div>'}</div>`;
 }
 async function loadStats() { S.stats = await api.stats(); }
 
@@ -168,6 +172,18 @@ async function launch(g, c) {
   if (!r.ok) { c.classList.remove('launching'); toast(r.error); }
 }
 
+function resetDlgScroll(d) {
+  d.scrollTop = 0;
+  d.scrollLeft = 0;
+  requestAnimationFrame(() => { d.scrollTop = 0; d.scrollLeft = 0; });
+}
+function openDlg(d) {
+  d.scrollTop = 0;
+  d.scrollLeft = 0;
+  if (!d.open) d.showModal();
+  resetDlgScroll(d);
+}
+
 function edit(g) {
   const d = $('#dlg'), isNew = !g;
   g = g || { name: '', exe: '', args: '', emulator: '', cover: '', track: '', grp: '' };
@@ -203,14 +219,14 @@ function edit(g) {
       d.close(); await load(); render(false);
     }
   };
-  d.showModal();
+  openDlg(d);
 }
 
 // ---- Import Windows applications (Get-StartApps)
 async function importDlg() {
   const d = $('#dlg'), sel = new Set();
   let apps = null, q = '';
-  const shell = body => d.innerHTML = `<div class="dl"><h1>Import Windows Applications</h1>${body}</div>`;
+  const shell = body => { d.innerHTML = `<div class="dl"><h1>Import Windows Applications</h1>${body}</div>`; resetDlgScroll(d); };
   const back = '<button class="btn ghost" id="imp-back">Back</button>';
   d.onclick = null;
   shell('<p class="lead">Reading applications registered in the Windows Start menu…</p><div class="end"><button class="btn ghost" id="imp-back">Cancel</button></div>');
@@ -224,14 +240,16 @@ async function importDlg() {
   }
   apps = r.apps;
   const shown = () => apps.filter(a => a.name.toLowerCase().includes(q) || a.aumid.toLowerCase().includes(q)).slice(0, 400);
-  const list = () => { const l = shown(); return l.length ? l.map(a => `<label class="imp-row ${a.imported ? 'done' : ''}"><input type="checkbox" data-id="${esc(a.aumid)}" ${a.imported ? 'disabled checked' : sel.has(a.aumid) ? 'checked' : ''}><div><b>${esc(a.name)}</b><span>${a.imported ? 'Already in your library' : esc(a.aumid)}</span></div></label>`).join('')
-    : '<div class="empty" style="padding:24px"><p style="margin:0">No applications match your search.</p></div>'; };
+  const list = () => {
+    const l = shown(); return l.length ? l.map(a => `<label class="imp-row ${a.imported ? 'done' : ''}"><input type="checkbox" data-id="${esc(a.aumid)}" ${a.imported ? 'disabled checked' : sel.has(a.aumid) ? 'checked' : ''}><div><b>${esc(a.name)}</b><span>${a.imported ? 'Already in your library' : esc(a.aumid)}</span></div></label>`).join('')
+      : '<div class="empty" style="padding:24px"><p style="margin:0">No applications match your search.</p></div>';
+  };
   const count = () => { const b = d.querySelector('#imp-go'); b.textContent = sel.size ? `Import ${sel.size} selected` : 'Import selected'; b.disabled = !sel.size; };
   shell(`<p class="lead">Pick the games to add. Store and Xbox games that can't be started from an .exe show up here.</p>
     <input id="imp-q" class="imp-q" placeholder="Search ${apps.length} applications" autocomplete="off">
     <div class="imp-list" id="imp-list">${list()}</div>
     <div class="end">${back}<button class="btn" id="imp-go" disabled>Import selected</button></div>`);
-  d.querySelector('#imp-q').oninput = e => { q = e.target.value.trim().toLowerCase(); d.querySelector('#imp-list').innerHTML = list(); };
+  d.querySelector('#imp-q').oninput = e => { q = e.target.value.trim().toLowerCase(); const il = d.querySelector('#imp-list'); il.innerHTML = list(); il.scrollTop = 0; };
   d.querySelector('#imp-list').onchange = e => { const c = e.target; if (!c.dataset.id) return; c.checked ? sel.add(c.dataset.id) : sel.delete(c.dataset.id); count(); };
   d.onclick = async e => {
     if (e.target.id === 'imp-back') return edit();
@@ -372,6 +390,7 @@ async function openSettings() {
     btn.classList.add('on');
     d.querySelectorAll('.stab-panel').forEach(p => p.classList.add('hidden'));
     d.querySelector('#stab-' + btn.dataset.stab).classList.remove('hidden');
+    resetDlgScroll(d);
   });
 
   // Live checkbox changes
@@ -417,7 +436,7 @@ async function openSettings() {
       toast('Settings saved.');
     }
   };
-  d.showModal();
+  openDlg(d);
 }
 
 api.on('overlay:settings-updated', s => {
@@ -458,7 +477,7 @@ function showLegal(k, back) {
     <div class="end"><button class="btn" id="cancel">Close</button></div></div>`;
   d.onclick = e => { if (e.target.id === 'cancel') d.close(); };
   d.onclose = () => { d.onclose = null; if (back) welcome(); };
-  d.showModal();
+  openDlg(d);
 }
 function welcome() {
   const d = $('#dlg');
@@ -473,7 +492,7 @@ function welcome() {
     if (l) { d.oncancel = null; return showLegal(l.dataset.l, true); }
     if (e.target.id === 'ok') { localStorage.setItem('accepted', LEGAL.rev); d.oncancel = null; d.close(); }
   };
-  d.showModal();
+  openDlg(d);
 }
 document.querySelector('.foot').addEventListener('click', e => { const l = e.target.closest('[data-l]'); if (l) showLegal(l.dataset.l); if (e.target.closest('#whatsnew')) showNews(); });
 
@@ -481,10 +500,9 @@ document.querySelector('.foot').addEventListener('click', e => { const l = e.tar
 function showNews() {
   const d = $('#dlg');
   d.innerHTML = `<div class="dl legal"><h1>What's New</h1>
-    ${CHANGELOG.map(c => `<h2>v${esc(c.v)}</h2>${c.items.map(i => `<p>${esc(i)}</p>`).join('')}`).join('')}
-    <div class="end"><button class="btn" id="cancel">Close</button></div></div>`;
-  d.onclick = e => { if (e.target.id === 'cancel') d.close(); };
-  d.showModal();
+    ${CHANGELOG.map(c => `<h2>v${esc(c.v)}</h2>${c.items.map(i => `<p>${esc(i)}</p>`).join('')}`).join('')}</div>`;
+  d.onclick = null;
+  openDlg(d);
 }
 
 // ---- Click outside a popup to dismiss it (same as Cancel/Close; never saves)
@@ -523,7 +541,10 @@ function updUI(u) {
   const b = $('#updbtn'), dl = '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>';
   b.className = 'show' + (u.state === 'ready' ? ' ready' : '');
   b.disabled = u.state === 'progress';
-  if (u.state === 'available') b.innerHTML = `${dl}<span>Update available${u.portable ? '' : ' · v' + esc(vf(u.version))}</span>`;
+  if (u.state === 'available') {
+    if (u.version) localStorage.setItem('lastNotifiedVersion', u.version);
+    b.innerHTML = `${dl}<span>Update available${u.portable ? '' : ' · v' + esc(vf(u.version))}</span>`;
+  }
   if (u.state === 'progress') b.innerHTML = `${dl}<span>Downloading… ${u.percent}%</span><u style="width:${u.percent}%"></u>`;
   if (u.state === 'ready') {
     if (updInfo.clicked) return api.installUpdate(); // user already asked to update: restart straight away
@@ -537,6 +558,12 @@ $('#updbtn').onclick = () => {
   } else if (updInfo.state === 'ready') api.installUpdate();
 };
 api.on('update', updUI);
+api.on('update:focus', u => {
+  if (u && u.version) updUI({ state: 'available', ...u });
+  const d = $('#dlg');
+  if (!d.oncancel) showNews();
+  $('#updbtn')?.focus();
+});
 api.version().then(v => {
   $('#ver').textContent = 'v' + vf(v.v);
   // Show What's New once after an update (fresh installs see the welcome dialog instead)
