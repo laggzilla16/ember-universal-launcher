@@ -1,27 +1,48 @@
 {
-  "name": "Ember Liquid Glass Design System",
+  "name": "NUKRON Optical Glass Design System",
+  "principle": "Snell's Law Refraction (n1 sin(theta1) = n2 sin(theta2))",
   "source": "renderer/styles.css",
   "typography": {
     "brand": "Unbounded",
-    "interface": "Inter"
+    "interface": "Inter",
+    "mono": "Cascadia Code"
   },
   "colors": {
-    "bg": "#0d0e11",
-    "panel": "#17181d",
-    "panel2": "#202127",
-    "tx": "#f5efe8",
-    "mu": "#a59f98",
-    "a1": "#ff8a2b",
-    "a2": "#e8401f",
-    "a3": "#ffb454",
-    "onA": "#2a0c03",
-    "ok": "#52d69a",
-    "dangerTx": "#ffa597"
+    "bg": "#090D19",
+    "bgSecondary": "#111827",
+    "panel": "#111827",
+    "panel2": "#172033",
+    "surface": "#172033",
+    "tx": "#F8FAFC",
+    "mu": "#AAB6CC",
+    "a1": "#2563EB",
+    "a2": "#E63946",
+    "a3": "#60A5FA",
+    "onA": "#F8FAFC",
+    "ok": "#34D399",
+    "dangerTx": "#FDA4AF"
+  },
+  "materials": {
+    "clearGlass": {
+      "blur": "12px",
+      "saturate": "1.25",
+      "background": "linear-gradient(145deg, rgba(23, 32, 51, 0.42), rgba(9, 13, 25, 0.56))"
+    },
+    "frostedGlass": {
+      "blur": "20px",
+      "saturate": "1.38",
+      "background": "linear-gradient(150deg, rgba(23, 32, 51, 0.58), rgba(17, 24, 39, 0.48) 55%, rgba(9, 13, 25, 0.64))"
+    },
+    "opticalAccentGlass": {
+      "blur": "22px",
+      "saturate": "1.45",
+      "background": "radial-gradient(120% 80% at 14% -10%, rgba(37, 99, 235, 0.24), transparent 58%), radial-gradient(110% 80% at 88% 112%, rgba(230, 57, 70, 0.18), transparent 56%), linear-gradient(145deg, rgba(23, 32, 51, 0.64), rgba(17, 24, 39, 0.52))"
+    }
   },
   "radii": {
+    "xl": "28px",
     "lg": "22px",
     "md": "14px",
     "sm": "10px"
   }
 }
-

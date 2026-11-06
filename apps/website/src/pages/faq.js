@@ -2,46 +2,46 @@ const { constants } = require('../../../../packages/shared');
 
 const FAQ_ITEMS = [
   {
-    id: 'what-is-ember',
+    id: 'what-is-nukron',
     category: 'general',
-    question: 'What is Ember?',
+    question: 'What is NUKRON?',
     answer:
-      'Ember (Ember Universal Launcher) is a lightweight, locally operated Windows desktop gaming launcher. It gives PC gamers a clean, centralized place to organize and launch their games across platforms, track playtime automatically, monitor live hardware metrics with a customizable in-game performance overlay, and stay quietly accessible from the Windows system tray.'
+      'NUKRON is a lightweight, locally operated Windows desktop gaming launcher crafted with an Optical Glass design system. It gives PC gamers a clean, centralized universe to organize and launch their games across platforms, track playtime automatically, monitor live hardware metrics with a customizable in-game performance overlay, and stay quietly accessible from the Windows system tray.'
   },
   {
-    id: 'is-ember-free',
+    id: 'is-nukron-free',
     category: 'general',
-    question: 'Is Ember free?',
+    question: 'Is NUKRON free?',
     answer:
-      'Yes. Ember Universal Launcher is completely free to download and use. There are no paid tiers, no subscriptions, no advertisements, and no locked features.'
+      'Yes. NUKRON is completely free to download and use. There are no paid tiers, no subscriptions, no advertisements, and no locked features.'
   },
   {
     id: 'supported-os',
     category: 'compatibility',
     question: 'Which operating systems are supported?',
     answer:
-      'Ember is built for Windows (Windows 10 and Windows 11, 64-bit). It integrates directly with Windows APIs for process path detection, Start Menu application discovery (AppUserModelIDs), native toast notifications, and hardware performance telemetry.'
+      'NUKRON is built for Windows (Windows 10 and Windows 11, 64-bit). It integrates directly with Windows APIs for process path detection, Start Menu application discovery (AppUserModelIDs), native toast notifications, and hardware performance telemetry.'
   },
   {
     id: 'require-account',
     category: 'privacy',
-    question: 'Does Ember require an account?',
+    question: 'Does NUKRON require an account?',
     answer:
-      'No. Ember never requires a user account, login, or internet connection to organize or launch your games. Everything runs locally on your computer.'
+      'No. NUKRON never requires a user account, login, or internet connection to organize or launch your games. Everything runs locally on your computer.'
   },
   {
     id: 'where-is-data-stored',
     category: 'privacy',
     question: 'Where is my gaming data stored?',
     answer:
-      'All of your data lives locally on your PC inside %APPDATA%\\ember-launcher\\ (including the SQLite database launcher.db, copied cover images, overlay-settings.json, and app-settings.json). Nothing is uploaded to the cloud. If you ever want to erase all data, simply uninstall Ember and delete the %APPDATA%\\ember-launcher\\ folder.'
+      'All of your data lives locally on your PC inside %APPDATA%\\ember-launcher\\ (including the SQLite database launcher.db, copied cover images, overlay-settings.json, and app-settings.json). Nothing is uploaded to the cloud. If you ever want to erase all data, simply uninstall NUKRON and delete the %APPDATA%\\ember-launcher\\ folder.'
   },
   {
     id: 'how-playtime-tracking-works',
     category: 'features',
     question: 'How does playtime tracking work?',
     answer:
-      'When you launch a game through Ember, a single session tracker starts for that game (preventing duplicate timers if clicked twice). Every 4 seconds, Ember checks running process paths locally and writes a heartbeat to SQLite. A process counts if it matches the game executable, lives in the game folder (handling launcher-to-game hand-offs), matches the configured emulator, or matches a custom "Process to track" executable name. If your PC or the app closes unexpectedly mid-game, the session is safely closed at the last 4-second heartbeat on next start. When you exit the game, the session ends 15 seconds after the last matching process closes.'
+      'When you launch a game through NUKRON, a single session tracker starts for that game (preventing duplicate timers if clicked twice). Every 4 seconds, NUKRON checks running process paths locally and writes a heartbeat to SQLite. A process counts if it matches the game executable, lives in the game folder (handling launcher-to-game hand-offs), matches the configured emulator, or matches a custom "Process to track" executable name. If your PC or the app closes unexpectedly mid-game, the session is safely closed at the last 4-second heartbeat on next start. When you exit the game, the session ends 15 seconds after the last matching process closes.'
   },
   {
     id: 'how-to-add-games',
@@ -55,7 +55,7 @@ const FAQ_ITEMS = [
     category: 'updates',
     question: 'How do automatic updates work?',
     answer:
-      'Installed copies of Ember check GitHub Releases automatically on startup and every 6 hours. When a new version is published, Ember shows an update indicator in the app and sends a single native Windows notification (even if minimized to the system tray). When you choose to update, Ember opens a compact progress window, downloads the update from GitHub Releases, verifies its SHA-512 integrity, installs silently without a setup wizard, and reopens automatically with your games and settings intact. Portable copies notify you when an update is available and open the official GitHub release page.'
+      'Installed copies of NUKRON check GitHub Releases automatically on startup and every 6 hours. When a new version is published, NUKRON shows an update indicator in the app and sends a single native Windows notification (even if minimized to the system tray). When you choose to update, NUKRON opens a compact progress window, downloads the update from GitHub Releases, verifies its SHA-512 integrity, installs silently without a setup wizard, and reopens automatically with your games and settings intact. Portable copies notify you when an update is available and open the official GitHub release page.'
   },
   {
     id: 'how-to-report-problem',
@@ -66,7 +66,7 @@ const FAQ_ITEMS = [
   }
 ];
 
-function renderFaqPage({ basePath = '.', baselineVersion = '1.4.2' }) {
+function renderFaqPage({ basePath = '.', baselineVersion = '1.5.0' }) {
   const faqHtml = FAQ_ITEMS.map((item, idx) => {
     const isOpen = idx < 2;
     return `
@@ -129,7 +129,7 @@ function renderFaqPage({ basePath = '.', baselineVersion = '1.4.2' }) {
             Report an Issue on GitHub ↗
           </a>
           <a href="${basePath}/download.html" class="btn btn-glass">
-            Download Ember (<span data-ember-version>v${baselineVersion}</span>)
+            Download NUKRON (<span data-ember-version>v${baselineVersion}</span>)
           </a>
         </div>
       </div>

@@ -1,12 +1,12 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
+function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.0' }) {
   return `
   <section class="page-hero download-hero">
     <div class="container">
       <div class="page-hero-header reveal-up">
         <span class="section-eyebrow">Official Windows Distribution</span>
-        <h1 class="page-headline">Download <span class="text-gradient">Ember</span></h1>
+        <h1 class="page-headline">Download <span class="text-gradient">NUKRON</span></h1>
         <p class="page-lead">
           Get the latest official release of ${constants.productFullName} directly from GitHub Releases. Free, locally operated, and ready in seconds.
         </p>
@@ -17,10 +17,10 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <div class="download-primary-card">
           <div class="dpc-top">
             <div class="dpc-brand">
-              <img src="${basePath}/assets/ember-logo.png" alt="Ember logo" width="52" height="52">
+              <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="52" height="52">
               <div>
                 <span class="dpc-badge"><i class="dot-live"></i> Latest Official Release</span>
-                <h2>Ember Universal Launcher</h2>
+                <h2>NUKRON</h2>
                 <p class="dpc-sub">Windows Desktop Application · <strong data-ember-version>v${baselineVersion}</strong></p>
               </div>
             </div>
@@ -34,7 +34,7 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <div class="dpc-installer-panel">
             <div class="dpc-file-info">
               <span class="dpc-file-label">Primary Windows Installer (NSIS Setup Executable)</span>
-              <code class="dpc-filename" data-ember-installer-name>Ember-Launcher-Setup-${baselineVersion}.exe</code>
+              <code class="dpc-filename" data-ember-installer-name>NUKRON-Setup-${baselineVersion}.exe</code>
               <span class="dpc-file-meta">
                 <span data-ember-installer-size>Verified Windows .exe Installer</span>
                 <span>·</span>
@@ -131,7 +131,7 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <span class="is-num">01</span>
           <h3>Download the Setup Installer</h3>
           <p>
-            Click <strong>Download for Windows</strong> above to fetch <code>Ember-Launcher-Setup-<span data-ember-version>${baselineVersion}</span>.exe</code> directly from the latest published GitHub release.
+            Click <strong>Download for Windows</strong> above to fetch <code>NUKRON-Setup-<span data-ember-version>${baselineVersion}</span>.exe</code> directly from the latest published GitHub release.
           </p>
         </article>
 
@@ -147,7 +147,7 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <span class="is-num">03</span>
           <h3>Add or Scan Your Games</h3>
           <p>
-            Launch Ember and click <strong>Add game</strong> in your Library to pick any game <code>.exe</code> or emulator ROM, or choose <strong>Import Windows Applications</strong> to scan installed Start Menu, Store, and Xbox games.
+            Launch NUKRON and click <strong>Add game</strong> in your Library to pick any game <code>.exe</code> or emulator ROM, or choose <strong>Import Windows Applications</strong> to scan installed Start Menu, Store, and Xbox games.
           </p>
         </article>
       </div>
@@ -161,35 +161,35 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <div class="tb-header">
           <span class="section-eyebrow">Helpful Guidance</span>
           <h2>Installation &amp; Troubleshooting Notes</h2>
-          <p>Practical answers based on how Ember operates on Windows.</p>
+          <p>Practical answers based on how NUKRON operates on Windows.</p>
         </div>
 
         <div class="tb-grid">
           <div class="tb-item">
             <h3>Windows SmartScreen prompt on first run</h3>
             <p>
-              Because Ember is an independent open-source project distributed directly via GitHub Releases, Windows Defender SmartScreen may display an <em>"Windows protected your PC"</em> prompt when running a newly published installer. Click <strong>More info</strong> → <strong>Run anyway</strong> after verifying the download came from <code>github.com/laggzilla16/ember-universal-launcher</code>.
+              Because NUKRON is an independent open-source project distributed directly via GitHub Releases, Windows Defender SmartScreen may display an <em>"Windows protected your PC"</em> prompt when running a newly published installer. Click <strong>More info</strong> → <strong>Run anyway</strong> after verifying the download came from <code>github.com/laggzilla16/ember-universal-launcher</code>.
             </p>
           </div>
 
           <div class="tb-item">
             <h3>Games requiring Administrator privileges</h3>
             <p>
-              If a specific game executable requires Administrator rights to start, Windows will block standard user processes from launching it. Run Ember as Administrator when launching elevated games.
+              If a specific game executable requires Administrator rights to start, Windows will block standard user processes from launching it. Run NUKRON as Administrator when launching elevated games.
             </p>
           </div>
 
           <div class="tb-item">
             <h3>Games started through another launcher</h3>
             <p>
-              If the executable you select only opens a secondary launcher before starting the actual game, open <strong>Edit game</strong> in Ember and set <strong>Process to track</strong> to the real game executable name (for example, <code>Game-Win64-Shipping.exe</code>).
+              If the executable you select only opens a secondary launcher before starting the actual game, open <strong>Edit game</strong> in NUKRON and set <strong>Process to track</strong> to the real game executable name (for example, <code>Game-Win64-Shipping.exe</code>).
             </p>
           </div>
 
           <div class="tb-item">
-            <h3>Updating from versions older than v1.1</h3>
+            <h3>Seamless upgrade from earlier Ember builds</h3>
             <p>
-              Installed copies on v1.1 and newer include the automatic updater and seamless v1.4+ silent update flow. If you are running an early copy older than v1.1, download and run the latest Setup installer once manually to enable automatic updates.
+              Existing installations upgrade cleanly in-place to NUKRON while preserving your entire SQLite library (<code>%APPDATA%\ember-launcher\launcher.db</code>), cover artwork, and overlay configuration.
             </p>
           </div>
         </div>

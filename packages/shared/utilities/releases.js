@@ -1,14 +1,17 @@
 /**
- * Ember Release & Installer Resolution Utilities
+ * NUKRON Release & Installer Resolution Utilities
  * Used by the website and test suite to safely parse GitHub Releases,
  * identify the authentic Windows installer (.exe), exclude blockmaps/metadata/source archives,
  * and format Markdown release notes safely without XSS risks.
  */
 (function (root, factory) {
+  const api = factory();
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory();
-  } else {
-    root.EmberReleaseUtils = factory();
+    module.exports = api;
+  }
+  if (root) {
+    root.NukronReleaseUtils = api;
+    root.EmberReleaseUtils = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
@@ -83,9 +86,11 @@
     if (isExcludedAssetName(name)) return false;
     const lower = name.toLowerCase();
     if (!lower.endsWith('.exe')) return false;
-    if (!/^https:\/\/github\.com\/laggzilla16\/ember-universal-launcher\/releases\/download\//i.test(url) &&
-        !/^https:\/\/objects\.githubusercontent\.com\//i.test(url) &&
-        !/^https:\/\//i.test(url)) {
+    if (
+      !/^https:\/\/github\.com\/laggzilla16\/ember-universal-launcher\/releases\/download\//i.test(url) &&
+      !/^https:\/\/objects\.githubusercontent\.com\//i.test(url) &&
+      !/^https:\/\//i.test(url)
+    ) {
       return false;
     }
     return true;
@@ -93,8 +98,9 @@
 
   /**
    * Scores Windows .exe assets so that the official NSIS Setup installer
-   * ("Ember-Launcher-Setup-X.Y.Z.exe") is always prioritized as the primary download,
-   * while Portable ("Ember-Launcher-Portable-X.Y.Z.exe") is recognized separately.
+   * ("NUKRON-Setup-X.Y.Z.exe" or legacy "Ember-Launcher-Setup-X.Y.Z.exe") is always prioritized
+   * as the primary download, while Portable ("NUKRON-Portable-X.Y.Z.exe" or "Ember-Launcher-Portable-X.Y.Z.exe")
+   * is recognized separately.
    */
   function classifyReleaseAssets(assets) {
     const list = Array.isArray(assets) ? assets : [];
@@ -107,9 +113,16 @@
     for (const asset of validExes) {
       const name = String(asset.name || '');
       const lower = name.toLowerCase();
-      if (/^ember-launcher-setup-[\d.]+.*\.exe$/i.test(name) || lower.includes('setup') || lower.includes('install')) {
+      if (
+        /^(?:nukron(?:-launcher)?|ember-launcher)-setup-[\d.]+.*\.exe$/i.test(name) ||
+        lower.includes('setup') ||
+        lower.includes('install')
+      ) {
         if (!setupAsset) setupAsset = asset;
-      } else if (/^ember-launcher-portable-[\d.]+.*\.exe$/i.test(name) || lower.includes('portable')) {
+      } else if (
+        /^(?:nukron(?:-launcher)?|ember-launcher)-portable-[\d.]+.*\.exe$/i.test(name) ||
+        lower.includes('portable')
+      ) {
         if (!portableAsset) portableAsset = asset;
       } else if (!fallbackExeAsset) {
         fallbackExeAsset = asset;
@@ -142,11 +155,16 @@
     const primary = classified.primaryInstaller;
     const portable = classified.portableExe;
 
+    const rawTitle = String(rawRelease.name || '').trim();
+    const normalizedTitle = rawTitle
+      ? rawTitle.replace(/\bEmber(?:\s+Universal)?(?:\s+Launcher)?\b/gi, 'NUKRON')
+      : `NUKRON v${version}`;
+
     return {
       id: rawRelease.id || tagName,
       tagName: tagName || `v${version}`,
       version,
-      title: String(rawRelease.name || `Ember v${version}`).trim(),
+      title: normalizedTitle,
       publishedAt: rawRelease.published_at || rawRelease.created_at || null,
       prerelease: Boolean(rawRelease.prerelease),
       draft: false,
@@ -177,11 +195,6 @@
 
   /**
    * Resolves the best release state from an array of GitHub Releases (and optional /releases/latest).
-   * - Filters out all drafts.
-   * - Separates stable published releases from prereleases.
-   * - Identifies the latest published release AND the latest release with a verified .exe installer.
-   * - Never silently serves an outdated installer: if the newest tag lacks an installer asset,
-   *   `usingFallbackRelease` is set to true with explicit metadata so the UI can inform the user.
    */
   function resolveReleasesState(rawReleases, latestSingleRelease) {
     const combined = [];
@@ -205,7 +218,6 @@
       }
     }
 
-    // Sort newest first by semantic version, then by publishedAt date
     combined.sort((a, b) => {
       const vc = compareVersions(b.version, a.version);
       if (vc !== 0) return vc;
@@ -237,9 +249,6 @@
     };
   }
 
-  /**
-   * Formats byte counts into human-readable MB/KB strings.
-   */
   function formatBytes(bytes) {
     const n = Number(bytes);
     if (!Number.isFinite(n) || n <= 0) return '';
@@ -249,9 +258,6 @@
     return Math.round(n / 1024) + ' KB';
   }
 
-  /**
-   * Formats an ISO date string into a clean readable date (e.g., "November 2, 2026").
-   */
   function formatReleaseDate(dateInput) {
     if (!dateInput) return 'Official GitHub Release';
     const d = new Date(dateInput);
@@ -263,9 +269,6 @@
     });
   }
 
-  /**
-   * Escapes raw strings for safe HTML insertion.
-   */
   function escapeHtml(str) {
     return String(str ?? '').replace(/[&<>"']/g, ch => {
       switch (ch) {
@@ -285,18 +288,11 @@
     });
   }
 
-  /**
-   * Formats inline Markdown tokens (bold, italic, inline code, safe https links) on already HTML-escaped text.
-   */
   function formatInlineMarkdown(escapedText) {
     let out = escapedText;
-    // Inline code `code`
     out = out.replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
-    // Bold **text**
     out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    // Italic *text* or _text_
     out = out.replace(/(^|[\s(])\*([^*]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
-    // Safe Markdown links [label](https://...)
     out = out.replace(
       /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>'
@@ -304,10 +300,6 @@
     return out;
   }
 
-  /**
-   * Safely renders GitHub Release Markdown notes into clean semantic HTML.
-   * Escapes all raw HTML first so untrusted tags/scripts can never execute.
-   */
   function renderReleaseNotesMarkdown(markdown) {
     const raw = String(markdown || '').trim();
     if (!raw) {
@@ -332,17 +324,15 @@
         continue;
       }
 
-      // Headings
       const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
       if (headingMatch) {
         closeList();
-        const level = Math.min(4, headingMatch[1].length + 2); // map # -> h3, ## -> h4
+        const level = Math.min(4, headingMatch[1].length + 2);
         const text = formatInlineMarkdown(escapeHtml(headingMatch[2]));
         htmlParts.push(`<h${level} class="md-heading">${text}</h${level}>`);
         continue;
       }
 
-      // Bullet list items (-, *, •)
       const listMatch = line.match(/^[-*•]\s+(.+)$/);
       if (listMatch) {
         if (!inList) {
@@ -354,7 +344,6 @@
         continue;
       }
 
-      // Numbered list items
       const numMatch = line.match(/^\d+\.\s+(.+)$/);
       if (numMatch) {
         if (!inList) {
@@ -366,7 +355,6 @@
         continue;
       }
 
-      // Standard paragraph
       closeList();
       htmlParts.push(`<p class="md-para">${formatInlineMarkdown(escapeHtml(line))}</p>`);
     }
@@ -390,4 +378,3 @@
     renderReleaseNotesMarkdown
   };
 });
-

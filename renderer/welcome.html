@@ -9,13 +9,20 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 body { display: flex; align-items: flex-end; justify-content: flex-end; padding: 12px; box-sizing: border-box; }
 .card {
   box-sizing: border-box; width: 100%; padding: 16px 20px; border-radius: 14px;
-  font: 500 14px/1.5 "Inter", system-ui, sans-serif; color: #ecebe8;
-  background: rgba(23, 24, 29, .94); border: 1px solid rgba(255, 255, 255, .08);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4); position: relative; overflow: hidden;
+  font: 500 14px/1.5 "Inter", system-ui, sans-serif; color: #f8fafc;
+  background:
+    radial-gradient(120% 80% at 12% 0%, rgba(37, 99, 235, 0.24), transparent 65%),
+    radial-gradient(100% 80% at 92% 100%, rgba(230, 57, 70, 0.16), transparent 65%),
+    rgba(17, 24, 39, 0.88);
+  border: 1px solid rgba(96, 165, 250, 0.26);
+  box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.18), 0 10px 30px rgba(3, 6, 14, .55);
+  position: relative; overflow: hidden;
   opacity: 0; transform: translateY(8px); transition: opacity .8s ease, transform .8s ease;
 }
-.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-  background: linear-gradient(135deg, #ffb454 0%, #ff7a1a 48%, #f0491f 100%); }
+.card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 52%, #e63946 100%);
+}
 .card.in { opacity: 1; transform: none; }
 .card.out { opacity: 0; transform: translateY(4px); transition-duration: .9s; }
 </style>

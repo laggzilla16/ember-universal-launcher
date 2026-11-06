@@ -1,4 +1,4 @@
-name: Deploy Official Ember Website
+name: Deploy Official NUKRON Website
 
 on:
   push:

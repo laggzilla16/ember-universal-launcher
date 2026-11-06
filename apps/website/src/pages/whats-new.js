@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.4.2', changelogEntries = [] }) {
+function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.5.0', changelogEntries = [] }) {
   const latestLocal = changelogEntries[0] || { v: baselineVersion, items: [] };
 
   const preRenderedTimeline = changelogEntries
@@ -16,8 +16,8 @@ function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.4.2', changel
         <div class="ce-card">
           <div class="ce-card-head">
             <div>
-              <h2 class="ce-title">Ember v${entry.v}</h2>
-              <p class="ce-subtitle">${isLatest ? 'Current stable version synchronized with Ember Desktop' : 'Verified desktop release changelog'}</p>
+              <h2 class="ce-title">NUKRON v${entry.v}</h2>
+              <p class="ce-subtitle">${isLatest ? 'Current stable version synchronized with NUKRON Desktop' : 'Verified desktop release changelog'}</p>
             </div>
             <div class="ce-actions">
               ${
@@ -48,7 +48,7 @@ function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.4.2', changel
     <div class="container">
       <div class="page-hero-header reveal-up">
         <span class="section-eyebrow">Live Release History</span>
-        <h1 class="page-headline">What’s New in <span class="text-gradient">Ember</span></h1>
+        <h1 class="page-headline">What’s New in <span class="text-gradient">NUKRON</span></h1>
         <p class="page-lead">
           Every improvement, feature, and fix shipped in ${constants.productFullName}—synchronized directly with official GitHub Releases and the in-app changelog.
         </p>
@@ -78,11 +78,11 @@ function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.4.2', changel
         <div class="spotlight-banner">
           <div class="sb-left">
             <span class="sb-eyebrow"><i class="dot-live"></i> Latest Published Version</span>
-            <h2 class="sb-version">Ember <span data-ember-version>v${latestLocal.v}</span></h2>
+            <h2 class="sb-version">NUKRON <span data-ember-version>v${latestLocal.v}</span></h2>
             <p class="sb-meta">
               <span data-ember-release-date>Latest Official Release</span>
               <span>·</span>
-              <span data-ember-installer-name>Ember-Launcher-Setup-${latestLocal.v}.exe</span>
+              <span data-ember-installer-name>NUKRON-Setup-${latestLocal.v}.exe</span>
             </p>
           </div>
           <div class="sb-right">

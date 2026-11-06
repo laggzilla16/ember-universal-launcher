@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
+function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
   return `
   <!-- =====================================================================
        SECTION 1 — HERO
@@ -11,19 +11,19 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <div class="hero-badge-row">
           <a href="${basePath}/whats-new.html" class="release-pill" title="View latest release notes">
             <span class="release-pill-dot"></span>
-            <span class="release-pill-brand">Ember <strong data-ember-version>v${baselineVersion}</strong></span>
+            <span class="release-pill-brand">NUKRON <strong data-ember-version>v${baselineVersion}</strong></span>
             <span class="release-pill-sep">·</span>
             <span class="release-pill-cta" data-ember-release-status>Latest Release →</span>
           </a>
         </div>
 
         <div class="hero-identity">
-          <img src="${basePath}/assets/ember-logo.png" alt="Ember Universal Launcher Logo" width="56" height="56" class="hero-logo">
-          <span class="hero-eyebrow">Ember Universal Launcher</span>
+          <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON Logo" width="56" height="56" class="hero-logo">
+          <span class="hero-eyebrow">NUKRON · PC Gaming Universe</span>
         </div>
 
         <h1 class="hero-headline">
-          Your games. Your space. <span class="text-gradient">Your Ember.</span>
+          Your games. <span class="text-gradient">Your universe.</span>
         </h1>
 
         <p class="hero-subheadline">
@@ -31,7 +31,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         </p>
 
         <p class="hero-description">
-          Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed launcher.
+          Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed optical-glass launcher.
         </p>
 
         <div class="hero-actions">
@@ -43,7 +43,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
           </button>
 
           <a href="#introduction" class="btn btn-glass btn-lg">
-            <span>Explore Ember</span>
+            <span>Explore NUKRON</span>
             <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 8l5 5 5-5"/>
             </svg>
@@ -72,14 +72,14 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         </div>
       </div>
 
-      <!-- HERO VISUAL CENTERPIECE: Interactive Replica of the Real Ember Desktop Interface -->
+      <!-- HERO VISUAL CENTERPIECE: Interactive Replica of the Real NUKRON Desktop Interface -->
       <div class="hero-stage-wrap reveal-up" data-delay="100">
         <div class="hero-stage-caption">
-          <span class="stage-tag"><i class="dot-amber"></i> Interactive Product Concept — Actual Ember Desktop UI</span>
+          <span class="stage-tag"><i class="dot-amber"></i> Interactive Product Concept — Actual NUKRON Desktop UI</span>
           <span class="stage-hint">Click sidebar tabs, launch a game, or toggle the live HUD overlay</span>
         </div>
 
-        <div class="ember-app-window" id="hero-app-window" role="region" aria-label="Interactive Ember Desktop Launcher preview">
+        <div class="ember-app-window" id="hero-app-window" role="region" aria-label="Interactive NUKRON Desktop Launcher preview">
           <!-- Custom Gaming Window Controls (from renderer/index.html) -->
           <div class="app-win-bar">
             <div class="app-upd-pill" id="preview-upd-pill" title="Seamless in-app updates via GitHub Releases">
@@ -97,10 +97,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <!-- Left Sidebar (218px scale replica) -->
             <aside class="app-sidebar">
               <div class="app-brand">
-                <img src="${basePath}/assets/ember-logo.png" alt="Ember" width="28" height="28">
-                <b>Ember</b>
+                <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON" width="28" height="28">
+                <b>NUKRON</b>
               </div>
-              <div class="app-nav" role="tablist" aria-label="Ember Desktop Views">
+              <div class="app-nav" role="tablist" aria-label="NUKRON Desktop Views">
                 <button type="button" class="app-nav-btn on" role="tab" aria-selected="true" data-app-tab="dash">
                   <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
                   <span>Dashboard</span>
@@ -210,10 +210,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             </div>
 
             <!-- Floating In-Game Performance Overlay HUD Replica (from renderer/overlay.html) -->
-            <div class="app-floating-overlay" id="hero-floating-overlay" aria-label="Ember Performance Overlay HUD preview">
+            <div class="app-floating-overlay" id="hero-floating-overlay" aria-label="NUKRON Performance Overlay HUD preview">
               <div class="ovl-head">
-                <img src="${basePath}/assets/ember-logo.png" alt="" width="16" height="16">
-                <span class="ovl-title">EMBER</span>
+                <img src="${basePath}/assets/nukron-logo.png" alt="" width="16" height="16">
+                <span class="ovl-title">NUKRON</span>
                 <span class="ovl-grip">⋮⋮</span>
               </div>
               <div class="ovl-metrics">
@@ -278,7 +278,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <span class="section-eyebrow">The Philosophy</span>
         <h2 class="section-headline">Everything starts here.</h2>
         <p class="section-lead">
-          PC gaming shouldn't begin with five competing storefront popups, mandatory sign-in screens, and cluttered ad feeds. Ember brings your personal library together into a calm, fast, locally operated space on Windows.
+          PC gaming shouldn't begin with five competing storefront popups, mandatory sign-in screens, and cluttered ad feeds. NUKRON brings your personal library together into a calm, fast, locally operated universe on Windows.
         </p>
       </div>
 
@@ -287,7 +287,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <div class="pillar-num">01</div>
           <h3>One personal library for every way you play</h3>
           <p>
-            Whether your games live as standalone Windows executables, launch through Steam, Epic, GOG, or Xbox, or run inside an emulator with your own ROMs and disc images, Ember organizes them under one roof with custom cover artwork and groups.
+            Whether your games live as standalone Windows executables, launch through Steam, Epic, GOG, or Xbox, or run inside an emulator with your own ROMs and disc images, NUKRON organizes them under one roof with custom cover artwork and groups.
           </p>
           <div class="pillar-chips">
             <span>Standalone .exe</span>
@@ -307,9 +307,9 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
 
         <article class="pillar-card">
           <div class="pillar-num">03</div>
-          <h3>Built to respect your focus</h3>
+          <h3>Snell’s Law Optical Glass Architecture</h3>
           <p>
-            From the Liquid Glass dark interface to a playtime tracker that survives crashes via 4-second heartbeats, every detail in Ember is engineered to make launching and enjoying your games effortless.
+            From the multi-layered Optical Glass interface with Electric Blue and Crimson Red edge refraction to a playtime tracker that survives crashes via 4-second heartbeats, every detail in NUKRON is engineered to make launching and enjoying your games effortless.
           </p>
         </article>
       </div>
@@ -325,7 +325,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <span class="section-eyebrow">Crafted Capabilities</span>
         <h2 class="section-headline">Engineered for how PC gamers actually play.</h2>
         <p class="section-lead">
-          Every feature in Ember exists to solve a real part of daily PC gaming—without bloat, subscriptions, or unnecessary complexity.
+          Every feature in NUKRON exists to solve a real part of daily PC gaming—without bloat, subscriptions, or unnecessary complexity.
         </p>
       </div>
 
@@ -497,8 +497,8 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
               <div class="studio-corner-label">In-Game Screen Preview · Top-Right Anchor</div>
               <div id="studio-overlay-preview" class="live-ovl layout-vertical size-medium">
                 <div class="ovl-head">
-                  <img src="${basePath}/assets/ember-logo.png" alt="" width="18" height="18">
-                  <span class="ovl-title">EMBER</span>
+                  <img src="${basePath}/assets/nukron-logo.png" alt="" width="18" height="18">
+                  <span class="ovl-title">NUKRON</span>
                   <span class="ovl-grip">⋮⋮</span>
                 </div>
                 <div class="live-ovl-metrics">
@@ -545,7 +545,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <span class="feature-index">02 · Automatic Playtime Tracking</span>
           <h3>Playtime Tracking That Never Loses a Minute</h3>
           <p class="feature-desc">
-            Track the time you spend playing your favorite games automatically whenever you launch through Ember. One tracker per game ensures double-clicking never creates duplicate timers.
+            Track the time you spend playing your favorite games automatically whenever you launch through NUKRON. One tracker per game ensures double-clicking never creates duplicate timers.
           </p>
           <div class="tracking-specs-grid">
             <div class="ts-item">
@@ -608,10 +608,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <!-- Feature 5: Designed Around You -->
         <article class="editorial-card span-6">
           <div class="ed-top">
-            <span class="feature-index">05 · Custom Interface</span>
+            <span class="feature-index">05 · Custom Optical Interface</span>
             <h3>Designed Around You</h3>
             <p>
-              Enjoy a customizable Liquid Glass interface with carefully designed interactions, specular borders, responsive playtime badges, and instant switching between deep obsidian Dark Mode and warm ivory Light Mode.
+              Enjoy a Snell's Law-inspired Optical Glass interface with Clear, Frosted, and Optical Accent material layers, Electric Blue and Crimson Red edge refraction, responsive playtime badges, and instant switching between Deep Midnight Dark Mode and Daylight Light Mode.
             </p>
           </div>
           <div class="theme-preview-widget" id="theme-preview-widget" data-preview-mode="dark">
@@ -626,8 +626,8 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
               <div class="tp-sample-card">
                 <div class="tp-dot"></div>
                 <div>
-                  <b>Liquid Glass Surface</b>
-                  <span>Adaptive contrast, warm typography, and zero visual clutter.</span>
+                  <b>Optical Glass Surface</b>
+                  <span>Refractive edge highlights, crisp typography, and zero visual clutter.</span>
                 </div>
               </div>
             </div>
@@ -640,14 +640,14 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="feature-index">08 · Mindful Welcome</span>
             <h3>A Calmer Startup</h3>
             <p>
-              When Ember starts with Windows, an optional corner message fades in with a thoughtful quote for a few seconds, then quietly disappears. It never steals window focus, never covers fullscreen games, and shows only once per Windows session.
+              When NUKRON starts with Windows, an optional corner message fades in with a thoughtful quote for a few seconds, then quietly disappears. It never steals window focus, never covers fullscreen games, and shows only once per Windows session.
             </p>
           </div>
           <div class="welcome-quote-stage">
             <div class="welcome-toast-replica" id="welcome-quote-card">
-              <img src="${basePath}/assets/ember-logo.png" alt="" width="24" height="24">
+              <img src="${basePath}/assets/nukron-logo.png" alt="" width="24" height="24">
               <div class="wt-copy">
-                <span class="wt-brand">EMBER</span>
+                <span class="wt-brand">NUKRON</span>
                 <p class="wt-msg" id="welcome-quote-text">“Take a breath. The game will wait for you.”</p>
               </div>
             </div>
@@ -663,14 +663,14 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="feature-index">06 · Seamless Updates</span>
             <h3>Stay Updated Without Setup Wizards</h3>
             <p>
-              Receive native Windows toast notifications when a new release is published—even while minimized to the system tray. Choosing Update downloads, verifies the SHA-512 checksum, installs silently, and reopens Ember with What's New ready to read.
+              Receive native Windows toast notifications when a new release is published—even while minimized to the system tray. Choosing Update downloads, verifies the SHA-512 checksum, installs silently, and reopens NUKRON with What's New ready to read.
             </p>
           </div>
           <div class="updater-mini-replica">
             <div class="umr-row">
-              <img src="${basePath}/assets/ember-logo.png" alt="" width="22" height="22">
+              <img src="${basePath}/assets/nukron-logo.png" alt="" width="22" height="22">
               <div class="umr-text">
-                <b>Ember Update Ready · <span data-ember-version>v${baselineVersion}</span></b>
+                <b>NUKRON Update Ready · <span data-ember-version>v${baselineVersion}</span></b>
                 <span>SHA-512 verified · Silent install preserves all games &amp; settings</span>
               </div>
               <a href="${basePath}/whats-new.html" class="umr-link">Changelog →</a>
@@ -684,12 +684,12 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="feature-index">07 · Always Accessible</span>
             <h3>System Tray Integration</h3>
             <p>
-              Keep Ember accessible without occupying your taskbar. Configure Ember to launch quietly in the Windows system tray at sign-in and minimize on close so your playtime tracking and performance overlay stay ready whenever you start a game.
+              Keep NUKRON accessible without occupying your taskbar. Configure NUKRON to launch quietly in the Windows system tray at sign-in and minimize on close so your playtime tracking and performance overlay stay ready whenever you start a game.
             </p>
           </div>
           <div class="tray-settings-replica">
             <div class="tray-toggle-line">
-              <span>Launch Ember when Windows starts</span>
+              <span>Launch NUKRON when Windows starts</span>
               <span class="fake-toggle on"><i></i></span>
             </div>
             <div class="tray-toggle-line">
@@ -703,7 +703,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 4 — THE EMBER EXPERIENCE ("Less managing. More playing.")
+       SECTION 4 — THE NUKRON EXPERIENCE ("Less managing. More playing.")
        ===================================================================== -->
   <section class="experience-section section-spacer" id="experience">
     <div class="container">
@@ -711,17 +711,17 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
         <span class="section-eyebrow">Your Daily Flow</span>
         <h2 class="section-headline">Less managing. More playing.</h2>
         <p class="section-lead">
-          See how Ember fits naturally into every gaming session from the moment you sit down at your PC.
+          See how NUKRON fits naturally into every gaming session from the moment you sit down at your PC.
         </p>
       </div>
 
       <div class="journey-layout reveal-up">
-        <ol class="journey-steps" id="journey-steps" role="tablist" aria-label="The Ember daily gaming journey">
+        <ol class="journey-steps" id="journey-steps" role="tablist" aria-label="The NUKRON daily gaming journey">
           <li class="journey-step active" data-step="0" role="tab" tabindex="0" aria-selected="true">
             <span class="step-num">01</span>
             <div class="step-body">
-              <h3>Open Ember</h3>
-              <p>Wake Ember from your Windows system tray or launch it directly—greeted by a calm, instant interface with zero login prompts.</p>
+              <h3>Open NUKRON</h3>
+              <p>Wake NUKRON from your Windows system tray or launch it directly—greeted by a calm, instant interface with zero login prompts.</p>
             </div>
           </li>
           <li class="journey-step" data-step="1" role="tab" tabindex="0" aria-selected="false">
@@ -735,7 +735,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="step-num">03</span>
             <div class="step-body">
               <h3>Launch your favorite game</h3>
-              <p>Click any game card to start playing immediately. Ember handles launch arguments, emulator ROM paths, or Windows App IDs automatically.</p>
+              <p>Click any game card to start playing immediately. NUKRON handles launch arguments, emulator ROM paths, or Windows App IDs automatically.</p>
             </div>
           </li>
           <li class="journey-step" data-step="3" role="tab" tabindex="0" aria-selected="false">
@@ -749,7 +749,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="step-num">05</span>
             <div class="step-body">
               <h3>Monitor your gaming performance</h3>
-              <p>Toggle the Liquid Glass performance overlay anytime to inspect live FPS, frame time, CPU/GPU load, VRAM, RAM, and temperatures.</p>
+              <p>Toggle the Optical Glass performance overlay anytime to inspect live FPS, frame time, CPU/GPU load, VRAM, RAM, and temperatures.</p>
             </div>
           </li>
         </ol>
@@ -759,13 +759,13 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <div class="js-step-badge" id="js-badge">Step 01 · Instant Startup</div>
             <h4 class="js-title" id="js-title">Ready in the background before you even pick a game</h4>
             <p class="js-desc" id="js-desc">
-              With single-instance locking and optional Windows startup in the system tray, Ember is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.
+              With single-instance locking and optional Windows startup in the system tray, NUKRON is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.
             </p>
             <div class="js-visual" id="js-visual">
               <div class="js-mock-box">
                 <div class="js-mock-row">
                   <span class="dot-live"></span>
-                  <strong>Ember Single-Instance Lock Active</strong>
+                  <strong>NUKRON Single-Instance Lock Active</strong>
                   <code>%APPDATA%\ember-launcher\launcher.db</code>
                 </div>
                 <div class="js-mock-quote">
@@ -789,7 +789,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <span class="section-eyebrow">Local-First Architecture</span>
           <h2 class="section-headline">Made to stay out of your way.</h2>
           <p class="section-lead">
-            Ember is built as a practical gaming companion rather than another noisy platform competing for your attention. It runs locally on your machine and respects your system resources.
+            NUKRON is built as a practical gaming companion rather than another noisy platform competing for your attention. It runs locally on your machine and respects your system resources.
           </p>
         </div>
 
@@ -839,14 +839,14 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.4.2' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 6 — FINAL DOWNLOAD SECTION ("Ready to make room for Ember?")
+       SECTION 6 — FINAL DOWNLOAD SECTION ("Ready to enter NUKRON?")
        ===================================================================== -->
   <section class="final-cta-section section-spacer" id="download-cta">
     <div class="container">
       <div class="final-cta-card reveal-up">
         <div class="final-cta-glow" aria-hidden="true"></div>
-        <img src="${basePath}/assets/ember-logo.png" alt="Ember logo" width="64" height="64" class="final-cta-logo">
-        <h2 class="final-cta-headline">Ready to make room for Ember?</h2>
+        <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="64" height="64" class="final-cta-logo">
+        <h2 class="final-cta-headline">Ready to make room for NUKRON?</h2>
         <p class="final-cta-desc">Your next gaming session starts here.</p>
 
         <div class="final-cta-actions">

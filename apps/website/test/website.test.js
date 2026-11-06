@@ -1,5 +1,5 @@
 /**
- * Automated Verification Suite for the Ember Official Website & GitHub Release Engine
+ * Automated Verification Suite for the NUKRON Official Website & GitHub Release Engine
  * Run: node apps/website/test/website.test.js (or npm run test:website)
  */
 const assert = require('assert');
@@ -10,7 +10,7 @@ const http = require('http');
 const { brand, constants, releases } = require('../../../packages/shared');
 const { buildWebsite, DIST_DIR } = require('../scripts/build');
 
-console.log('--- Running Ember Website & Monorepo Verification Suite ---');
+console.log('--- Running NUKRON Website & Monorepo Verification Suite ---');
 
 // 1. Build the static website
 buildWebsite();
@@ -33,6 +33,10 @@ const requiredDistFiles = [
   'robots.txt',
   '.nojekyll',
   'favicon.ico',
+  'assets/nukron-logo.png',
+  'assets/nukron-logo.svg',
+  'assets/nukron-wordmark.svg',
+  'assets/nukron-dashboard-concept.svg',
   'assets/ember-logo.png',
   'assets/icon.ico',
   'assets/og-social-card.svg',
@@ -58,17 +62,17 @@ console.log('✓ All static pages, clean URL indices, fonts, logos, and SEO file
 // 3. Verify Homepage Required Headlines, Storytelling Sections, and Features
 const homeHtml = fs.readFileSync(path.join(DIST_DIR, 'index.html'), 'utf8');
 const requiredHomeCopy = [
-  'Your games. Your space.',
-  'Your Ember.',
+  'Your games.',
+  'Your universe.',
   'A better home for your PC gaming experience.',
-  'Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed launcher.',
+  'Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed optical-glass launcher.',
   'Everything starts here.',
   'Less managing. More playing.',
   'Made to stay out of your way.',
-  'Ready to make room for Ember?',
+  'Ready to make room for NUKRON?',
   'Your next gaming session starts here.',
   'Download for Windows',
-  'Explore Ember'
+  'Explore NUKRON'
 ];
 for (const phrase of requiredHomeCopy) {
   assert(homeHtml.includes(phrase), `Homepage missing required copy: "${phrase}"`);
@@ -78,16 +82,16 @@ console.log('✓ Homepage required sections and copy verified');
 // 4. Verify Additional Pages Content (About, FAQ, Privacy, Download, What's New)
 const aboutHtml = fs.readFileSync(path.join(DIST_DIR, 'about.html'), 'utf8');
 assert(
-  aboutHtml.includes('Ember was created around a simple idea: PC gaming deserves a better home.'),
+  aboutHtml.includes('NUKRON was created around a simple idea: PC gaming deserves a better home.'),
   'About page missing required philosophy statement'
 );
 
 const faqHtml = fs.readFileSync(path.join(DIST_DIR, 'faq.html'), 'utf8');
 const requiredFaqQuestions = [
-  'What is Ember?',
-  'Is Ember free?',
+  'What is NUKRON?',
+  'Is NUKRON free?',
   'Which operating systems are supported?',
-  'Does Ember require an account?',
+  'Does NUKRON require an account?',
   'Where is my gaming data stored?',
   'How does playtime tracking work?',
   'How do I add games?',
@@ -97,6 +101,11 @@ const requiredFaqQuestions = [
 for (const q of requiredFaqQuestions) {
   assert(faqHtml.includes(q), `FAQ page missing question: "${q}"`);
 }
+const downloadHtml = fs.readFileSync(path.join(DIST_DIR, 'download.html'), 'utf8');
+assert(downloadHtml.includes('NUKRON-Setup-1.5.0.exe'), 'Download page must reference NUKRON-Setup-1.5.0.exe');
+const whatsNewHtml = fs.readFileSync(path.join(DIST_DIR, 'whats-new.html'), 'utf8');
+assert(whatsNewHtml.includes('NUKRON v1.5.0'), 'What\'s New page must include NUKRON v1.5.0');
+assert(whatsNewHtml.includes('Complete rebranding from Ember Universal Launcher to NUKRON'), 'What\'s New page must include 1.5.0 changelog items');
 console.log('✓ About, FAQ, Privacy, Download, and What\'s New content verified');
 
 // 5. Verify Internal Links & Asset References Across All Built HTML Files
@@ -143,7 +152,53 @@ for (const htmlRel of htmlFilesToInspect) {
 }
 console.log('✓ Zero broken internal links or missing local assets across all pages');
 
-// 6. Verify GitHub Releases & Installer Asset Selection Logic
+// 6. Verify GitHub Releases & Installer Asset Selection Logic (both NUKRON and legacy Ember assets)
+const mockNukronAssets = [
+  {
+    name: 'latest.yml',
+    browser_download_url: 'https://github.com/laggzilla16/ember-universal-launcher/releases/download/v1.5.0/latest.yml',
+    size: 412
+  },
+  {
+    name: 'NUKRON-Setup-1.5.0.exe.blockmap',
+    browser_download_url: 'https://github.com/laggzilla16/ember-universal-launcher/releases/download/v1.5.0/NUKRON-Setup-1.5.0.exe.blockmap',
+    size: 89120
+  },
+  {
+    name: 'source-code.zip',
+    browser_download_url: 'https://github.com/laggzilla16/ember-universal-launcher/releases/download/v1.5.0/source-code.zip',
+    size: 1200000
+  },
+  {
+    name: 'NUKRON-Portable-1.5.0.exe',
+    browser_download_url: 'https://github.com/laggzilla16/ember-universal-launcher/releases/download/v1.5.0/NUKRON-Portable-1.5.0.exe',
+    size: 78500000
+  },
+  {
+    name: 'NUKRON-Setup-1.5.0.exe',
+    browser_download_url: 'https://github.com/laggzilla16/ember-universal-launcher/releases/download/v1.5.0/NUKRON-Setup-1.5.0.exe',
+    size: 81200000
+  }
+];
+
+assert.strictEqual(releases.isValidWindowsExeAsset(mockNukronAssets[0]), false, 'latest.yml must be rejected');
+assert.strictEqual(releases.isValidWindowsExeAsset(mockNukronAssets[1]), false, '.blockmap must be rejected');
+assert.strictEqual(releases.isValidWindowsExeAsset(mockNukronAssets[2]), false, 'source .zip must be rejected');
+assert.strictEqual(releases.isValidWindowsExeAsset(mockNukronAssets[3]), true, 'Portable .exe is a valid exe');
+assert.strictEqual(releases.isValidWindowsExeAsset(mockNukronAssets[4]), true, 'Setup .exe is a valid exe');
+
+const classifiedNukron = releases.classifyReleaseAssets(mockNukronAssets);
+assert.strictEqual(
+  classifiedNukron.primaryInstaller.name,
+  'NUKRON-Setup-1.5.0.exe',
+  'Primary installer must prioritize NUKRON NSIS Setup .exe over Portable .exe'
+);
+assert.strictEqual(
+  classifiedNukron.portableExe.name,
+  'NUKRON-Portable-1.5.0.exe',
+  'NUKRON Portable .exe must be identified separately'
+);
+
 const mockAssets = [
   {
     name: 'latest.yml',
@@ -172,22 +227,16 @@ const mockAssets = [
   }
 ];
 
-assert.strictEqual(releases.isValidWindowsExeAsset(mockAssets[0]), false, 'latest.yml must be rejected');
-assert.strictEqual(releases.isValidWindowsExeAsset(mockAssets[1]), false, '.blockmap must be rejected');
-assert.strictEqual(releases.isValidWindowsExeAsset(mockAssets[2]), false, 'source .zip must be rejected');
-assert.strictEqual(releases.isValidWindowsExeAsset(mockAssets[3]), true, 'Portable .exe is a valid exe');
-assert.strictEqual(releases.isValidWindowsExeAsset(mockAssets[4]), true, 'Setup .exe is a valid exe');
-
 const classified = releases.classifyReleaseAssets(mockAssets);
 assert.strictEqual(
   classified.primaryInstaller.name,
   'Ember-Launcher-Setup-1.4.2.exe',
-  'Primary installer must prioritize NSIS Setup .exe over Portable .exe'
+  'Legacy Ember-Launcher-Setup .exe must continue to be supported for historical releases'
 );
 assert.strictEqual(
   classified.portableExe.name,
   'Ember-Launcher-Portable-1.4.2.exe',
-  'Portable .exe must be identified separately'
+  'Legacy Portable .exe must be identified separately'
 );
 
 // Drafts must be excluded, prereleases distinguished, and missing installer on newest tag flagged honestly
@@ -197,11 +246,11 @@ const mockReleaseList = [
     name: 'Draft Release',
     draft: true,
     prerelease: false,
-    assets: [mockAssets[4]]
+    assets: [mockNukronAssets[4]]
   },
   {
     tag_name: 'v1.5.0-beta.1',
-    name: 'Ember 1.5.0 Beta 1',
+    name: 'NUKRON 1.5.0 Beta 1',
     draft: false,
     prerelease: true,
     published_at: '2026-11-01T10:00:00Z',
@@ -209,19 +258,19 @@ const mockReleaseList = [
   },
   {
     tag_name: 'v1.4.3',
-    name: 'Ember 1.4.3 (Tag without binary yet)',
+    name: 'NUKRON 1.4.3 (Tag without binary yet)',
     draft: false,
     prerelease: false,
     published_at: '2026-10-31T10:00:00Z',
-    assets: [mockAssets[0], mockAssets[1]] // only yml and blockmap
+    assets: [mockNukronAssets[0], mockNukronAssets[1]] // only yml and blockmap
   },
   {
     tag_name: 'v1.4.2',
-    name: 'Ember 1.4.2',
+    name: 'NUKRON 1.4.2',
     draft: false,
     prerelease: false,
     published_at: '2026-10-30T10:00:00Z',
-    assets: mockAssets
+    assets: mockNukronAssets
   }
 ];
 
@@ -240,12 +289,12 @@ console.log('✓ GitHub Releases resolution, asset filtering, draft exclusion, a
 // 7. Verify Safe Markdown Release Notes Formatting (XSS protection)
 const untrustedMd = `# What's Changed
 <script>alert("xss")</script>
-- Added **Liquid Glass** badge for \`launcher.db\`
+- Added **Optical Glass** badge for \`launcher.db\`
 - Fixed [issue #12](https://github.com/laggzilla16/ember-universal-launcher/issues/12)`;
 const renderedHtml = releases.renderReleaseNotesMarkdown(untrustedMd);
 assert(!renderedHtml.includes('<script>'), 'Raw <script> tags must be escaped');
 assert(renderedHtml.includes('&lt;script&gt;'), 'Escaped script tag expected');
-assert(renderedHtml.includes('<strong>Liquid Glass</strong>'), 'Bold markdown formatting expected');
+assert(renderedHtml.includes('<strong>Optical Glass</strong>'), 'Bold markdown formatting expected');
 assert(renderedHtml.includes('<code class="md-code">launcher.db</code>'), 'Inline code formatting expected');
 assert(
   renderedHtml.includes('href="https://github.com/laggzilla16/ember-universal-launcher/issues/12"'),
@@ -287,4 +336,4 @@ for (const route of routesToVerify) {
   assert(resolvedFile && fs.existsSync(resolvedFile), `Route ${route} failed to resolve to a built file`);
 }
 console.log('✓ All clean URLs and .html routes verified');
-console.log('--- All Ember Website Tests Passed! ---');
+console.log('--- All NUKRON Website Tests Passed! ---');

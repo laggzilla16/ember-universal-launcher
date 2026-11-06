@@ -1,34 +1,34 @@
-# Ember Universal Launcher
+# NUKRON
 
-**Your games. Your space. Your Ember.**
+**Your games. Your universe.**
 
-Ember Universal Launcher is a lightweight, locally operated Windows gaming launcher with automatic playtime tracking and a customizable in-game performance overlay. No mandatory account, no subscriptions, and no cloud lock-in.
+NUKRON (formerly Ember Universal Launcher) is a lightweight, locally operated Windows gaming launcher with automatic playtime tracking, a Snell's Law-inspired **Optical Glass** interface, and a customizable in-game performance overlay. No mandatory account, no subscriptions, and no cloud lock-in.
 
-All local application data lives in `%APPDATA%\ember-launcher\` (`launcher.db` + copied cover images + local preferences).
+All local application data lives in `%APPDATA%\ember-launcher\` (`launcher.db` + copied cover images + local preferences), preserving seamless upgrades and 100% compatibility for existing installations.
 
 ---
 
 ## Monorepo Architecture
 
-This repository houses both the **Ember Windows Desktop Application** and the **Official Ember Website** using a non-destructive monorepo layout:
+This repository houses both the **NUKRON Windows Desktop Application** and the **Official NUKRON Website** using a non-destructive monorepo layout:
 
 ```text
 ember-universal-launcher/
 ├── apps/
 │   ├── desktop/            # Workspace entry & docs for the Electron desktop app
-│   └── website/            # Official Ember website (static generator, pages, styles, client JS)
-│       ├── src/            # Modular page templates, Liquid Glass CSS, & GitHub Releases client
+│   └── website/            # Official NUKRON website (static generator, pages, styles, client JS)
+│       ├── src/            # Modular page templates, Optical Glass CSS, & GitHub Releases client
 │       ├── scripts/        # Build (build.js) and development server (dev.js)
 │       ├── test/           # Automated website & release resolution tests
 │       └── dist/           # Production static website output (git-ignored)
 ├── packages/
 │   └── shared/             # Shared brand tokens, product constants, and release utilities
-│       ├── brand/          # Official Liquid Glass palette & typography tokens
+│       ├── brand/          # Official NUKRON Optical Glass palette & typography tokens
 │       ├── constants/      # Product metadata, GitHub repo & API constants
 │       └── utilities/      # Semver comparison, installer asset filtering, & safe Markdown parser
 ├── assets/
 │   ├── branding/           # Shared fonts (Unbounded, Inter) & design tokens JSON
-│   ├── logos/              # Official Ember logo (ember-logo.png) and Windows icon (icon.ico)
+│   ├── logos/              # Official NUKRON logo (nukron-logo.png, nukron-logo.svg, nukron-wordmark.svg) & Windows icon (icon.ico)
 │   └── screenshots/        # Vector product concepts & Open Graph social preview assets
 ├── renderer/               # Desktop Electron renderer UI, styles, overlay, & changelog
 ├── test/                   # Desktop application unit tests (version, update-notify, welcome)
@@ -58,7 +58,7 @@ npm install
 ### Desktop Application Commands
 
 ```bash
-# Run the Ember Electron desktop launcher in development
+# Run the NUKRON Electron desktop launcher in development
 npm start
 # or
 npm run dev:desktop
@@ -102,7 +102,7 @@ npm run test:website
 - **Games started through another launcher**: if the `.exe` you pick only starts a launcher, set *Process to track* to the real game's `.exe` name (e.g. `Game-Win64-Shipping.exe`).
 - **Launch & Track**: click a game card to launch. A session starts at launch and ends 15 seconds after the last matching process exits.
 - **Performance Overlay**: toggle the in-game hardware HUD from the active session bar or configure layouts (`Vertical`, `Horizontal`, `Compact`, `Expanded`), sizes (`Small`, `Medium`, `Large`), screen position, and metrics (`FPS`, `CPU`, `GPU`, `VRAM`, `RAM`, `CPU °C`, `GPU °C`) in **Settings > Performance Overlay**.
-- **Startup & System Tray**: configure *Launch Ember when Windows starts*, *Minimize to system tray*, and *Show startup message* under **Settings > General**.
+- **Startup & System Tray**: configure *Launch NUKRON when Windows starts*, *Minimize to system tray*, and *Show startup message* under **Settings > General**.
 
 ### How Playtime Tracking Works
 - One tracker per game, so double-clicking or launching twice never creates a second timer.
@@ -110,11 +110,11 @@ npm run test:website
 - A heartbeat is written to SQLite every poll. If the app or PC shuts down unexpectedly mid-game, the session is closed at the last heartbeat on next start.
 - If nothing matching appears within 90 seconds of launching, the session is discarded and you are notified why.
 - Failed process scans never end a session.
-- Closing Ember while a game runs ends that session at that moment (unless minimized to the system tray); the game itself keeps running.
+- Closing NUKRON while a game runs ends that session at that moment (unless minimized to the system tray); the game itself keeps running.
 - Games whose files are uninstalled, moved, or on a disconnected drive stay in the library marked *Not installed* with all playtime, history, and statistics preserved. Click *Locate* to relink them. Only **Remove** deletes a game's history.
 
 ### Notes
-- Games requiring administrator rights fail to launch unless Ember is also run as administrator.
+- Games requiring administrator rights fail to launch unless NUKRON is also run as administrator.
 - `node:sqlite` is built into the Electron runtime, so there are no native modules to compile.
 
 ---
@@ -127,16 +127,16 @@ Installed copies check GitHub Releases (`laggzilla16/ember-universal-launcher`) 
 2. Run `npm run dist`.
 3. On GitHub, create a **published** (not draft, not pre-release) Release tagged `v<version>` and attach from `dist\`:
    - `latest.yml`
-   - `Ember-Launcher-Setup-<version>.exe`
-   - `Ember-Launcher-Setup-<version>.exe.blockmap`
-   - *(Optionally)* `Ember-Launcher-Portable-<version>.exe`
-4. Installed users receive a native Windows notification and in-app update button that downloads, verifies the SHA-512 checksum, silently installs, and relaunches Ember. Portable copies are directed to the release page.
+   - `NUKRON-Setup-<version>.exe`
+   - `NUKRON-Setup-<version>.exe.blockmap`
+   - *(Optionally)* `NUKRON-Portable-<version>.exe`
+4. Installed users receive a native Windows notification and in-app update button that downloads, verifies the SHA-512 checksum, silently installs, and relaunches NUKRON. Portable copies are directed to the release page.
 
 ### Website Dynamic Release Resolution
 The official website (`apps/website`) connects directly to the GitHub Releases API in the browser:
 - Queries `https://api.github.com/repos/laggzilla16/ember-universal-launcher/releases` and `/releases/latest`.
 - Automatically detects the newest published release without requiring manual website edits.
-- Resolves `Ember-Launcher-Setup-<version>.exe` as the primary Windows download while strictly filtering out `.blockmap`, `latest.yml`, and source code archives.
+- Resolves `NUKRON-Setup-<version>.exe` (and legacy `Ember-Launcher-Setup-<version>.exe` for older tags) as the primary Windows download while strictly filtering out `.blockmap`, `latest.yml`, and source code archives.
 - Renders Markdown release notes safely on the **What's New** page and synchronizes with `renderer/changelog.js`.
 - Provides graceful fallback links to `https://github.com/laggzilla16/ember-universal-launcher/releases` if the GitHub API is offline or rate-limited.
 

@@ -1,5 +1,5 @@
 /**
- * Ember Official Website — Local Development & Preview Server
+ * NUKRON Official Website — Local Development & Preview Server
  * Builds apps/website/dist, serves clean and .html routes, and watches src/ for changes.
  */
 const http = require('http');
@@ -70,7 +70,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[ember-website] Server running at http://127.0.0.1:${PORT}`);
+  console.log(`[nukron-website] Server running at http://127.0.0.1:${PORT}`);
 });
 
 if (!isPreviewOnly) {
@@ -83,7 +83,7 @@ if (!isPreviewOnly) {
         try {
           buildWebsite();
         } catch (err) {
-          console.error('[ember-website] Rebuild error:', err.message);
+          console.error('[nukron-website] Rebuild error:', err.message);
         }
       }, 120);
     });

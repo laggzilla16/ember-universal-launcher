@@ -1,7 +1,7 @@
 {
   "name": "ember-launcher",
-  "version": "1.4.2",
-  "description": "Game launcher with automatic playtime tracking",
+  "version": "1.5.0",
+  "description": "NUKRON — PC game launcher with automatic playtime tracking and optical-glass performance overlay",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "local.ember.launcher",
-    "productName": "Ember Launcher",
+    "productName": "NUKRON",
     "files": [
       "main.js",
       "preload.js",
@@ -37,7 +37,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "Ember-Launcher-Setup-${version}.${ext}"
+      "shortcutName": "NUKRON",
+      "artifactName": "NUKRON-Setup-${version}.${ext}"
     },
     "publish": [
       {
@@ -47,7 +48,7 @@
       }
     ],
     "portable": {
-      "artifactName": "Ember-Launcher-Portable-${version}.${ext}"
+      "artifactName": "NUKRON-Portable-${version}.${ext}"
     }
   },
   "dependencies": {

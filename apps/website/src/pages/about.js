@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
+function renderAboutPage({ basePath = '.', baselineVersion = '1.5.0' }) {
   return `
   <section class="page-hero about-hero">
     <div class="container">
@@ -11,9 +11,9 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
 
       <!-- Core Manifesto Block -->
       <div class="manifesto-card reveal-up" data-delay="80">
-        <img src="${basePath}/assets/ember-logo.png" alt="Ember logo" width="60" height="60" class="manifesto-logo">
+        <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="60" height="60" class="manifesto-logo">
         <blockquote class="manifesto-quote">
-          “Ember was created around a simple idea: PC gaming deserves a better home. A place that feels personal, stays out of your way, and makes the experience of managing your games a little better.”
+          “NUKRON was created around a simple idea: PC gaming deserves a better home. A place that feels personal, stays out of your way, and makes the experience of managing your games a little better.”
         </blockquote>
         <p class="manifesto-body">
           Modern PC gaming is richer than ever, yet the software surrounding it has grown increasingly noisy. Launching a single game often means navigating mandatory account logins, pop-up store promotions, background cloud syncs, and fragmented libraries.
@@ -27,7 +27,7 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
       <div class="principles-section section-spacer">
         <div class="section-title-block reveal-up">
           <span class="section-eyebrow">Core Principles</span>
-          <h2 class="section-headline">What Ember stands for—and what we leave out.</h2>
+          <h2 class="section-headline">What NUKRON stands for—and what we leave out.</h2>
         </div>
 
         <div class="principles-grid reveal-up">
@@ -43,7 +43,7 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="pi-tag">Principle 02</span>
             <h3>No Mandatory Accounts</h3>
             <p>
-              You never have to create an account, verify an email address, or sign in to access your own games. Install Ember, add or scan your games, and play.
+              You never have to create an account, verify an email address, or sign in to access your own games. Install NUKRON, add or scan your games, and play.
             </p>
           </article>
 
@@ -51,15 +51,15 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
             <span class="pi-tag">Principle 03</span>
             <h3>No Subscriptions or Upsells</h3>
             <p>
-              Ember is free software. There are no subscription tiers, no advertisements, and no promotional storefronts competing for screen space.
+              NUKRON is free software. There are no subscription tiers, no advertisements, and no promotional storefronts competing for screen space.
             </p>
           </article>
 
           <article class="principle-item">
             <span class="pi-tag">Principle 04</span>
-            <h3>Crafted Visual Identity</h3>
+            <h3>Snell's Law Optical Glass Identity</h3>
             <p>
-              Built with Ember's custom <em>Liquid Glass</em> design system—combining deep charcoal surfaces, warm amber-to-crimson accents drawn from the Ember mark, and responsive typography in Unbounded and Inter.
+              Built with NUKRON's custom <em>Optical Glass</em> design system—combining Deep Midnight surfaces, Electric Blue and Crimson Red refractive accents inspired by Snell's Law ($n_1 \sin\theta_1 = n_2 \sin\theta_2$), and responsive typography in Unbounded and Inter.
             </p>
           </article>
         </div>
@@ -71,11 +71,11 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.4.2' }) {
           <span class="section-eyebrow">Under the Hood</span>
           <h2>Thoughtful Windows Engineering</h2>
           <p>
-            Ember is built specifically for Windows 10 and Windows 11 using Electron, built-in <code>node:sqlite</code>, and a lightweight native C# telemetry &amp; process helper daemon. This architecture lets Ember detect running game processes, read Windows Start Menu / Store AppUserModelIDs, and render an in-game hardware overlay without third-party bloat.
+            NUKRON is built specifically for Windows 10 and Windows 11 using Electron, built-in <code>node:sqlite</code>, and a lightweight native C# telemetry &amp; process helper daemon. This architecture lets NUKRON detect running game processes, read Windows Start Menu / Store AppUserModelIDs, and render an in-game hardware overlay without third-party bloat.
           </p>
           <div class="asc-actions">
             <button type="button" class="btn btn-primary" data-ember-download>
-              <span>Download Ember (<span data-ember-version>v${baselineVersion}</span>)</span>
+              <span>Download NUKRON (<span data-ember-version>v${baselineVersion}</span>)</span>
             </button>
             <a href="${constants.github.repoUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-glass">
               Explore Repository on GitHub ↗

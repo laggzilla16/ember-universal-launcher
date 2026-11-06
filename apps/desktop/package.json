@@ -1,7 +1,7 @@
 {
-  "name": "@ember/desktop-workspace",
+  "name": "@nukron/desktop-workspace",
   "private": true,
-  "description": "Workspace entry for the Ember Universal Launcher Windows desktop application (Electron entry points reside at repository root to preserve electron-builder and updater paths).",
+  "description": "Workspace entry for the NUKRON Windows desktop application (Electron entry points reside at repository root to preserve electron-builder and updater paths).",
   "scripts": {
     "dev": "npm --prefix ../.. start",
     "start": "npm --prefix ../.. start",

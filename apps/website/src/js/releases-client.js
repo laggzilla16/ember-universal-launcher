@@ -1,5 +1,5 @@
 /**
- * Ember Official Website — Dynamic GitHub Releases & Download Client
+ * NUKRON Official Website — Dynamic GitHub Releases & Download Client
  * Connects directly to https://api.github.com/repos/laggzilla16/ember-universal-launcher/releases
  * Resolves the latest valid Windows installer (.exe), updates version indicators dynamically,
  * powers the live What's New changelog, and provides graceful fallbacks without fake states.
@@ -7,9 +7,9 @@
 (function () {
   'use strict';
 
-  const Utils = window.EmberReleaseUtils;
-  const Baseline = window.EMBER_BASELINE_DATA || {
-    version: '1.4.2',
+  const Utils = window.NukronReleaseUtils || window.EmberReleaseUtils;
+  const Baseline = window.NUKRON_BASELINE_DATA || window.EMBER_BASELINE_DATA || {
+    version: '1.5.0',
     repoUrl: 'https://github.com/laggzilla16/ember-universal-launcher',
     releasesUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases',
     latestReleasePageUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases/latest',
@@ -238,7 +238,7 @@
       const localItems = localMap.get(rel.version) || null;
       merged.push({
         version: rel.version,
-        title: rel.title || `Ember v${rel.version}`,
+        title: rel.title || `NUKRON v${rel.version}`,
         publishedAt: rel.publishedAt,
         prerelease: rel.prerelease,
         htmlUrl: rel.htmlUrl,
@@ -255,7 +255,7 @@
         if (!seenVersions.has(v)) {
           merged.push({
             version: v,
-            title: `Ember v${v}`,
+            title: `NUKRON v${v}`,
             publishedAt: null,
             prerelease: false,
             htmlUrl: `${Baseline.releasesUrl}/tag/v${encodeURIComponent(v)}`,
@@ -322,7 +322,7 @@
                 <p class="ce-subtitle">${
                   item.installer
                     ? `Installer: ${Utils.escapeHtml(item.installer.name)}${item.installer.size ? ' (' + Utils.formatBytes(item.installer.size) + ')' : ''}`
-                    : 'Official Ember Universal Launcher Release'
+                    : 'Official NUKRON Release'
                 }</p>
               </div>
               <div class="ce-actions">
@@ -374,7 +374,7 @@
 
     showDownloadFeedback({
       title: 'Resolving latest Windows installer…',
-      body: 'Checking official Ember GitHub Releases for the latest verified setup executable…',
+      body: 'Checking official NUKRON GitHub Releases for the latest verified setup executable…',
       actionsHtml: ''
     });
 
@@ -403,7 +403,7 @@
       triggerBrowserDownload(inst.url);
       const sizeInfo = inst.size ? ` (${Utils.formatBytes(inst.size)})` : '';
       showDownloadFeedback({
-        title: `Downloading Ember v${rel.version}`,
+        title: `Downloading NUKRON v${rel.version}`,
         body: `Started download of <code>${Utils.escapeHtml(inst.name)}</code>${Utils.escapeHtml(sizeInfo)}. If your browser blocked the automatic download prompt, use the direct link below.`,
         actionsHtml: `
           <a href="${Utils.escapeHtml(inst.url)}" class="btn btn-primary btn-xs" download>Direct Installer Link (.exe)</a>
@@ -427,7 +427,7 @@
     }
 
     // Case 3: GitHub API unreachable / rate-limited / offline -> Honest fallback to official GitHub Releases
-    const directFallbackInstallerUrl = `${Baseline.releasesUrl}/latest/download/Ember-Launcher-Setup-${Baseline.version}.exe`;
+    const directFallbackInstallerUrl = `${Baseline.releasesUrl}/latest/download/NUKRON-Setup-${Baseline.version}.exe`;
     showDownloadFeedback({
       title: 'Unable to reach GitHub Releases API',
       body: `Your browser could not query <code>api.github.com</code> (${Utils.escapeHtml(currentState.errorMessage || 'network or rate limit')}). Use the official GitHub Releases page below to download the latest Windows installer directly.`,

@@ -1,5 +1,5 @@
 /**
- * Ember Official Website — Interactive Product Demonstrations & UI Polish
+ * NUKRON Official Website — Interactive Product Demonstrations & UI Polish
  */
 (function () {
   'use strict';
@@ -415,7 +415,7 @@
     }
   }
 
-  /* 7. Section 4: The Ember Experience 5-Step Journey */
+  /* 7. Section 4: The NUKRON Experience 5-Step Journey */
   function initJourneyTimeline() {
     const steps = document.querySelectorAll('#journey-steps .journey-step');
     const badgeEl = document.getElementById('js-badge');
@@ -426,14 +426,14 @@
 
     const stepData = [
       {
-        badge: 'Step 01 · Open Ember',
+        badge: 'Step 01 · Open NUKRON',
         title: 'Ready in the background before you even pick a game',
-        desc: 'With single-instance locking and optional Windows startup in the system tray, Ember is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.',
+        desc: 'With single-instance locking and optional Windows startup in the system tray, NUKRON is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
               <span class="dot-live"></span>
-              <strong>Ember Single-Instance Lock Active</strong>
+              <strong>NUKRON Single-Instance Lock Active</strong>
               <code>%APPDATA%\\ember-launcher\\launcher.db</code>
             </div>
             <div class="js-mock-quote">“Welcome back. Take your time.”</div>
@@ -457,7 +457,7 @@
       {
         badge: 'Step 03 · Launch Your Favorite Game',
         title: 'One click starts the game and arms the session tracker',
-        desc: 'Ember spawns your game executable directly, passes custom launch arguments or ROM files to your emulator, or triggers the registered Windows AppUserModelID.',
+        desc: 'NUKRON spawns your game executable directly, passes custom launch arguments or ROM files to your emulator, or triggers the registered Windows AppUserModelID.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
@@ -471,7 +471,7 @@
       {
         badge: 'Step 04 · Track Your Playtime',
         title: '4-second SQLite heartbeats that survive unexpected shutdowns',
-        desc: 'Every 4 seconds, Ember inspects active process paths locally and updates your session heartbeat in SQLite. When you quit the game, the session closes cleanly after a 15-second grace period.',
+        desc: 'Every 4 seconds, NUKRON inspects active process paths locally and updates your session heartbeat in SQLite. When you quit the game, the session closes cleanly after a 15-second grace period.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
@@ -485,7 +485,7 @@
       {
         badge: 'Step 05 · Monitor Your Gaming Performance',
         title: 'Real-time hardware telemetry whenever you want a closer look',
-        desc: 'Toggle the Liquid Glass overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
+        desc: 'Toggle the Optical Glass overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">

@@ -196,7 +196,7 @@ function edit(g) {
     ${f('grp', 'Group', '', 'e.g. RPG, Emulated, Favorites')}
     ${aum ? '' : f('emulator', 'Emulator (optional)', 'exe', 'Leave empty for normal PC games')}
     ${aum ? '' : f('args', 'Launch arguments (optional)', '', '-windowed')}
-    ${f('track', 'Process to track (optional)', '', aum ? 'Only needed if Ember cannot detect the app, e.g. game.exe' : 'e.g. game.exe — for games started through another launcher')}
+    ${f('track', 'Process to track (optional)', '', aum ? 'Only needed if NUKRON cannot detect the app, e.g. game.exe' : 'e.g. game.exe — for games started through another launcher')}
     <div class="end">${isNew ? '' : '<button class="btn danger" id="del">Remove</button>'}<button class="btn ghost" id="cancel">Cancel</button><button class="btn" id="save">Save</button></div></div>`;
   const v = id => (d.querySelector('#f-' + id)?.value ?? '').trim();
   d.onclick = async e => {
@@ -339,17 +339,17 @@ async function openSettings() {
 
     <div class="stab-panel hidden" id="stab-general">
       <div class="tog-section">
-        ${tog('s-startup', app0.launchAtStartup, 'Launch Ember when Windows starts')}
+        ${tog('s-startup', app0.launchAtStartup, 'Launch NUKRON when Windows starts')}
       </div>
-      <p class="tog-note">When on, Ember starts automatically when you sign into Windows (hidden in the system tray if Minimize to system tray is on). Turn off to stop it launching at sign-in.</p>
+      <p class="tog-note">When on, NUKRON starts automatically when you sign into Windows (hidden in the system tray if Minimize to system tray is on). Turn off to stop it launching at sign-in.</p>
       <div class="tog-section">
         ${tog('s-bg', app0.background, 'Minimize to system tray')}
       </div>
-      <p class="tog-note">When on, closing the window hides Ember to the system tray (look under the ^ "Show hidden icons" arrow in the taskbar). Playtime keeps being tracked, and the performance overlay still works. Right-click the tray icon and choose Quit Ember to exit completely. When off, closing the window exits Ember.</p>
+      <p class="tog-note">When on, closing the window hides NUKRON to the system tray (look under the ^ "Show hidden icons" arrow in the taskbar). Playtime keeps being tracked, and the performance overlay still works. Right-click the tray icon and choose Quit NUKRON to exit completely. When off, closing the window exits NUKRON.</p>
       <div class="tog-section">
         ${tog('s-welcome', app0.showStartupMessage !== false, 'Show startup message')}
       </div>
-      <p class="tog-note">When on, a small quote fades in for a few seconds in the corner of your screen the first time Ember starts with Windows. Shown once per Windows session, never over fullscreen games.</p>
+      <p class="tog-note">When on, a small quote fades in for a few seconds in the corner of your screen the first time NUKRON starts with Windows. Shown once per Windows session, never over fullscreen games.</p>
     </div>
 
     <div class="end">
@@ -481,9 +481,9 @@ function showLegal(k, back) {
 }
 function welcome() {
   const d = $('#dlg');
-  d.innerHTML = `<div class="dl"><h1>Welcome to Ember</h1>
-    <p class="lead">Ember launches your games and tracks your playtime. Everything stays on this PC.</p>
-    <p class="lead"><b>Please play fair.</b> Ember is made for games you own, from any store or platform (Steam, Epic, GOG, Xbox, standalone installers, or emulators with your own legal copies). Downloading cracked or pirated games isn't advised: it's illegal in many places, hurts the developers who make them, and cracked files are a common way malware spreads.</p>
+  d.innerHTML = `<div class="dl"><h1>Welcome to NUKRON</h1>
+    <p class="lead">NUKRON launches your games and tracks your playtime. Everything stays on this PC.</p>
+    <p class="lead"><b>Please play fair.</b> NUKRON is made for games you own, from any store or platform (Steam, Epic, GOG, Xbox, standalone installers, or emulators with your own legal copies). Downloading cracked or pirated games isn't advised: it's illegal in many places, hurts the developers who make them, and cracked files are a common way malware spreads.</p>
     <p class="lead">By continuing you agree to the <a data-l="terms">Terms of Service</a> and <a data-l="privacy">Privacy Policy</a>.</p>
     <div class="end"><button class="btn" id="ok">I understand &amp; agree</button></div></div>`;
   d.oncancel = e => e.preventDefault();

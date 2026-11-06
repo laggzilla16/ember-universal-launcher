@@ -1,6 +1,6 @@
-# Ember Desktop Application (`apps/desktop`)
+# NUKRON Desktop Application (`apps/desktop`)
 
-Ember Universal Launcher is a local Windows desktop gaming launcher built with Electron and `node:sqlite`.
+NUKRON is a local Windows desktop gaming launcher built with Electron and `node:sqlite`.
 
 ## Monorepo Preservation Note
 

@@ -2,7 +2,7 @@ const { brand, constants } = require('../../../../packages/shared');
 
 /**
  * Renders the complete HTML document shell (head, navigation, main content, download feedback modal, footer)
- * for any page of the official Ember website.
+ * for any page of the official NUKRON website.
  */
 function renderLayout({
   pageId,
@@ -10,7 +10,7 @@ function renderLayout({
   description,
   canonicalPath = '',
   basePath = '.',
-  baselineVersion = '1.4.2',
+  baselineVersion = '1.5.0',
   bodyContent
 }) {
   const fullTitle =
@@ -51,10 +51,11 @@ function renderLayout({
   <meta name="twitter:description" content="${metaDesc}">
   <meta name="twitter:image" content="${prodBaseUrl}/assets/og-social-card.svg">
 
-  <!-- Official Ember Icons & Fonts -->
-  <link rel="icon" type="image/png" href="${basePath}/assets/ember-logo.png">
+  <!-- Official NUKRON Icons & Fonts -->
+  <link rel="icon" type="image/png" href="${basePath}/assets/nukron-logo.png">
+  <link rel="icon" type="image/svg+xml" href="${basePath}/assets/nukron-logo.svg">
   <link rel="shortcut icon" type="image/x-icon" href="${basePath}/assets/icon.ico">
-  <link rel="apple-touch-icon" href="${basePath}/assets/ember-logo.png">
+  <link rel="apple-touch-icon" href="${basePath}/assets/nukron-logo.png">
   <link rel="preload" href="${basePath}/fonts/unbounded.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="${basePath}/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="${basePath}/styles/main.css">
@@ -62,7 +63,7 @@ function renderLayout({
 <body data-page="${pageId}" data-base-path="${basePath}">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- Ambient Liquid Glass Background Lighting -->
+  <!-- Snell's Law Optical Glass Ambient Lighting Stage -->
   <div class="ambient-stage" aria-hidden="true">
     <div class="ambient-orb orb-amber"></div>
     <div class="ambient-orb orb-crimson"></div>
@@ -70,15 +71,15 @@ function renderLayout({
     <div class="ambient-grid"></div>
   </div>
 
-  <!-- Premium Sticky Navigation Bar -->
-  <header class="site-header" id="site-header">
+  <!-- Premium Sticky Optical-Glass Navigation Bar -->
+  <header class="site-header glass-clear" id="site-header">
     <div class="container nav-container">
-      <a href="${basePath}/index.html" class="brand-mark" aria-label="Ember Universal Launcher Home">
+      <a href="${basePath}/index.html" class="brand-mark" aria-label="NUKRON Home">
         <span class="brand-logo-wrap">
-          <img src="${basePath}/assets/ember-logo.png" alt="Ember logo" width="34" height="34" class="brand-logo">
+          <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="34" height="34" class="brand-logo">
         </span>
         <span class="brand-text">
-          <span class="brand-wordmark">Ember</span>
+          <span class="brand-wordmark">NUKRON</span>
           <span class="brand-version-pill" data-ember-version-pill title="Latest release version">v<span data-ember-version>${baselineVersion}</span></span>
         </span>
       </a>
@@ -150,11 +151,11 @@ function renderLayout({
   <div class="download-feedback-drawer" id="download-feedback" role="status" aria-live="polite" hidden>
     <div class="download-feedback-card">
       <div class="df-head">
-        <img src="${basePath}/assets/ember-logo.png" alt="" width="24" height="24" class="df-logo">
+        <img src="${basePath}/assets/nukron-logo.png" alt="" width="24" height="24" class="df-logo">
         <strong class="df-title" id="df-title">Preparing download…</strong>
         <button type="button" class="df-close" id="df-close" aria-label="Dismiss notification">✕</button>
       </div>
-      <p class="df-body" id="df-body">Connecting to official Ember GitHub Releases…</p>
+      <p class="df-body" id="df-body">Connecting to official NUKRON GitHub Releases…</p>
       <div class="df-actions" id="df-actions"></div>
     </div>
   </div>
@@ -165,11 +166,11 @@ function renderLayout({
       <div class="footer-top">
         <div class="footer-brand-col">
           <a href="${basePath}/index.html" class="brand-mark footer-brand">
-            <img src="${basePath}/assets/ember-logo.png" alt="Ember logo" width="32" height="32" class="brand-logo">
-            <span class="brand-wordmark">Ember</span>
+            <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="32" height="32" class="brand-logo">
+            <span class="brand-wordmark">NUKRON</span>
           </a>
           <p class="footer-tagline">
-            ${constants.productFullName} is a lightweight, locally operated Windows gaming launcher. Organize your library, track playtime automatically, and monitor performance without accounts or cloud clutter.
+            ${constants.productFullName} is a lightweight, locally operated Windows gaming launcher crafted with an Optical Glass interface. Organize your library, track playtime automatically, and monitor performance without accounts or cloud clutter.
           </p>
           <div class="footer-badges">
             <span class="spec-badge"><i class="dot-live"></i> Windows 10 &amp; 11 (64-bit)</span>
@@ -184,7 +185,7 @@ function renderLayout({
             <ul class="footer-links">
               <li><a href="${basePath}/index.html">Home</a></li>
               <li><a href="${basePath}/index.html#features">Features</a></li>
-              <li><a href="${basePath}/index.html#experience">The Ember Experience</a></li>
+              <li><a href="${basePath}/index.html#experience">The NUKRON Experience</a></li>
               <li><a href="${basePath}/download.html">Download for Windows</a></li>
               <li><a href="${basePath}/whats-new.html">What's New</a></li>
             </ul>
@@ -193,7 +194,7 @@ function renderLayout({
           <div class="footer-col">
             <h3 class="footer-heading">Resources</h3>
             <ul class="footer-links">
-              <li><a href="${basePath}/about.html">About Ember</a></li>
+              <li><a href="${basePath}/about.html">About NUKRON</a></li>
               <li><a href="${basePath}/faq.html">FAQ &amp; Help</a></li>
               <li><a href="${basePath}/privacy.html">Privacy Policy</a></li>
               <li><a href="${basePath}/privacy.html#terms">Terms of Service</a></li>

@@ -27,8 +27,8 @@ function shouldNotify(newVer, currentVer, lastNotifiedVer) {
 function buildNotificationPayload(version, iconPath) {
   const v = cleanVersion(version);
   const payload = {
-    title: 'Ember Launcher',
-    body: `A new Ember update is available!\nVersion ${v} is ready. Check out what's new.`,
+    title: 'NUKRON',
+    body: `A new NUKRON update is available!\nVersion ${v} is ready. Check out what's new.`,
     silent: false
   };
   if (iconPath) payload.icon = iconPath;
