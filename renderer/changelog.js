@@ -1,6 +1,13 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.1',
+    items: [
+      'Updated the official NUKRON application emblem and multi-resolution Windows icon across the splash screen, sidebar header, in-game performance overlay, updater window, system tray, and Windows toast notifications.',
+      'Restored the clean original website layout and structure while applying the updated NUKRON branding, logo, and colour palette.'
+    ]
+  },
+  {
     v: '1.5.0',
     items: [
       'Complete rebranding from Ember Universal Launcher to NUKRON ("Your games. Your universe.") across the Windows desktop application, in-game performance overlay, startup quote toast, seamless updater, system tray, and official website.',

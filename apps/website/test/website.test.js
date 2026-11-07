@@ -102,8 +102,9 @@ for (const q of requiredFaqQuestions) {
   assert(faqHtml.includes(q), `FAQ page missing question: "${q}"`);
 }
 const downloadHtml = fs.readFileSync(path.join(DIST_DIR, 'download.html'), 'utf8');
-assert(downloadHtml.includes('NUKRON-Setup-1.5.0.exe'), 'Download page must reference NUKRON-Setup-1.5.0.exe');
+assert(downloadHtml.includes('NUKRON-Setup-1.5.1.exe'), 'Download page must reference NUKRON-Setup-1.5.1.exe');
 const whatsNewHtml = fs.readFileSync(path.join(DIST_DIR, 'whats-new.html'), 'utf8');
+assert(whatsNewHtml.includes('NUKRON v1.5.1'), 'What\'s New page must include NUKRON v1.5.1');
 assert(whatsNewHtml.includes('NUKRON v1.5.0'), 'What\'s New page must include NUKRON v1.5.0');
 assert(whatsNewHtml.includes('Complete rebranding from Ember Universal Launcher to NUKRON'), 'What\'s New page must include 1.5.0 changelog items');
 console.log('✓ About, FAQ, Privacy, Download, and What\'s New content verified');

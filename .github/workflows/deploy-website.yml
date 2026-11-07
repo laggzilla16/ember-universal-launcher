@@ -8,7 +8,10 @@ on:
       - 'apps/website/**'
       - 'packages/shared/**'
       - 'assets/**'
+      - 'renderer/assets/**'
       - 'renderer/changelog.js'
+      - 'build/icon.ico'
+      - 'package.json'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -18,7 +21,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'ember-website-pages'
+  group: 'nukron-website-pages'
   cancel-in-progress: true
 
 jobs:

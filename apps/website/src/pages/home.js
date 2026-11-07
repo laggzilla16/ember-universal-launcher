@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
+function renderHomePage({ basePath = '.', baselineVersion = '1.5.1' }) {
   return `
   <!-- =====================================================================
        SECTION 1 — HERO
@@ -18,7 +18,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
 
         <div class="hero-identity">
-          <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON Logo" width="56" height="56" class="hero-logo">
+          <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON Logo" width="56" height="56" class="hero-logo">
           <span class="hero-eyebrow">NUKRON</span>
         </div>
 
@@ -97,7 +97,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             <!-- Left Sidebar (218px scale replica) -->
             <aside class="app-sidebar">
               <div class="app-brand">
-                <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON" width="28" height="28">
+                <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON" width="28" height="28">
                 <b>NUKRON</b>
               </div>
               <div class="app-nav" role="tablist" aria-label="NUKRON Desktop Views">
@@ -212,7 +212,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             <!-- Floating In-Game Performance Overlay HUD Replica (from renderer/overlay.html) -->
             <div class="app-floating-overlay" id="hero-floating-overlay" aria-label="NUKRON Performance Overlay HUD preview">
               <div class="ovl-head">
-                <img src="${basePath}/assets/nukron-logo.png" alt="" width="16" height="16">
+                <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="" width="16" height="16">
                 <span class="ovl-title">NUKRON</span>
                 <span class="ovl-grip">⋮⋮</span>
               </div>
@@ -497,7 +497,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
               <div class="studio-corner-label">In-Game Screen Preview · Top-Right Anchor</div>
               <div id="studio-overlay-preview" class="live-ovl layout-vertical size-medium">
                 <div class="ovl-head">
-                  <img src="${basePath}/assets/nukron-logo.png" alt="" width="18" height="18">
+                  <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="" width="18" height="18">
                   <span class="ovl-title">NUKRON</span>
                   <span class="ovl-grip">⋮⋮</span>
                 </div>
@@ -645,7 +645,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
           </div>
           <div class="welcome-quote-stage">
             <div class="welcome-toast-replica" id="welcome-quote-card">
-              <img src="${basePath}/assets/nukron-logo.png" alt="" width="24" height="24">
+              <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="" width="24" height="24">
               <div class="wt-copy">
                 <span class="wt-brand">NUKRON</span>
                 <p class="wt-msg" id="welcome-quote-text">“Take a breath. The game will wait for you.”</p>
@@ -668,7 +668,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
           </div>
           <div class="updater-mini-replica">
             <div class="umr-row">
-              <img src="${basePath}/assets/nukron-logo.png" alt="" width="22" height="22">
+              <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="" width="22" height="22">
               <div class="umr-text">
                 <b>NUKRON Update Ready · <span data-ember-version>v${baselineVersion}</span></b>
                 <span>SHA-512 verified · Silent install preserves all games &amp; settings</span>
@@ -845,7 +845,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
     <div class="container">
       <div class="final-cta-card reveal-up">
         <div class="final-cta-glow" aria-hidden="true"></div>
-        <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="64" height="64" class="final-cta-logo">
+        <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON logo" width="64" height="64" class="final-cta-logo">
         <h2 class="final-cta-headline">Ready to make room for NUKRON?</h2>
         <p class="final-cta-desc">Your next gaming session starts here.</p>
 

@@ -247,7 +247,7 @@ function buildWebsite() {
       <section class="page-hero">
         <div class="container">
           <div class="final-cta-card">
-            <img src="./assets/nukron-logo.png" alt="NUKRON logo" width="56" height="56" class="final-cta-logo">
+            <img src="./assets/nukron-logo.png?v=${baseline.version}" alt="NUKRON logo" width="56" height="56" class="final-cta-logo">
             <h1 class="final-cta-headline">Page not found</h1>
             <p class="final-cta-desc">The page you were looking for doesn't exist or has moved.</p>
             <div class="final-cta-actions">

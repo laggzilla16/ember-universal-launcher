@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.0' }) {
+function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.1' }) {
   return `
   <section class="page-hero download-hero">
     <div class="container">
@@ -17,7 +17,7 @@ function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.0' }) {
         <div class="download-primary-card">
           <div class="dpc-top">
             <div class="dpc-brand">
-              <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="52" height="52">
+              <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON logo" width="52" height="52">
               <div>
                 <span class="dpc-badge"><i class="dot-live"></i> Latest Official Release</span>
                 <h2>NUKRON</h2>
