@@ -8,9 +8,9 @@ const NUKRON_CONSTANTS = {
   desktopPackageName: 'ember-launcher',
   appId: 'local.ember.launcher',
   tagline: 'Your games. Your universe.',
-  supportingHeadline: 'A precision optical-glass home for your PC gaming universe.',
+  supportingHeadline: 'A better home for your PC gaming experience.',
   description:
-    'Organize, launch, and experience every game you own on Windows inside a genuine optical-glass interface—with automatic SQLite playtime tracking and a real-time hardware performance overlay.',
+    'Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed launcher.',
   platform: {
     os: 'Windows 10 / Windows 11 (64-bit)',
     shortOs: 'Windows 10 & 11',

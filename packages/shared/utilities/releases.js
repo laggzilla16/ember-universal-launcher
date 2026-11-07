@@ -363,69 +363,6 @@
     return htmlParts.join('\n');
   }
 
-  /**
-   * Classifies a list of changelog strings (or markdown lines) into
-   * New Features, Improvements, and Bug Fixes while preserving every item verbatim.
-   */
-  function categorizeReleaseItems(items) {
-    const features = [];
-    const improvements = [];
-    const fixes = [];
-
-    const list = Array.isArray(items) ? items : [];
-    for (const rawItem of list) {
-      const item = String(rawItem || '').trim();
-      if (!item) continue;
-
-      if (/^(?:fixed\b|bug\b|hotfix\b|click outside\b|if an update download fails\b)/i.test(item) || /\b(?:fixed|bug fix|clipping|excluding NUKRON and background web browsers)\b/i.test(item)) {
-        fixes.push(item);
-      } else if (/^(?:redesigned\b|improved\b|seamless in-place upgrade\b|updated\b|refined\b|optimized\b|enhanced\b)/i.test(item)) {
-        improvements.push(item);
-      } else {
-        features.push(item);
-      }
-    }
-
-    return { features, improvements, fixes };
-  }
-
-  /**
-   * Renders categorized release notes HTML (New Features, Improvements, Bug Fixes)
-   * from verified changelog items and/or GitHub Release markdown.
-   */
-  function renderCategorizedReleaseNotes(localItems, markdownBody, htmlUrl) {
-    if (Array.isArray(localItems) && localItems.length > 0) {
-      const cats = categorizeReleaseItems(localItems);
-      const groups = [
-        { key: 'features', label: 'New Features', badgeClass: 'cat-feature', list: cats.features },
-        { key: 'improvements', label: 'Improvements', badgeClass: 'cat-improve', list: cats.improvements },
-        { key: 'fixes', label: 'Bug Fixes', badgeClass: 'cat-fix', list: cats.fixes }
-      ].filter(g => g.list.length > 0);
-
-      return `<div class="ce-categories">${groups
-        .map(
-          g => `
-        <div class="ce-cat-group" data-cat-group="${g.key}">
-          <div class="ce-cat-header">
-            <span class="ce-cat-badge ${g.badgeClass}">${g.label}</span>
-            <span class="ce-cat-count">${g.list.length}</span>
-          </div>
-          <ul class="md-list">
-            ${g.list.map(line => `<li>${formatInlineMarkdown(escapeHtml(line))}</li>`).join('\n            ')}
-          </ul>
-        </div>`
-        )
-        .join('\n')}</div>`;
-    }
-
-    if (markdownBody && String(markdownBody).trim().length > 0) {
-      return renderReleaseNotesMarkdown(markdownBody);
-    }
-
-    const safeUrl = escapeHtml(htmlUrl || 'https://github.com/laggzilla16/ember-universal-launcher/releases');
-    return `<p class="md-para">Release details available on <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="md-link">GitHub Releases ↗</a>.</p>`;
-  }
-
   return {
     cleanVersion,
     compareVersions,
@@ -438,8 +375,6 @@
     formatBytes,
     formatReleaseDate,
     escapeHtml,
-    renderReleaseNotesMarkdown,
-    categorizeReleaseItems,
-    renderCategorizedReleaseNotes
+    renderReleaseNotesMarkdown
   };
 });

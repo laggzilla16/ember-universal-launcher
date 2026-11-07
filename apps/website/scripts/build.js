@@ -12,7 +12,7 @@ const { renderHomePage } = require('../src/pages/home');
 const { renderDownloadPage } = require('../src/pages/download');
 const { renderWhatsNewPage } = require('../src/pages/whats-new');
 const { renderAboutPage } = require('../src/pages/about');
-const { renderFaqPage, getFaqJsonLd } = require('../src/pages/faq');
+const { renderFaqPage } = require('../src/pages/faq');
 const { renderPrivacyPage } = require('../src/pages/privacy');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -54,7 +54,7 @@ function buildWebsite() {
   fs.rmSync(DIST_DIR, { recursive: true, force: true });
   ensureDir(DIST_DIR);
 
-  // 1. Copy official NUKRON branding assets, application screenshots & fonts
+  // 1. Copy official NUKRON branding assets & fonts (plus legacy aliases for backward compatibility)
   copyFileSafe(
     path.join(REPO_ROOT, 'renderer', 'assets', 'nukron-logo.png'),
     path.join(DIST_DIR, 'assets', 'nukron-logo.png')
@@ -66,6 +66,10 @@ function buildWebsite() {
   copyFileSafe(
     path.join(REPO_ROOT, 'assets', 'logos', 'nukron-wordmark.svg'),
     path.join(DIST_DIR, 'assets', 'nukron-wordmark.svg')
+  );
+  copyFileSafe(
+    path.join(REPO_ROOT, 'renderer', 'assets', 'ember-logo.png'),
+    path.join(DIST_DIR, 'assets', 'ember-logo.png')
   );
   copyFileSafe(
     path.join(REPO_ROOT, 'build', 'icon.ico'),
@@ -83,19 +87,10 @@ function buildWebsite() {
     path.join(REPO_ROOT, 'assets', 'screenshots', 'nukron-dashboard-concept.svg'),
     path.join(DIST_DIR, 'assets', 'nukron-dashboard-concept.svg')
   );
-  const screenAssets = [
-    'nukron-screen-library.svg',
-    'nukron-screen-management.svg',
-    'nukron-screen-statistics.svg',
-    'nukron-screen-overlay.svg',
-    'nukron-screen-settings.svg'
-  ];
-  for (const assetName of screenAssets) {
-    copyFileSafe(
-      path.join(SRC_DIR, 'assets', assetName),
-      path.join(DIST_DIR, 'assets', assetName)
-    );
-  }
+  copyFileSafe(
+    path.join(REPO_ROOT, 'assets', 'screenshots', 'ember-dashboard-concept.svg'),
+    path.join(DIST_DIR, 'assets', 'ember-dashboard-concept.svg')
+  );
   copyFileSafe(
     path.join(REPO_ROOT, 'renderer', 'fonts', 'unbounded.woff2'),
     path.join(DIST_DIR, 'fonts', 'unbounded.woff2')
@@ -138,7 +133,7 @@ function buildWebsite() {
   ensureDir(path.join(DIST_DIR, 'js'));
   fs.writeFileSync(
     path.join(DIST_DIR, 'js', 'release-data.js'),
-    `window.NUKRON_BASELINE_DATA = ${JSON.stringify(releaseDataPayload, null, 2)};\n`,
+    `window.NUKRON_BASELINE_DATA = window.EMBER_BASELINE_DATA = ${JSON.stringify(releaseDataPayload, null, 2)};\n`,
     'utf8'
   );
 
@@ -151,12 +146,7 @@ function buildWebsite() {
       canonicalPath: '',
       title: 'Home',
       description: constants.description,
-      render: basePath =>
-        renderHomePage({
-          basePath,
-          baselineVersion: baseline.version,
-          changelogEntries: baseline.changelog
-        })
+      render: basePath => renderHomePage({ basePath, baselineVersion: baseline.version })
     },
     {
       pageId: 'download',
@@ -165,13 +155,8 @@ function buildWebsite() {
       canonicalPath: 'download.html',
       title: 'Download for Windows',
       description:
-        'Download the latest official Windows installer and portable build for NUKRON directly from GitHub Releases. Free, local SQLite storage, no account required.',
-      render: basePath =>
-        renderDownloadPage({
-          basePath,
-          baselineVersion: baseline.version,
-          changelogEntries: baseline.changelog
-        })
+        'Download the latest official Windows installer for NUKRON directly from GitHub Releases. Free, local SQLite storage, no account required.',
+      render: basePath => renderDownloadPage({ basePath, baselineVersion: baseline.version })
     },
     {
       pageId: 'whats-new',
@@ -203,10 +188,9 @@ function buildWebsite() {
       file: 'faq.html',
       cleanDir: 'faq',
       canonicalPath: 'faq.html',
-      title: 'Documentation, FAQ & Support',
+      title: 'Frequently Asked Questions',
       description:
-        'Documentation and answers to common questions about NUKRON: local SQLite storage, automatic playtime tracking, Windows game discovery, performance overlay, and updates.',
-      extraJsonLd: getFaqJsonLd(),
+        'Answers to common questions about NUKRON: local SQLite storage, automatic playtime tracking, Windows game discovery, and updates.',
       render: basePath => renderFaqPage({ basePath, baselineVersion: baseline.version })
     },
     {
@@ -230,8 +214,7 @@ function buildWebsite() {
       canonicalPath: p.canonicalPath,
       basePath: '.',
       baselineVersion: baseline.version,
-      bodyContent: p.render('.'),
-      extraJsonLd: p.extraJsonLd || null
+      bodyContent: p.render('.')
     });
     fs.writeFileSync(path.join(DIST_DIR, p.file), rootHtml, 'utf8');
 
@@ -246,8 +229,7 @@ function buildWebsite() {
         canonicalPath: p.canonicalPath,
         basePath: '..',
         baselineVersion: baseline.version,
-        bodyContent: p.render('..'),
-        extraJsonLd: p.extraJsonLd || null
+        bodyContent: p.render('..')
       });
       fs.writeFileSync(path.join(subDir, 'index.html'), subHtml, 'utf8');
     }
