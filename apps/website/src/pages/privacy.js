@@ -14,7 +14,7 @@ function renderPrivacyPage({ basePath = '.' }) {
 
       <div class="legal-grid reveal-up" data-delay="70">
         <!-- Privacy Policy Document (Synchronized with PRIVACY.md) -->
-        <article class="legal-doc-card glass-frosted" id="privacy-policy">
+        <article class="legal-doc-card" id="privacy-policy">
           <div class="ldc-header">
             <span class="ldc-badge">Official Desktop Policy</span>
             <h2>NUKRON — Privacy Policy</h2>
@@ -67,7 +67,7 @@ function renderPrivacyPage({ basePath = '.' }) {
 
         <!-- Terms of Service Summary (Synchronized with TERMS.md) + Pre-Publication Verification Box -->
         <div class="legal-side-col">
-          <article class="legal-doc-card glass-frosted" id="terms">
+          <article class="legal-doc-card" id="terms">
             <div class="ldc-header">
               <span class="ldc-badge">Terms of Service</span>
               <h2>NUKRON — Terms of Service</h2>
@@ -104,7 +104,7 @@ function renderPrivacyPage({ basePath = '.' }) {
           </article>
 
           <!-- Required Pre-Publication Confirmation Notice (per Section 7 prompt guidelines) -->
-          <aside class="verification-notice-card glass-optical" aria-label="Items to confirm before public website publication">
+          <aside class="verification-notice-card" aria-label="Items to confirm before public website publication">
             <h3>Website Publication Confirmation Notes</h3>
             <p>
               The policies above accurately reflect the NUKRON desktop application (<code>PRIVACY.md</code> and <code>TERMS.md</code>). Before publishing this website to a custom production domain, confirm the following hosting details:

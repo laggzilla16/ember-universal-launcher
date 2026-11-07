@@ -16,7 +16,6 @@
     initHeaderAndMobileNav();
     initScrollReveal();
     initHeroDesktopPreview();
-    initProductShowcase();
     initDiscoveryDemo();
     initOverlayStudio();
     initThemeAndWelcomeWidgets();
@@ -278,41 +277,6 @@
     }, 1000);
   }
 
-  /* 3b. Product Showcase 5-Tab Screenshot Explorer */
-  function initProductShowcase() {
-    const tabs = Array.from(document.querySelectorAll('[data-showcase-tab]'));
-    const panels = Array.from(document.querySelectorAll('[data-showcase-panel]'));
-    if (!tabs.length || !panels.length) return;
-
-    const activateTab = targetKey => {
-      tabs.forEach(tab => {
-        const isCurrent = tab.getAttribute('data-showcase-tab') === targetKey;
-        tab.classList.toggle('on', isCurrent);
-        tab.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
-      });
-      panels.forEach(panel => {
-        const isCurrent = panel.getAttribute('data-showcase-panel') === targetKey;
-        panel.classList.toggle('on', isCurrent);
-        panel.hidden = !isCurrent;
-      });
-    };
-
-    tabs.forEach((tab, idx) => {
-      tab.addEventListener('click', () => {
-        activateTab(tab.getAttribute('data-showcase-tab'));
-      });
-      tab.addEventListener('keydown', e => {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-          e.preventDefault();
-          const dir = e.key === 'ArrowRight' ? 1 : -1;
-          const nextIdx = (idx + dir + tabs.length) % tabs.length;
-          tabs[nextIdx].focus();
-          activateTab(tabs[nextIdx].getAttribute('data-showcase-tab'));
-        }
-      });
-    });
-  }
-
   /* 4. Feature 1 & 3: Library Group Filter + Windows Application Discovery Scanner */
   function initDiscoveryDemo() {
     const libPane = document.getElementById('demo-pane-library');
@@ -429,7 +393,7 @@
 
     const quoteText = document.getElementById('welcome-quote-text');
     const cycleBtn = document.getElementById('cycle-quote-btn');
-    const baseline = window.NUKRON_BASELINE_DATA || {};
+    const baseline = window.EMBER_BASELINE_DATA || {};
     const messages =
       Array.isArray(baseline.welcomeMessages) && baseline.welcomeMessages.length
         ? baseline.welcomeMessages
@@ -521,7 +485,7 @@
       {
         badge: 'Step 05 · Monitor Your Gaming Performance',
         title: 'Real-time hardware telemetry whenever you want a closer look',
-        desc: 'Toggle the Optical Glass overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
+        desc: 'Toggle the overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
