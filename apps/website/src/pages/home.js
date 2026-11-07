@@ -1,25 +1,33 @@
-const { constants } = require('../../../../packages/shared');
+const { constants, releases } = require('../../../../packages/shared');
 
-function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
+function renderHomePage({ basePath = '.', baselineVersion = '1.5.0', changelogEntries = [] }) {
+  const latestChangelog = changelogEntries[0] || { v: baselineVersion, items: [] };
+  const categorizedLatest = releases.categorizeReleaseItems(latestChangelog.items || []);
+
   return `
   <!-- =====================================================================
-       SECTION 1 — HERO
+       SECTION 1 — HERO (NUKRON Optical-Glass Stage)
        ===================================================================== -->
   <section class="hero-section" id="top">
     <div class="container hero-container">
       <div class="hero-copy reveal-up">
         <div class="hero-badge-row">
-          <a href="${basePath}/whats-new.html" class="release-pill" title="View latest release notes">
+          <a href="${basePath}/whats-new.html" class="release-pill glass-optical" title="Explore What's New in the latest NUKRON release">
             <span class="release-pill-dot"></span>
-            <span class="release-pill-brand">NUKRON <strong data-ember-version>v${baselineVersion}</strong></span>
+            <span class="release-pill-brand">NUKRON <strong data-nukron-version>v${baselineVersion}</strong></span>
             <span class="release-pill-sep">·</span>
-            <span class="release-pill-cta" data-ember-release-status>Latest Release →</span>
+            <span class="release-pill-formula">n₁ sin(θ₁) = n₂ sin(θ₂) Optical Glass</span>
+            <span class="release-pill-sep">·</span>
+            <span class="release-pill-cta" data-nukron-release-status>What's New →</span>
           </a>
         </div>
 
         <div class="hero-identity">
-          <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON Logo" width="56" height="56" class="hero-logo">
-          <span class="hero-eyebrow">NUKRON · PC Gaming Universe</span>
+          <img src="${basePath}/assets/nukron-logo.svg" alt="NUKRON Emblem" width="54" height="54" class="hero-logo">
+          <div class="hero-wordmark-stack">
+            <span class="hero-wordmark-text">NUKRON</span>
+            <span class="hero-eyebrow">Precision PC Gaming Launcher for Windows</span>
+          </div>
         </div>
 
         <h1 class="hero-headline">
@@ -35,22 +43,22 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </p>
 
         <div class="hero-actions">
-          <button type="button" class="btn btn-primary btn-lg" data-ember-download>
-            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <button type="button" class="btn btn-primary btn-xl" data-nukron-download>
+            <svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M10 3v10m0 0l-4-4m4 4l4-4M3 16h14"/>
             </svg>
             <span>Download for Windows</span>
           </button>
 
-          <a href="#introduction" class="btn btn-glass btn-lg">
+          <a href="#showcase" class="btn btn-glass btn-xl">
             <span>Explore NUKRON</span>
-            <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 8l5 5 5-5"/>
             </svg>
           </a>
         </div>
 
-        <div class="hero-meta-bar" aria-label="Release and compatibility details">
+        <div class="hero-meta-bar glass-clear" aria-label="Release and compatibility details">
           <div class="hero-meta-item">
             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
               <path d="M1.5 2.75L7 2v5.5H1.5V2.75zm0 5.75H7V14l-5.5-.75V8.5zM7.75 1.9L14.5 1v6.5H7.75V1.9zm0 6.6H14.5V15l-6.75-.9V8.5z"/>
@@ -59,45 +67,49 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
           </div>
           <span class="meta-dot">·</span>
           <div class="hero-meta-item">
-            <span>Version <strong data-ember-version>v${baselineVersion}</strong></span>
+            <span>Latest <strong data-nukron-version>v${baselineVersion}</strong></span>
           </div>
           <span class="meta-dot">·</span>
           <div class="hero-meta-item">
-            <span data-ember-installer-label>NSIS Setup Installer (.exe)</span>
+            <span data-nukron-installer-name>NUKRON-Setup-${baselineVersion}.exe</span>
           </div>
           <span class="meta-dot">·</span>
           <div class="hero-meta-item">
-            <a href="${constants.github.releasesUrl}" target="_blank" rel="noopener noreferrer" class="meta-link">All Releases ↗</a>
+            <span data-nukron-release-date>Synced with GitHub Releases</span>
+          </div>
+          <span class="meta-dot">·</span>
+          <div class="hero-meta-item">
+            <a href="${basePath}/download.html" class="meta-link">Installer &amp; Portable →</a>
           </div>
         </div>
       </div>
 
-      <!-- HERO VISUAL CENTERPIECE: Interactive Replica of the Real NUKRON Desktop Interface -->
-      <div class="hero-stage-wrap reveal-up" data-delay="100">
+      <!-- HERO VISUAL CENTERPIECE: Interactive Replica of the Actual NUKRON Desktop Application -->
+      <div class="hero-stage-wrap reveal-up" data-delay="90">
         <div class="hero-stage-caption">
-          <span class="stage-tag"><i class="dot-amber"></i> Interactive Product Concept — Actual NUKRON Desktop UI</span>
-          <span class="stage-hint">Click sidebar tabs, launch a game, or toggle the live HUD overlay</span>
+          <span class="stage-tag"><i class="dot-blue"></i> Live Interactive NUKRON Desktop Application Replica</span>
+          <span class="stage-hint">Switch sidebar views, launch a game card, or toggle the in-game Performance Overlay HUD</span>
         </div>
 
-        <div class="ember-app-window" id="hero-app-window" role="region" aria-label="Interactive NUKRON Desktop Launcher preview">
-          <!-- Custom Gaming Window Controls (from renderer/index.html) -->
+        <div class="nukron-app-window glass-optical" id="hero-app-window" role="region" aria-label="Interactive NUKRON Desktop Launcher preview">
+          <!-- Custom Gaming Window Controls (matching renderer/index.html) -->
           <div class="app-win-bar">
-            <div class="app-upd-pill" id="preview-upd-pill" title="Seamless in-app updates via GitHub Releases">
+            <div class="app-upd-pill glass-clear" id="preview-upd-pill" title="Seamless SHA-512 verified updates via GitHub Releases">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>
-              <span>Up to date · <b data-ember-version>v${baselineVersion}</b></span>
+              <span>Up to date · <b data-nukron-version>v${baselineVersion}</b></span>
             </div>
-            <div class="app-win-ctrls" aria-hidden="true">
-              <span class="app-wbtn"><svg viewBox="0 0 16 16"><path d="M3 8.5h10"/></svg></span>
-              <span class="app-wbtn"><svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/></svg></span>
-              <span class="app-wbtn w-close"><svg viewBox="0 0 16 16"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/></svg></span>
+            <div class="app-win-ctrls glass-clear" aria-hidden="true">
+              <span class="app-wbtn w-min" title="Minimize"><svg viewBox="0 0 16 16"><path d="M3 8.5h10"/></svg></span>
+              <span class="app-wbtn w-max" title="Maximize"><svg viewBox="0 0 16 16"><path d="M3 6V3.8c0-.44.36-.8.8-.8H6M10 3h2.2c.44 0 .8.36.8.8V6M13 10v2.2c0 .44-.36.8-.8.8H10M6 13H3.8a.8.8 0 0 1-.8-.8V10"/><rect x="4.8" y="4.8" width="6.4" height="6.4" rx="1" stroke-opacity=".45"/></svg></span>
+              <span class="app-wbtn w-close" title="Close"><svg viewBox="0 0 16 16"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/></svg></span>
             </div>
           </div>
 
           <div class="app-shell-grid">
-            <!-- Left Sidebar (218px scale replica) -->
+            <!-- Left Sidebar (222px replica of renderer/index.html) -->
             <aside class="app-sidebar">
               <div class="app-brand">
-                <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON" width="28" height="28">
+                <img src="${basePath}/assets/nukron-logo.svg" alt="NUKRON" width="30" height="30">
                 <b>NUKRON</b>
               </div>
               <div class="app-nav" role="tablist" aria-label="NUKRON Desktop Views">
@@ -122,10 +134,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
               <div class="app-sidebar-bottom">
                 <button type="button" class="app-side-action" id="hero-toggle-overlay-btn">
                   <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h2l1.5 4L12 7l1.5 5L15 8h2"/></svg>
-                  <span>Toggle Overlay HUD</span>
+                  <span>Performance HUD</span>
                 </button>
                 <div class="app-side-foot">
-                  <span class="app-ver" data-ember-version>v${baselineVersion}</span>
+                  <span class="app-ver" data-nukron-version>v${baselineVersion}</span>
                   <span>What's New · Privacy · Terms</span>
                 </div>
               </div>
@@ -133,11 +145,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
 
             <!-- Main App Viewport -->
             <div class="app-viewport" id="hero-app-viewport">
-              <!-- Populated and interactive via interactions.js, pre-rendered with Dashboard for instant load & SEO -->
               <div class="app-view-pane" data-pane="dash">
                 <div class="app-view-header">
                   <h2>Dashboard</h2>
-                  <span class="app-local-tag">Local SQLite · %APPDATA%\ember-launcher</span>
+                  <span class="app-local-tag">Local SQLite · %APPDATA%\\ember-launcher</span>
                 </div>
                 <div class="app-stats-row">
                   <div class="app-stat-card">
@@ -210,9 +221,9 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             </div>
 
             <!-- Floating In-Game Performance Overlay HUD Replica (from renderer/overlay.html) -->
-            <div class="app-floating-overlay" id="hero-floating-overlay" aria-label="NUKRON Performance Overlay HUD preview">
+            <div class="app-floating-overlay glass-optical" id="hero-floating-overlay" aria-label="NUKRON Performance Overlay HUD preview">
               <div class="ovl-head">
-                <img src="${basePath}/assets/nukron-logo.png" alt="" width="16" height="16">
+                <img src="${basePath}/assets/nukron-logo.svg" alt="" width="16" height="16">
                 <span class="ovl-title">NUKRON</span>
                 <span class="ovl-grip">⋮⋮</span>
               </div>
@@ -252,7 +263,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             </div>
 
             <!-- Bottom Active Session Bar (#bar from renderer/app.js) -->
-            <div class="app-session-bar" id="hero-session-bar">
+            <div class="app-session-bar glass-frosted" id="hero-session-bar">
               <div class="session-art art-elden" id="hero-session-art"></div>
               <div class="session-info">
                 <b id="hero-session-title">Elden Ring: Shadow of the Erdtree</b>
@@ -270,21 +281,167 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 2 — INTRODUCTION ("Everything starts here.")
+       SECTION 2 — PRODUCT SHOWCASE (Actual Desktop Application Screens)
+       ===================================================================== -->
+  <section class="showcase-section section-spacer" id="showcase">
+    <div class="container">
+      <div class="section-title-block reveal-up">
+        <span class="section-eyebrow">Actual Desktop Application</span>
+        <h2 class="section-headline">Inside the <span class="text-gradient">NUKRON</span> desktop experience.</h2>
+        <p class="section-lead">
+          Explore the five core views of the completed NUKRON Windows application—crafted with Snell’s Law Optical Glass surfaces, Electric Blue interactive controls, and controlled Crimson Red edge refraction.
+        </p>
+      </div>
+
+      <div class="showcase-shell glass-optical reveal-up" data-delay="60">
+        <!-- 5-Part Showcase Selector Tabs -->
+        <div class="showcase-tabs" role="tablist" aria-label="NUKRON Desktop Application Showcase">
+          <button type="button" class="showcase-tab on" role="tab" aria-selected="true" data-showcase-tab="library">
+            <span class="st-num">01</span>
+            <span class="st-label">Game Library</span>
+          </button>
+          <button type="button" class="showcase-tab" role="tab" aria-selected="false" data-showcase-tab="management">
+            <span class="st-num">02</span>
+            <span class="st-label">Game Management</span>
+          </button>
+          <button type="button" class="showcase-tab" role="tab" aria-selected="false" data-showcase-tab="statistics">
+            <span class="st-num">03</span>
+            <span class="st-label">Gaming Statistics</span>
+          </button>
+          <button type="button" class="showcase-tab" role="tab" aria-selected="false" data-showcase-tab="overlay">
+            <span class="st-num">04</span>
+            <span class="st-label">Performance Overlay</span>
+          </button>
+          <button type="button" class="showcase-tab" role="tab" aria-selected="false" data-showcase-tab="settings">
+            <span class="st-num">05</span>
+            <span class="st-label">Customization &amp; Settings</span>
+          </button>
+        </div>
+
+        <!-- Panel 1: Game Library -->
+        <div class="showcase-panel" data-showcase-panel="library">
+          <div class="sp-grid">
+            <div class="sp-copy">
+              <span class="feature-index">01 · Unified Game Library</span>
+              <h3>Every game you own in one optical-glass grid</h3>
+              <p>
+                Browse standalone Windows executables, Steam/Epic/GOG installs, Microsoft Store &amp; Xbox games, and emulated titles side by side with custom cover artwork and instant filtering.
+              </p>
+              <ul class="feature-check-list">
+                <li><strong>Instant Search &amp; Sorting:</strong> Filter in real time by title or group tags (RPG, Action, Emulated, Favorites) and sort by Recently played, Name, or Most played.</li>
+                <li><strong>Optical Playtime Pill:</strong> Compact glass badges display multi-unit playtime (minutes, hours, and days) or a live ticking session clock while you play.</li>
+                <li><strong>Non-Destructive Uninstalled State:</strong> Disconnected drives or uninstalled games show a <em>Not installed</em> badge and <em>Locate</em> action without erasing your recorded playtime.</li>
+              </ul>
+            </div>
+            <div class="sp-figure">
+              <img src="${basePath}/assets/nukron-screen-library.svg" alt="NUKRON Desktop Game Library interface screenshot showing game cards, group filters, search bar, and active session bar" width="960" height="580" class="sp-screenshot">
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Game Management -->
+        <div class="showcase-panel" data-showcase-panel="management" hidden>
+          <div class="sp-grid">
+            <div class="sp-copy">
+              <span class="feature-index">02 · Flexible Game Management</span>
+              <h3>Add .exe games, emulators, or scan Windows Start Menu apps</h3>
+              <p>
+                NUKRON gives you direct control over how each game launches and how its running process is tracked—without forcing folder scans that clutter your library with uninstallers.
+              </p>
+              <ul class="feature-check-list">
+                <li><strong>Import Windows Applications:</strong> Built-in scanner reads registered Windows Start Menu, Microsoft Store, and Xbox AppUserModelIDs (AUMIDs) for one-click import.</li>
+                <li><strong>Emulator &amp; Launch Arguments:</strong> Pair any ROM or disc image with your preferred emulator executable and pass custom command-line flags like <code>-fullscreen -dx12</code>.</li>
+                <li><strong>Custom Process Tracking:</strong> Specify a custom <em>Process to track</em> (e.g., <code>Game-Win64-Shipping.exe</code>) for games launched through secondary patchers or storefronts.</li>
+              </ul>
+            </div>
+            <div class="sp-figure">
+              <img src="${basePath}/assets/nukron-screen-management.svg" alt="NUKRON Game Management dialog and Import Windows Applications scanner screenshot" width="960" height="580" class="sp-screenshot">
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Gaming Statistics -->
+        <div class="showcase-panel" data-showcase-panel="statistics" hidden>
+          <div class="sp-grid">
+            <div class="sp-copy">
+              <span class="feature-index">03 · Gaming Statistics &amp; Session History</span>
+              <h3>Clear playtime analytics backed by 4-second SQLite heartbeats</h3>
+              <p>
+                Inspect your actual gaming habits across daily and weekly timelines, ranked breakdowns, and chronological session logs stored locally in <code>launcher.db</code>.
+              </p>
+              <ul class="feature-check-list">
+                <li><strong>At-a-Glance Summary Cards:</strong> Track time played today, total playtime this week (Mon–Sun), and your 7-day daily average alongside Dashboard library totals.</li>
+                <li><strong>14-Day Daily &amp; 8-Week Trends:</strong> Toggle between a 14-day daily bar chart and an 8-week weekly activity chart with hover duration tooltips.</li>
+                <li><strong>Most Played Rankings &amp; History:</strong> Compare your top games over the last 7 days, 30 days, or all time with percentage share bars and timestamped session logs.</li>
+              </ul>
+            </div>
+            <div class="sp-figure">
+              <img src="${basePath}/assets/nukron-screen-statistics.svg" alt="NUKRON Statistics view screenshot showing daily and weekly playtime charts and most played rankings" width="960" height="580" class="sp-screenshot">
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Performance Overlay -->
+        <div class="showcase-panel" data-showcase-panel="overlay" hidden>
+          <div class="sp-grid">
+            <div class="sp-copy">
+              <span class="feature-index">04 · In-Game Performance Overlay</span>
+              <h3>Real-time hardware telemetry in a Snell’s Law optical HUD</h3>
+              <p>
+                Toggle the always-on-top Optical Glass overlay from the active session bar or Settings to monitor live frame rates and system sensors without leaving your game.
+              </p>
+              <ul class="feature-check-list">
+                <li><strong>7 Live Hardware Metrics:</strong> Monitor FPS &amp; frame time (<code>ms</code>), CPU utilization, GPU utilization, dedicated VRAM, system RAM, CPU temperature, and GPU temperature.</li>
+                <li><strong>4 Layouts &amp; 3 Sizes:</strong> Switch effortlessly between <em>Vertical</em>, <em>Horizontal</em>, <em>Compact</em>, and <em>Expanded</em> layouts in Small, Medium, or Large scaling.</li>
+                <li><strong>Zero-PowerShell Native Daemon:</strong> Powered by a persistent C# helper using NVML, FrameView SDK, PDH, and Win32 APIs—excluding browsers and NUKRON from FPS detection.</li>
+              </ul>
+            </div>
+            <div class="sp-figure">
+              <img src="${basePath}/assets/nukron-screen-overlay.svg" alt="NUKRON In-Game Performance Overlay HUD screenshot showing Vertical, Horizontal, Compact, and Expanded layouts" width="960" height="580" class="sp-screenshot">
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 5: Customization & Settings -->
+        <div class="showcase-panel" data-showcase-panel="settings" hidden>
+          <div class="sp-grid">
+            <div class="sp-copy">
+              <span class="feature-index">05 · Customization &amp; Settings</span>
+              <h3>Tailored to your desktop setup and daily routine</h3>
+              <p>
+                Configure every aspect of how NUKRON looks, where the overlay sits on your monitor, and how the launcher behaves when Windows starts or when you close the window.
+              </p>
+              <ul class="feature-check-list">
+                <li><strong>Midnight Dark &amp; Daylight Light Themes:</strong> Switch themes with one click in the sidebar while preserving crisp Optical Glass refraction and contrast.</li>
+                <li><strong>Screen Corner Anchors &amp; Free Dragging:</strong> Snap the HUD to any screen corner or drag it directly to a custom coordinate that stays saved across sessions.</li>
+                <li><strong>Windows Startup, Tray &amp; Calm Welcome:</strong> Launch quietly in the system tray at Windows sign-in and optionally greet each session with a non-intrusive corner quote.</li>
+              </ul>
+            </div>
+            <div class="sp-figure">
+              <img src="${basePath}/assets/nukron-screen-settings.svg" alt="NUKRON Settings and Customization screenshot showing overlay controls, system tray toggles, startup toast, and dark/light themes" width="960" height="580" class="sp-screenshot">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 3 — OPTICAL GLASS ARCHITECTURE & INTRODUCTION ("Everything starts here.")
        ===================================================================== -->
   <section class="intro-section section-spacer" id="introduction">
     <div class="container">
       <div class="intro-header reveal-up">
-        <span class="section-eyebrow">The Philosophy</span>
+        <span class="section-eyebrow">Optical Glass &amp; Philosophy</span>
         <h2 class="section-headline">Everything starts here.</h2>
         <p class="section-lead">
-          PC gaming shouldn't begin with five competing storefront popups, mandatory sign-in screens, and cluttered ad feeds. NUKRON brings your personal library together into a calm, fast, locally operated universe on Windows.
+          PC gaming shouldn't begin with five competing storefront popups, mandatory sign-in screens, and cluttered ad feeds. NUKRON brings your personal library together into a calm, fast, locally operated universe on Windows—crafted with a realistic Snell’s Law optical material system.
         </p>
       </div>
 
       <div class="intro-pillars reveal-up">
-        <article class="pillar-card pillar-featured">
-          <div class="pillar-num">01</div>
+        <article class="pillar-card pillar-featured glass-optical">
+          <div class="pillar-num">01 · UNIFIED LIBRARY</div>
           <h3>One personal library for every way you play</h3>
           <p>
             Whether your games live as standalone Windows executables, launch through Steam, Epic, GOG, or Xbox, or run inside an emulator with your own ROMs and disc images, NUKRON organizes them under one roof with custom cover artwork and groups.
@@ -297,39 +454,47 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
           </div>
         </article>
 
-        <article class="pillar-card">
-          <div class="pillar-num">02</div>
+        <article class="pillar-card glass-frosted">
+          <div class="pillar-num">02 · LOCAL SQLITE</div>
           <h3>Owned by your PC, not a cloud server</h3>
           <p>
-            Your library, cover images, session history, and settings live locally in <code>%APPDATA%\ember-launcher\</code> powered by built-in SQLite. No account to register, no telemetry, and no internet connection needed to launch or track your games.
+            Your library, cover images, session history, and settings live locally in <code>%APPDATA%\\ember-launcher\\</code> powered by built-in SQLite. No account to register, no telemetry, and no internet connection needed to launch or track your games.
           </p>
+          <div class="pillar-chips">
+            <span>node:sqlite Engine</span>
+            <span>Zero Cloud Bloat</span>
+          </div>
         </article>
 
-        <article class="pillar-card">
-          <div class="pillar-num">03</div>
-          <h3>Snell’s Law Optical Glass Architecture</h3>
+        <article class="pillar-card glass-frosted">
+          <div class="pillar-num">03 · SNELL'S LAW OPTICS</div>
+          <h3>Refractive Optical Glass Architecture</h3>
           <p>
-            From the multi-layered Optical Glass interface with Electric Blue and Crimson Red edge refraction to a playtime tracker that survives crashes via 4-second heartbeats, every detail in NUKRON is engineered to make launching and enjoying your games effortless.
+            Inspired by Snell’s Law (<code>n₁ sin(θ₁) = n₂ sin(θ₂)</code>), NUKRON layers Clear, Frosted, and Optical Accent glass surfaces with grazing-angle Fresnel borders, internal specular highlights, Electric Blue luminance, and controlled Crimson Red edge dispersion.
           </p>
+          <div class="pillar-chips">
+            <span>3-Tier Glass System</span>
+            <span>Chromatic Rim Refraction</span>
+          </div>
         </article>
       </div>
     </div>
   </section>
 
   <!-- =====================================================================
-       SECTION 3 — FEATURE SHOWCASE (8 Features, Varied Compositions)
+       SECTION 4 — INTERACTIVE FEATURE STUDIOS ("Engineered for how PC gamers actually play.")
        ===================================================================== -->
   <section class="features-section section-spacer" id="features">
     <div class="container">
       <div class="section-title-block reveal-up">
-        <span class="section-eyebrow">Crafted Capabilities</span>
+        <span class="section-eyebrow">Interactive Capabilities</span>
         <h2 class="section-headline">Engineered for how PC gamers actually play.</h2>
         <p class="section-lead">
-          Every feature in NUKRON exists to solve a real part of daily PC gaming—without bloat, subscriptions, or unnecessary complexity.
+          Test NUKRON’s core workflows directly in your browser—from Windows application discovery and live HUD customization to crash-safe playtime tracking.
         </p>
       </div>
 
-      <!-- COMPOSITION A: Large Split Showcase — Feature 1 (Your Gaming Library) & Feature 3 (Automatic Game Discovery) -->
+      <!-- COMPOSITION A: Large Split Showcase — Library Management & Automatic Discovery -->
       <div class="feature-split-block reveal-up">
         <div class="feature-split-copy">
           <div class="feature-tag-row">
@@ -354,7 +519,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
 
         <div class="feature-split-visual">
-          <div class="discovery-demo-window">
+          <div class="discovery-demo-window glass-frosted">
             <div class="demo-tabs" role="tablist" aria-label="Library and Discovery Demo">
               <button type="button" class="demo-tab on" data-lib-demo="library">Library Grid</button>
               <button type="button" class="demo-tab" data-lib-demo="scanner">Import Windows Applications</button>
@@ -438,11 +603,11 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
       </div>
 
-      <!-- COMPOSITION B: Full-Width Interactive Studio — Feature 4 (Performance Overlay) -->
-      <div class="feature-studio-block reveal-up">
+      <!-- COMPOSITION B: Full-Width Interactive Studio — Performance Overlay -->
+      <div class="feature-studio-block glass-optical reveal-up">
         <div class="studio-header">
           <div>
-            <span class="feature-index">04 · Customizable In-Game HUD</span>
+            <span class="feature-index">04 · Customizable In-Game HUD Studio</span>
             <h3>Performance Overlay</h3>
             <p class="feature-desc">
               Monitor gaming performance using a customizable in-game overlay powered by a lightweight native Windows helper daemon (NVML, FrameView SDK, PDH, and Win32 system telemetry—zero PowerShell spawning overhead).
@@ -457,7 +622,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
 
         <div class="overlay-studio-grid">
           <!-- Interactive Controls matching Settings > Performance Overlay in renderer/app.js -->
-          <div class="studio-controls" aria-label="Customize overlay preview">
+          <div class="studio-controls glass-clear" aria-label="Customize overlay preview">
             <div class="studio-ctrl-group">
               <label class="studio-label">Overlay Layout</label>
               <div class="studio-btn-row" id="studio-layout-btns">
@@ -495,9 +660,9 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
           <div class="studio-viewport">
             <div class="studio-game-backdrop">
               <div class="studio-corner-label">In-Game Screen Preview · Top-Right Anchor</div>
-              <div id="studio-overlay-preview" class="live-ovl layout-vertical size-medium">
+              <div id="studio-overlay-preview" class="live-ovl glass-optical layout-vertical size-medium">
                 <div class="ovl-head">
-                  <img src="${basePath}/assets/nukron-logo.png" alt="" width="18" height="18">
+                  <img src="${basePath}/assets/nukron-logo.svg" alt="" width="18" height="18">
                   <span class="ovl-title">NUKRON</span>
                   <span class="ovl-grip">⋮⋮</span>
                 </div>
@@ -539,7 +704,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
       </div>
 
-      <!-- COMPOSITION C: Alternating Deep-Dive — Feature 2 (Playtime Tracking & Statistics) -->
+      <!-- COMPOSITION C: Alternating Deep-Dive — Playtime Tracking & Statistics -->
       <div class="feature-split-block reverse reveal-up">
         <div class="feature-split-copy">
           <span class="feature-index">02 · Automatic Playtime Tracking</span>
@@ -548,15 +713,15 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             Track the time you spend playing your favorite games automatically whenever you launch through NUKRON. One tracker per game ensures double-clicking never creates duplicate timers.
           </p>
           <div class="tracking-specs-grid">
-            <div class="ts-item">
+            <div class="ts-item glass-clear">
               <strong>4s Process Heartbeat</strong>
               <span>Writes session progress to SQLite every 4 seconds. If your PC loses power mid-game, your session closes cleanly at the last heartbeat.</span>
             </div>
-            <div class="ts-item">
+            <div class="ts-item glass-clear">
               <strong>15s Grace Period</strong>
               <span>Handles launcher-to-game hand-offs seamlessly and waits 15 seconds after the last matching process exits before finalizing.</span>
             </div>
-            <div class="ts-item">
+            <div class="ts-item glass-clear">
               <strong>Daily &amp; Weekly Analytics</strong>
               <span>Explore 14-day daily charts, 8-week trends, daily averages, and most-played rankings across 7 days, 30 days, and all time.</span>
             </div>
@@ -564,7 +729,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
 
         <div class="feature-split-visual">
-          <div class="stats-showcase-card">
+          <div class="stats-showcase-card glass-frosted">
             <div class="sc-top-metrics">
               <div class="sc-stat"><b>2h 45m</b><span>played today</span></div>
               <div class="sc-stat"><b>14h 20m</b><span>this week (Mon–Sun)</span></div>
@@ -603,10 +768,10 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </div>
       </div>
 
-      <!-- COMPOSITION D: Editorial Bento Trio — Features 5, 6, 7, 8 -->
+      <!-- COMPOSITION D: Editorial Bento Grid — Features 5, 6, 7, 8 -->
       <div class="feature-editorial-grid reveal-up">
         <!-- Feature 5: Designed Around You -->
-        <article class="editorial-card span-6">
+        <article class="editorial-card glass-frosted span-6">
           <div class="ed-top">
             <span class="feature-index">05 · Custom Optical Interface</span>
             <h3>Designed Around You</h3>
@@ -618,8 +783,8 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             <div class="tp-header">
               <span>Live Theme Preview</span>
               <div class="tp-switch-group">
-                <button type="button" class="tp-btn on" data-set-tp="dark">Dark Mode</button>
-                <button type="button" class="tp-btn" data-set-tp="light">Light Mode</button>
+                <button type="button" class="tp-btn on" data-set-tp="dark">Midnight Dark</button>
+                <button type="button" class="tp-btn" data-set-tp="light">Daylight Light</button>
               </div>
             </div>
             <div class="tp-sample-surface">
@@ -635,7 +800,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </article>
 
         <!-- Feature 8: A Calmer Startup -->
-        <article class="editorial-card span-6">
+        <article class="editorial-card glass-frosted span-6">
           <div class="ed-top">
             <span class="feature-index">08 · Mindful Welcome</span>
             <h3>A Calmer Startup</h3>
@@ -644,8 +809,8 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             </p>
           </div>
           <div class="welcome-quote-stage">
-            <div class="welcome-toast-replica" id="welcome-quote-card">
-              <img src="${basePath}/assets/nukron-logo.png" alt="" width="24" height="24">
+            <div class="welcome-toast-replica glass-optical" id="welcome-quote-card">
+              <img src="${basePath}/assets/nukron-logo.svg" alt="" width="24" height="24">
               <div class="wt-copy">
                 <span class="wt-brand">NUKRON</span>
                 <p class="wt-msg" id="welcome-quote-text">“Take a breath. The game will wait for you.”</p>
@@ -658,7 +823,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </article>
 
         <!-- Feature 6: Stay Updated -->
-        <article class="editorial-card span-6">
+        <article class="editorial-card glass-frosted span-6">
           <div class="ed-top">
             <span class="feature-index">06 · Seamless Updates</span>
             <h3>Stay Updated Without Setup Wizards</h3>
@@ -666,11 +831,11 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
               Receive native Windows toast notifications when a new release is published—even while minimized to the system tray. Choosing Update downloads, verifies the SHA-512 checksum, installs silently, and reopens NUKRON with What's New ready to read.
             </p>
           </div>
-          <div class="updater-mini-replica">
+          <div class="updater-mini-replica glass-clear">
             <div class="umr-row">
-              <img src="${basePath}/assets/nukron-logo.png" alt="" width="22" height="22">
+              <img src="${basePath}/assets/nukron-logo.svg" alt="" width="24" height="24">
               <div class="umr-text">
-                <b>NUKRON Update Ready · <span data-ember-version>v${baselineVersion}</span></b>
+                <b>NUKRON Update Ready · <span data-nukron-version>v${baselineVersion}</span></b>
                 <span>SHA-512 verified · Silent install preserves all games &amp; settings</span>
               </div>
               <a href="${basePath}/whats-new.html" class="umr-link">Changelog →</a>
@@ -679,7 +844,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </article>
 
         <!-- Feature 7: System Tray Integration -->
-        <article class="editorial-card span-6">
+        <article class="editorial-card glass-frosted span-6">
           <div class="ed-top">
             <span class="feature-index">07 · Always Accessible</span>
             <h3>System Tray Integration</h3>
@@ -687,7 +852,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
               Keep NUKRON accessible without occupying your taskbar. Configure NUKRON to launch quietly in the Windows system tray at sign-in and minimize on close so your playtime tracking and performance overlay stay ready whenever you start a game.
             </p>
           </div>
-          <div class="tray-settings-replica">
+          <div class="tray-settings-replica glass-clear">
             <div class="tray-toggle-line">
               <span>Launch NUKRON when Windows starts</span>
               <span class="fake-toggle on"><i></i></span>
@@ -703,12 +868,12 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 4 — THE NUKRON EXPERIENCE ("Less managing. More playing.")
+       SECTION 5 — PRODUCT WALKTHROUGH ("Less managing. More playing.")
        ===================================================================== -->
   <section class="experience-section section-spacer" id="experience">
     <div class="container">
       <div class="section-title-block reveal-up">
-        <span class="section-eyebrow">Your Daily Flow</span>
+        <span class="section-eyebrow">Product Walkthrough</span>
         <h2 class="section-headline">Less managing. More playing.</h2>
         <p class="section-lead">
           See how NUKRON fits naturally into every gaming session from the moment you sit down at your PC.
@@ -755,7 +920,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
         </ol>
 
         <div class="journey-stage" id="journey-stage" aria-live="polite">
-          <div class="js-card" id="journey-stage-card">
+          <div class="js-card glass-frosted" id="journey-stage-card">
             <div class="js-step-badge" id="js-badge">Step 01 · Instant Startup</div>
             <h4 class="js-title" id="js-title">Ready in the background before you even pick a game</h4>
             <p class="js-desc" id="js-desc">
@@ -766,7 +931,7 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
                 <div class="js-mock-row">
                   <span class="dot-live"></span>
                   <strong>NUKRON Single-Instance Lock Active</strong>
-                  <code>%APPDATA%\ember-launcher\launcher.db</code>
+                  <code>%APPDATA%\\ember-launcher\\launcher.db</code>
                 </div>
                 <div class="js-mock-quote">
                   “Welcome back. Take your time.”
@@ -780,41 +945,97 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 5 — PERFORMANCE AND SIMPLICITY ("Made to stay out of your way.")
+       SECTION 6 — WHAT'S NEW HIGHLIGHT (Live Release & Changelog Summary)
+       ===================================================================== -->
+  <section class="home-whats-new-section section-spacer" id="whats-new-preview">
+    <div class="container">
+      <div class="hwn-header reveal-up">
+        <div>
+          <span class="section-eyebrow">What's New &amp; Release History</span>
+          <h2 class="section-headline">Latest in NUKRON <span class="text-gradient" data-nukron-version>v${baselineVersion}</span></h2>
+          <p class="section-lead">
+            Synchronized with the official in-app changelog and GitHub Releases. Every update ships with transparent release notes across features, improvements, and fixes.
+          </p>
+        </div>
+        <div class="hwn-actions">
+          <a href="${basePath}/whats-new.html" class="btn btn-glass">
+            <span>Explore Full Release History →</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hwn-grid reveal-up" data-delay="70">
+        <article class="hwn-card glass-frosted">
+          <div class="hwn-card-head">
+            <span class="ce-cat-badge cat-feature">New Features</span>
+            <span class="ce-cat-count">${categorizedLatest.features.length}</span>
+          </div>
+          <ul class="md-list">
+            ${categorizedLatest.features.map(item => `<li>${releases.escapeHtml(item)}</li>`).join('\n            ')}
+          </ul>
+        </article>
+
+        <div class="hwn-side-stack">
+          <article class="hwn-card glass-frosted">
+            <div class="hwn-card-head">
+              <span class="ce-cat-badge cat-improve">Improvements</span>
+              <span class="ce-cat-count">${categorizedLatest.improvements.length}</span>
+            </div>
+            <ul class="md-list">
+              ${categorizedLatest.improvements.map(item => `<li>${releases.escapeHtml(item)}</li>`).join('\n              ')}
+            </ul>
+          </article>
+
+          <article class="hwn-card glass-frosted">
+            <div class="hwn-card-head">
+              <span class="ce-cat-badge cat-fix">Bug Fixes</span>
+              <span class="ce-cat-count">${categorizedLatest.fixes.length}</span>
+            </div>
+            <ul class="md-list">
+              ${categorizedLatest.fixes.map(item => `<li>${releases.escapeHtml(item)}</li>`).join('\n              ')}
+            </ul>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 7 — PRIVACY & LOCAL-FIRST PHILOSOPHY ("Made to stay out of your way.")
        ===================================================================== -->
   <section class="simplicity-section section-spacer" id="simplicity">
     <div class="container">
-      <div class="simplicity-shell reveal-up">
+      <div class="simplicity-shell glass-frosted reveal-up">
         <div class="simplicity-intro">
-          <span class="section-eyebrow">Local-First Architecture</span>
+          <span class="section-eyebrow">Privacy &amp; Local-First Philosophy</span>
           <h2 class="section-headline">Made to stay out of your way.</h2>
           <p class="section-lead">
-            NUKRON is built as a practical gaming companion rather than another noisy platform competing for your attention. It runs locally on your machine and respects your system resources.
+            NUKRON is built as a practical gaming companion rather than another noisy platform competing for your attention. It runs locally on your machine and respects your privacy and system resources.
           </p>
         </div>
 
         <div class="simplicity-grid">
-          <div class="simp-card">
+          <div class="simp-card glass-clear">
             <div class="simp-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
             </div>
-            <h3>100% Local Operation</h3>
+            <h3>100% Local SQLite Storage</h3>
             <p>
               Built on Electron's built-in <code>node:sqlite</code> engine with zero cloud dependencies. Your game paths, cover images, and session timestamps never leave your PC.
             </p>
           </div>
 
-          <div class="simp-card">
+          <div class="simp-card glass-clear">
             <div class="simp-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
             </div>
             <h3>Simple Organization</h3>
             <p>
-              No convoluted nested menus or store tabs. Group your games the way you think about them, find anything in keystrokes, and launch with a single click.
+              No convoluted nested menus or store feeds. Group your games the way you think about them, find anything in keystrokes, and launch with a single click.
             </p>
           </div>
 
-          <div class="simp-card">
+          <div class="simp-card glass-clear">
             <div class="simp-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             </div>
@@ -824,13 +1045,13 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
             </p>
           </div>
 
-          <div class="simp-card">
+          <div class="simp-card glass-clear">
             <div class="simp-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
-            <h3>Zero Unnecessary Complexity</h3>
+            <h3>Zero Telemetry or Accounts</h3>
             <p>
-              No mandatory user accounts. No subscriptions. No ads, chat popups, or telemetry trackers. Only network requests are checking GitHub Releases for app updates.
+              No mandatory user accounts. No subscriptions. No ads, chat popups, or analytics trackers. Network requests only check GitHub Releases for app updates.
             </p>
           </div>
         </div>
@@ -839,32 +1060,34 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
   </section>
 
   <!-- =====================================================================
-       SECTION 6 — FINAL DOWNLOAD SECTION ("Ready to enter NUKRON?")
+       SECTION 8 — FINAL DOWNLOAD SECTION ("Ready to make room for NUKRON?")
        ===================================================================== -->
   <section class="final-cta-section section-spacer" id="download-cta">
     <div class="container">
-      <div class="final-cta-card reveal-up">
+      <div class="final-cta-card glass-optical reveal-up">
         <div class="final-cta-glow" aria-hidden="true"></div>
-        <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="64" height="64" class="final-cta-logo">
+        <img src="${basePath}/assets/nukron-logo.svg" alt="NUKRON logo" width="68" height="68" class="final-cta-logo">
         <h2 class="final-cta-headline">Ready to make room for NUKRON?</h2>
         <p class="final-cta-desc">Your next gaming session starts here.</p>
 
         <div class="final-cta-actions">
-          <button type="button" class="btn btn-primary btn-xl" data-ember-download>
+          <button type="button" class="btn btn-primary btn-xl" data-nukron-download>
             <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M10 3v10m0 0l-4-4m4 4l4-4M3 16h14"/>
             </svg>
-            <span>Download for Windows</span>
+            <span>Download for Windows (<span data-nukron-version>v${baselineVersion}</span>)</span>
           </button>
           <a href="${basePath}/download.html" class="btn btn-glass btn-xl">
-            Installation &amp; Release Details
+            <span>Installer, Portable &amp; Setup Guide</span>
           </a>
         </div>
 
         <div class="final-cta-meta">
-          <span>Latest Release: <strong data-ember-version>v${baselineVersion}</strong></span>
+          <span>Latest Release: <strong data-nukron-version>v${baselineVersion}</strong></span>
           <span class="meta-dot">·</span>
-          <span data-ember-release-date>Official GitHub Release</span>
+          <span data-nukron-release-date>Official GitHub Release</span>
+          <span class="meta-dot">·</span>
+          <span data-nukron-installer-name>NUKRON-Setup-${baselineVersion}.exe</span>
           <span class="meta-dot">·</span>
           <span>Windows 10 &amp; 11 (64-bit)</span>
           <span class="meta-dot">·</span>
@@ -877,4 +1100,3 @@ function renderHomePage({ basePath = '.', baselineVersion = '1.5.0' }) {
 }
 
 module.exports = { renderHomePage };
-
