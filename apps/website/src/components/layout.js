@@ -45,19 +45,19 @@ function renderLayout({
   <meta property="og:title" content="${fullTitle}">
   <meta property="og:description" content="${metaDesc}">
   <meta property="og:url" content="${canonicalUrl}">
-  <meta property="og:image" content="${prodBaseUrl}/assets/og-social-card.svg">
+  <meta property="og:image" content="${prodBaseUrl}/assets/og-social-card.svg?v=${baselineVersion}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${fullTitle}">
   <meta name="twitter:description" content="${metaDesc}">
-  <meta name="twitter:image" content="${prodBaseUrl}/assets/og-social-card.svg">
+  <meta name="twitter:image" content="${prodBaseUrl}/assets/og-social-card.svg?v=${baselineVersion}">
 
   <!-- Official NUKRON Icons & Fonts -->
-  <link rel="icon" type="image/png" href="${basePath}/assets/nukron-logo.png">
-  <link rel="shortcut icon" type="image/x-icon" href="${basePath}/assets/icon.ico">
-  <link rel="apple-touch-icon" href="${basePath}/assets/nukron-logo.png">
+  <link rel="icon" type="image/png" href="${basePath}/assets/nukron-logo.png?v=${baselineVersion}">
+  <link rel="shortcut icon" type="image/x-icon" href="${basePath}/assets/icon.ico?v=${baselineVersion}">
+  <link rel="apple-touch-icon" href="${basePath}/assets/nukron-logo.png?v=${baselineVersion}">
   <link rel="preload" href="${basePath}/fonts/unbounded.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="${basePath}/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="${basePath}/styles/main.css">
+  <link rel="stylesheet" href="${basePath}/styles/main.css?v=${baselineVersion}">
 </head>
 <body data-page="${pageId}" data-base-path="${basePath}">
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -75,7 +75,7 @@ function renderLayout({
     <div class="container nav-container">
       <a href="${basePath}/index.html" class="brand-mark" aria-label="NUKRON Home">
         <span class="brand-logo-wrap">
-          <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="34" height="34" class="brand-logo">
+          <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON logo" width="34" height="34" class="brand-logo">
         </span>
         <span class="brand-text">
           <span class="brand-wordmark">NUKRON</span>
@@ -150,7 +150,7 @@ function renderLayout({
   <div class="download-feedback-drawer" id="download-feedback" role="status" aria-live="polite" hidden>
     <div class="download-feedback-card">
       <div class="df-head">
-        <img src="${basePath}/assets/nukron-logo.png" alt="" width="24" height="24" class="df-logo">
+        <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="" width="24" height="24" class="df-logo">
         <strong class="df-title" id="df-title">Preparing download…</strong>
         <button type="button" class="df-close" id="df-close" aria-label="Dismiss notification">✕</button>
       </div>
@@ -165,7 +165,7 @@ function renderLayout({
       <div class="footer-top">
         <div class="footer-brand-col">
           <a href="${basePath}/index.html" class="brand-mark footer-brand">
-            <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="32" height="32" class="brand-logo">
+            <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON logo" width="32" height="32" class="brand-logo">
             <span class="brand-wordmark">NUKRON</span>
           </a>
           <p class="footer-tagline">

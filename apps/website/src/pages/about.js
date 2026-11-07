@@ -11,7 +11,7 @@ function renderAboutPage({ basePath = '.', baselineVersion = '1.5.1' }) {
 
       <!-- Core Manifesto Block -->
       <div class="manifesto-card reveal-up" data-delay="80">
-        <img src="${basePath}/assets/nukron-logo.png" alt="NUKRON logo" width="60" height="60" class="manifesto-logo">
+        <img src="${basePath}/assets/nukron-logo.png?v=${baselineVersion}" alt="NUKRON logo" width="60" height="60" class="manifesto-logo">
         <blockquote class="manifesto-quote">
           “NUKRON was created around a simple idea: PC gaming deserves a better home. A place that feels personal, stays out of your way, and makes the experience of managing your games a little better.”
         </blockquote>
