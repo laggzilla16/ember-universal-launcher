@@ -1,20 +1,20 @@
-# Ember Official Website (`apps/website`)
+# NUKRON Official Website (`apps/website`)
 
-Official website for **Ember Universal Launcher** (`https://github.com/laggzilla16/ember-universal-launcher`).
+Official website for **NUKRON** (`https://github.com/laggzilla16/ember-universal-launcher`).
 
 ## Architecture
 
-The website is a static-first, zero-external-dependency frontend engineered inside the Ember monorepo. It shares the official **Liquid Glass** design language, typography (`Unbounded` and `Inter`), and brand assets with the Ember desktop launcher while remaining 100% independent of the Electron runtime.
+The website is a static-first, zero-external-dependency frontend engineered inside the NUKRON monorepo. It shares the official **Optical Glass** design language, typography (`Unbounded` and `Inter`), and brand assets with the NUKRON desktop launcher while remaining 100% independent of the Electron runtime.
 
 ### Pages Built (`apps/website/dist`)
 
 - `/` (`index.html`) — Storytelling homepage:
-  1. **Hero** with live interactive Ember Desktop UI concept, dynamic version indicator, and direct Windows installer download.
+  1. **Hero** with live interactive NUKRON Desktop UI concept, dynamic version indicator, and direct Windows installer download.
   2. **Introduction** (*"Everything starts here."*) — Local-first philosophy.
   3. **Feature Showcase** — 8 core capabilities presented across interactive studios and editorial layouts.
-  4. **The Ember Experience** (*"Less managing. More playing."*) — Interactive 5-step daily gaming flow.
+  4. **The NUKRON Experience** (*"Less managing. More playing."*) — Interactive 5-step daily gaming flow.
   5. **Performance and Simplicity** (*"Made to stay out of your way."*).
-  6. **Final Download CTA** (*"Ready to make room for Ember?"*).
+  6. **Final Download CTA** (*"Ready to make room for NUKRON?"*).
 - `/download.html` (`/download/`) — Dedicated Windows download hub, compatibility specs, 3-step setup guide, and troubleshooting.
 - `/whats-new.html` (`/whats-new/`) — Live release history synchronized with the GitHub Releases API and verified in-app changelog.
 - `/about.html` (`/about/`) — Brand philosophy, core principles, and Windows technical overview.
@@ -48,7 +48,7 @@ At runtime, `js/releases-client.js` queries:
 Installer resolution rules (`packages/shared/utilities/releases.js`):
 1. Filters out `draft` releases so drafts are never shown publicly.
 2. Distinguishes stable releases from `prerelease` tags.
-3. Prioritizes the official NSIS Windows Setup executable (`Ember-Launcher-Setup-<version>.exe`).
+3. Prioritizes the official NSIS Windows Setup executable (`NUKRON-Setup-<version>.exe`, with backward-compatible support for legacy `Ember-Launcher-Setup-<version>.exe`).
 4. Strictly excludes `.blockmap`, `latest.yml`, `.zip`/`.tar.gz` source archives, and checksum metadata files.
 5. Never silently downloads an outdated release: if a newly created tag lacks a `.exe` asset, the user is explicitly informed and offered either the latest verified installer or the official GitHub Releases page.
 6. Gracefully falls back to `https://github.com/laggzilla16/ember-universal-launcher/releases/latest` if `api.github.com` is unreachable or rate-limited.

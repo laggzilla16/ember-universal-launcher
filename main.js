@@ -59,7 +59,7 @@ function saveOverlaySettings() {
 }
 
 // ---- Native Performance & Process Helper Daemon (zero-PowerShell-spawn telemetry + process scanning)
-const HELPER_VERSION = '2';
+const HELPER_VERSION = '3';
 const HELPER_CS_SOURCE = `using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -401,7 +401,7 @@ class Program {
                                 pname == "shellexperiencehost.exe" || pname == "startmenuexperiencehost.exe" ||
                                 pname == "applicationframehost.exe" || pname == "textinputhost.exe" ||
                                 pname == "systemsettings.exe" || pname == "lockapp.exe" ||
-                                pname == "electron.exe" || pname == "ember launcher.exe") {
+                                pname == "electron.exe" || pname == "ember launcher.exe" || pname == "nukron.exe") {
                                 continue;
                             }
 
@@ -413,7 +413,10 @@ class Program {
                                     if (val > fgFps) fgFps = val;
                                 }
                             } else if (targetPids.Count > 0 && fgPid == pid) {
-                                if (val > otherGameFps) otherGameFps = val;
+                                if (!pname.Contains("code") && !pname.Contains("antigravity") && !pname.Contains("chrome") &&
+                                    !pname.Contains("msedge") && !pname.Contains("firefox") && !pname.Contains("discord")) {
+                                    if (val > otherGameFps) otherGameFps = val;
+                                }
                             }
                         }
 
@@ -852,14 +855,16 @@ const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings
 let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '' }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
-const LOGO = path.join(__dirname, 'renderer', 'assets', 'ember-logo.png');
-function trayIcon() { // the real Ember logo; falls back to a flame-coloured dot drawn in code (BGRA) if the file is missing
+const LOGO = fs.existsSync(path.join(__dirname, 'renderer', 'assets', 'nukron-logo.png'))
+  ? path.join(__dirname, 'renderer', 'assets', 'nukron-logo.png')
+  : path.join(__dirname, 'renderer', 'assets', 'ember-logo.png');
+function trayIcon() { // the real NUKRON logo; falls back to an Electric Blue -> Crimson Red optical dot (BGRA) if the file is missing
   const logo = nativeImage.createFromPath(LOGO);
   if (!logo.isEmpty()) return logo.resize({ width: 32, height: 32, quality: 'best' });
   const n = 32, buf = Buffer.alloc(n * n * 4), c = (n - 1) / 2;
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
     const d = Math.hypot(x - c, y - c), a = Math.max(0, Math.min(1, c - d + 0.5)), t = (x + y) / (2 * n), i = (y * n + x) * 4;
-    buf[i] = 255 * (1 - t) + 162 * t; buf[i + 1] = 108 * (1 - t) + 95 * t; buf[i + 2] = 124 * (1 - t) + 255 * t; buf[i + 3] = Math.round(255 * a); // B,G,R,A: purple -> pink
+    buf[i] = Math.round(235 * (1 - t) + 70 * t); buf[i + 1] = Math.round(99 * (1 - t) + 57 * t); buf[i + 2] = Math.round(37 * (1 - t) + 230 * t); buf[i + 3] = Math.round(255 * a); // B,G,R,A: #2563EB -> #E63946
   }
   return nativeImage.createFromBitmap(buf, { width: n, height: n });
 }
@@ -910,13 +915,37 @@ function maybeShowWelcome() {
 }
 function applyTray() {
   if (appSettings.background && !tray) {
-    tray = new Tray(trayIcon()); tray.setToolTip('Ember Launcher');
-    tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open Ember', click: showMain }, { type: 'separator' }, { label: 'Quit Ember', click: () => app.quit() }]));
+    tray = new Tray(trayIcon()); tray.setToolTip('NUKRON');
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open NUKRON', click: showMain }, { type: 'separator' }, { label: 'Quit NUKRON', click: () => app.quit() }]));
     tray.on('click', showMain);
   } else if (!appSettings.background && tray) { tray.destroy(); tray = null; }
 }
 
+function migrateLegacyUserData() {
+  try {
+    const curDir = app.getPath('userData');
+    const appData = app.getPath('appData');
+    const legacyDir = path.join(appData, 'ember-launcher');
+    if (path.resolve(curDir).toLowerCase() === path.resolve(legacyDir).toLowerCase()) return;
+    if (!fs.existsSync(legacyDir)) return;
+    fs.mkdirSync(curDir, { recursive: true });
+    for (const file of ['launcher.db', 'app-settings.json', 'overlay-settings.json', 'welcome-state.json']) {
+      const src = path.join(legacyDir, file), dst = path.join(curDir, file);
+      if (fs.existsSync(src) && !fs.existsSync(dst)) fs.copyFileSync(src, dst);
+    }
+    const srcCovers = path.join(legacyDir, 'covers'), dstCovers = path.join(curDir, 'covers');
+    if (fs.existsSync(srcCovers) && !fs.existsSync(dstCovers)) {
+      fs.mkdirSync(dstCovers, { recursive: true });
+      for (const f of fs.readdirSync(srcCovers)) {
+        const s = path.join(srcCovers, f), d = path.join(dstCovers, f);
+        if (fs.statSync(s).isFile() && !fs.existsSync(d)) fs.copyFileSync(s, d);
+      }
+    }
+  } catch {}
+}
+
 function initDb() {
+  migrateLegacyUserData();
   db = new DatabaseSync(path.join(app.getPath('userData'), 'launcher.db'));
   db.exec(`PRAGMA journal_mode=WAL;
     CREATE TABLE IF NOT EXISTS games(id INTEGER PRIMARY KEY, name TEXT NOT NULL, exe TEXT NOT NULL,
@@ -1063,7 +1092,7 @@ function launch(id) {
   let child;
   try { child = spawn(exe, argv, { cwd: path.dirname(exe), detached: true, stdio: 'ignore' }); }
   catch (e) { return { ok: false, error: e.message }; }
-  child.on('error', e => finish(id, true, `Could not start ${g.name}: ${e.message}. If it needs admin rights, run Ember as administrator.`));
+  child.on('error', e => finish(id, true, `Could not start ${g.name}: ${e.message}. If it needs admin rights, run NUKRON as administrator.`));
   return startSession(id, g, exe.toLowerCase(), matcher(g), child);
 }
 
@@ -1092,8 +1121,8 @@ async function tick(id) {
   } else if (st.seen && now - st.last >= GRACE) finish(id);
   else if (!st.seen && now - st.started > NOSHOW)
     finish(id, true, st.aumid
-      ? 'Ember could not detect this Windows app running. It may not support launching this way, or it runs outside its package folder. Set "Process to track" in the game settings.'
-      : 'Ember could not detect the game running. Set "Process to track" in the game settings.');
+      ? 'NUKRON could not detect this Windows app running. It may not support launching this way, or it runs outside its package folder. Set "Process to track" in the game settings.'
+      : 'NUKRON could not detect the game running. Set "Process to track" in the game settings.');
 }
 
 function finish(id, discard, msg) {
@@ -1163,7 +1192,7 @@ h('import:add', list => {
   return { added, skipped };
 });
 h('theme', t => {
-  const c = t === 'light' ? '#f4f0ec' : '#0d0e11';
+  const c = t === 'light' ? '#f1f5f9' : '#090d19';
   if (win && !win.isDestroyed()) win.setBackgroundColor(c);
 });
 // ---- Custom Window Controls IPC handlers
@@ -1317,7 +1346,7 @@ function openUpdateWin() {
   if (uwin && !uwin.isDestroyed()) return;
   uwin = new BrowserWindow({
     width: 420, height: 270, resizable: false, minimizable: false, maximizable: false, frame: false, center: true,
-    show: false, backgroundColor: '#0d0e11', icon: LOGO, alwaysOnTop: true,
+    show: false, backgroundColor: '#090d19', icon: LOGO, alwaysOnTop: true,
     webPreferences: { preload: path.join(__dirname, 'preload-updater.js'), contextIsolation: true, sandbox: true }
   });
   uwin.loadFile(path.join(__dirname, 'renderer', 'updater.html'));
@@ -1370,7 +1399,7 @@ function failFlow(err) {
     detail = 'The downloaded update was damaged and has been discarded. Your current version is unchanged. Try again.';
     try { updater.downloadedUpdateHelper && updater.downloadedUpdateHelper.clear(); } catch {}
   } else if (/stalled/i.test(m)) detail = 'The download stopped making progress. Check your connection and try again. Your current version is unchanged.';
-  else if (/ENOTFOUND|ETIMEDOUT|ECONN|EAI_AGAIN|net::|HTTP|socket|network/i.test(m)) detail = 'Ember could not reach GitHub. Check your internet connection and try again. Your current version is unchanged.';
+  else if (/ENOTFOUND|ETIMEDOUT|ECONN|EAI_AGAIN|net::|HTTP|socket|network/i.test(m)) detail = 'NUKRON could not reach GitHub. Check your internet connection and try again. Your current version is unchanged.';
   else if (/ENOSPC/i.test(m)) detail = 'There is not enough free disk space to download the update. Free some space and try again.';
   uState('Update failed', detail, null, 'error');
   openUpdateWin();
@@ -1399,10 +1428,10 @@ function applyUpdate() {
   setTimeout(() => {
     if (!flow) return;
     flow.installing = true; clearInterval(flow.watchdog);
-    uState('Installing update...', 'Ember will close and reopen automatically. Your games and settings are kept.', null, 'install');
+    uState('Installing update...', 'NUKRON will close and reopen automatically. Your games and settings are kept.', null, 'install');
     try { fs.writeFileSync(PENDING_UPDATE(), JSON.stringify({ from: app.getVersion(), to: availableVersion, at: Date.now() })); } catch {}
     setTimeout(() => {
-      try { updater.quitAndInstall(true, true); } // silent install (no setup wizard), then relaunch Ember
+      try { updater.quitAndInstall(true, true); } // silent install (no setup wizard), then relaunch NUKRON
       catch (e) { try { fs.unlinkSync(PENDING_UPDATE()); } catch {} flow.installing = false; failFlow(e); }
     }, 900);
   }, 700);
@@ -1414,10 +1443,10 @@ function checkPendingUpdate() {
   if (m && m.to && m.to === app.getVersion()) {
     holdMain = true; flow = null;
     uState('Finalizing installation...', '', null, 'finalize'); openUpdateWin();
-    setTimeout(() => uState('Update complete!', 'Ember ' + m.to + ' is ready.', 100, 'done'), 1200);
+    setTimeout(() => uState('Update complete!', 'NUKRON ' + m.to + ' is ready.', 100, 'done'), 1200);
     setTimeout(() => { closeUpdateWin(); holdMain = false; if (!(startedHidden && appSettings.background)) { win && !win.isDestroyed() && win.show(); } }, 2800);
   } else if (m && m.to) {
-    setTimeout(() => send('update', { state: 'failed', message: 'The last update could not be installed, so Ember is still on v' + app.getVersion() + '. Your games and settings are safe. You can try updating again.' }), 4000);
+    setTimeout(() => send('update', { state: 'failed', message: 'The last update could not be installed, so NUKRON is still on v' + app.getVersion() + '. Your games and settings are safe. You can try updating again.' }), 4000);
   }
 }
 function initUpdates() {
@@ -1440,7 +1469,7 @@ async function checkUpdates(manual) {
   manualCheck = manual;
   try {
     if (canAuto) return void await updater.checkForUpdates();
-    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'User-Agent': 'ember-launcher' } });
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { 'User-Agent': 'nukron-launcher' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json(), v = String(j.tag_name).replace(/^v/, '');
     if (newer(v, app.getVersion())) onUpdateAvailable(v, true, j.html_url);
@@ -1469,10 +1498,11 @@ app.whenReady().then(() => {
   if (!gotLock) return;
   initDb();
   loadOverlaySettings(); loadAppSettings();
+  if (appSettings.launchAtStartup && !startupEnabled()) setStartup(true); // preserve startup registration across exe rename (Ember -> NUKRON)
   appSettings.launchAtStartup = startupEnabled(); // OS registration is the source of truth
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#0d0e11', show: false, icon: LOGO,
+    width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#090d19', show: false, icon: LOGO,
     frame: false, titleBarStyle: 'hidden',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });

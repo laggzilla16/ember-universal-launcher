@@ -1,5 +1,5 @@
 /**
- * Ember Official Website — Interactive Product Demonstrations & UI Polish
+ * NUKRON Official Website — Interactive Product Demonstrations & UI Polish
  */
 (function () {
   'use strict';
@@ -16,6 +16,7 @@
     initHeaderAndMobileNav();
     initScrollReveal();
     initHeroDesktopPreview();
+    initProductShowcase();
     initDiscoveryDemo();
     initOverlayStudio();
     initThemeAndWelcomeWidgets();
@@ -85,7 +86,7 @@
     items.forEach(el => io.observe(el));
   }
 
-  /* 3. Hero Interactive Ember Desktop Preview */
+  /* 3. Hero Interactive NUKRON Desktop Preview */
   function initHeroDesktopPreview() {
     const win = document.getElementById('hero-app-window');
     if (!win) return;
@@ -277,6 +278,41 @@
     }, 1000);
   }
 
+  /* 3b. Product Showcase 5-Tab Screenshot Explorer */
+  function initProductShowcase() {
+    const tabs = Array.from(document.querySelectorAll('[data-showcase-tab]'));
+    const panels = Array.from(document.querySelectorAll('[data-showcase-panel]'));
+    if (!tabs.length || !panels.length) return;
+
+    const activateTab = targetKey => {
+      tabs.forEach(tab => {
+        const isCurrent = tab.getAttribute('data-showcase-tab') === targetKey;
+        tab.classList.toggle('on', isCurrent);
+        tab.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+      });
+      panels.forEach(panel => {
+        const isCurrent = panel.getAttribute('data-showcase-panel') === targetKey;
+        panel.classList.toggle('on', isCurrent);
+        panel.hidden = !isCurrent;
+      });
+    };
+
+    tabs.forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        activateTab(tab.getAttribute('data-showcase-tab'));
+      });
+      tab.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const dir = e.key === 'ArrowRight' ? 1 : -1;
+          const nextIdx = (idx + dir + tabs.length) % tabs.length;
+          tabs[nextIdx].focus();
+          activateTab(tabs[nextIdx].getAttribute('data-showcase-tab'));
+        }
+      });
+    });
+  }
+
   /* 4. Feature 1 & 3: Library Group Filter + Windows Application Discovery Scanner */
   function initDiscoveryDemo() {
     const libPane = document.getElementById('demo-pane-library');
@@ -393,7 +429,7 @@
 
     const quoteText = document.getElementById('welcome-quote-text');
     const cycleBtn = document.getElementById('cycle-quote-btn');
-    const baseline = window.EMBER_BASELINE_DATA || {};
+    const baseline = window.NUKRON_BASELINE_DATA || {};
     const messages =
       Array.isArray(baseline.welcomeMessages) && baseline.welcomeMessages.length
         ? baseline.welcomeMessages
@@ -415,7 +451,7 @@
     }
   }
 
-  /* 7. Section 4: The Ember Experience 5-Step Journey */
+  /* 7. Section 4: The NUKRON Experience 5-Step Journey */
   function initJourneyTimeline() {
     const steps = document.querySelectorAll('#journey-steps .journey-step');
     const badgeEl = document.getElementById('js-badge');
@@ -426,14 +462,14 @@
 
     const stepData = [
       {
-        badge: 'Step 01 · Open Ember',
+        badge: 'Step 01 · Open NUKRON',
         title: 'Ready in the background before you even pick a game',
-        desc: 'With single-instance locking and optional Windows startup in the system tray, Ember is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.',
+        desc: 'With single-instance locking and optional Windows startup in the system tray, NUKRON is already waiting quietly when you sign in—accompanied by a gentle, optional welcome quote once per session.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
               <span class="dot-live"></span>
-              <strong>Ember Single-Instance Lock Active</strong>
+              <strong>NUKRON Single-Instance Lock Active</strong>
               <code>%APPDATA%\\ember-launcher\\launcher.db</code>
             </div>
             <div class="js-mock-quote">“Welcome back. Take your time.”</div>
@@ -457,7 +493,7 @@
       {
         badge: 'Step 03 · Launch Your Favorite Game',
         title: 'One click starts the game and arms the session tracker',
-        desc: 'Ember spawns your game executable directly, passes custom launch arguments or ROM files to your emulator, or triggers the registered Windows AppUserModelID.',
+        desc: 'NUKRON spawns your game executable directly, passes custom launch arguments or ROM files to your emulator, or triggers the registered Windows AppUserModelID.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
@@ -471,7 +507,7 @@
       {
         badge: 'Step 04 · Track Your Playtime',
         title: '4-second SQLite heartbeats that survive unexpected shutdowns',
-        desc: 'Every 4 seconds, Ember inspects active process paths locally and updates your session heartbeat in SQLite. When you quit the game, the session closes cleanly after a 15-second grace period.',
+        desc: 'Every 4 seconds, NUKRON inspects active process paths locally and updates your session heartbeat in SQLite. When you quit the game, the session closes cleanly after a 15-second grace period.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">
@@ -485,7 +521,7 @@
       {
         badge: 'Step 05 · Monitor Your Gaming Performance',
         title: 'Real-time hardware telemetry whenever you want a closer look',
-        desc: 'Toggle the Liquid Glass overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
+        desc: 'Toggle the Optical Glass overlay in-game to monitor FPS, frame time, CPU/GPU utilization, VRAM, system RAM, and temperatures across four customizable layouts.',
         html: `
           <div class="js-mock-box">
             <div class="js-mock-row">

@@ -1,5 +1,5 @@
 /**
- * Ember Official Website — Static Site Builder
+ * NUKRON Official Website — Static Site Builder
  * Compiles modular pages, shared brand tokens, official fonts/logos, SEO metadata,
  * sitemap.xml, robots.txt, and GitHub Releases baseline data into apps/website/dist/.
  */
@@ -12,7 +12,7 @@ const { renderHomePage } = require('../src/pages/home');
 const { renderDownloadPage } = require('../src/pages/download');
 const { renderWhatsNewPage } = require('../src/pages/whats-new');
 const { renderAboutPage } = require('../src/pages/about');
-const { renderFaqPage } = require('../src/pages/faq');
+const { renderFaqPage, getFaqJsonLd } = require('../src/pages/faq');
 const { renderPrivacyPage } = require('../src/pages/privacy');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -54,10 +54,18 @@ function buildWebsite() {
   fs.rmSync(DIST_DIR, { recursive: true, force: true });
   ensureDir(DIST_DIR);
 
-  // 1. Copy official Ember branding assets & fonts
+  // 1. Copy official NUKRON branding assets, application screenshots & fonts
   copyFileSafe(
-    path.join(REPO_ROOT, 'renderer', 'assets', 'ember-logo.png'),
-    path.join(DIST_DIR, 'assets', 'ember-logo.png')
+    path.join(REPO_ROOT, 'renderer', 'assets', 'nukron-logo.png'),
+    path.join(DIST_DIR, 'assets', 'nukron-logo.png')
+  );
+  copyFileSafe(
+    path.join(REPO_ROOT, 'renderer', 'assets', 'nukron-logo.svg'),
+    path.join(DIST_DIR, 'assets', 'nukron-logo.svg')
+  );
+  copyFileSafe(
+    path.join(REPO_ROOT, 'assets', 'logos', 'nukron-wordmark.svg'),
+    path.join(DIST_DIR, 'assets', 'nukron-wordmark.svg')
   );
   copyFileSafe(
     path.join(REPO_ROOT, 'build', 'icon.ico'),
@@ -72,9 +80,22 @@ function buildWebsite() {
     path.join(DIST_DIR, 'assets', 'og-social-card.svg')
   );
   copyFileSafe(
-    path.join(REPO_ROOT, 'assets', 'screenshots', 'ember-dashboard-concept.svg'),
-    path.join(DIST_DIR, 'assets', 'ember-dashboard-concept.svg')
+    path.join(REPO_ROOT, 'assets', 'screenshots', 'nukron-dashboard-concept.svg'),
+    path.join(DIST_DIR, 'assets', 'nukron-dashboard-concept.svg')
   );
+  const screenAssets = [
+    'nukron-screen-library.svg',
+    'nukron-screen-management.svg',
+    'nukron-screen-statistics.svg',
+    'nukron-screen-overlay.svg',
+    'nukron-screen-settings.svg'
+  ];
+  for (const assetName of screenAssets) {
+    copyFileSafe(
+      path.join(SRC_DIR, 'assets', assetName),
+      path.join(DIST_DIR, 'assets', assetName)
+    );
+  }
   copyFileSafe(
     path.join(REPO_ROOT, 'renderer', 'fonts', 'unbounded.woff2'),
     path.join(DIST_DIR, 'fonts', 'unbounded.woff2')
@@ -117,7 +138,7 @@ function buildWebsite() {
   ensureDir(path.join(DIST_DIR, 'js'));
   fs.writeFileSync(
     path.join(DIST_DIR, 'js', 'release-data.js'),
-    `window.EMBER_BASELINE_DATA = ${JSON.stringify(releaseDataPayload, null, 2)};\n`,
+    `window.NUKRON_BASELINE_DATA = ${JSON.stringify(releaseDataPayload, null, 2)};\n`,
     'utf8'
   );
 
@@ -130,7 +151,12 @@ function buildWebsite() {
       canonicalPath: '',
       title: 'Home',
       description: constants.description,
-      render: basePath => renderHomePage({ basePath, baselineVersion: baseline.version })
+      render: basePath =>
+        renderHomePage({
+          basePath,
+          baselineVersion: baseline.version,
+          changelogEntries: baseline.changelog
+        })
     },
     {
       pageId: 'download',
@@ -139,8 +165,13 @@ function buildWebsite() {
       canonicalPath: 'download.html',
       title: 'Download for Windows',
       description:
-        'Download the latest official Windows installer for Ember Universal Launcher directly from GitHub Releases. Free, local SQLite storage, no account required.',
-      render: basePath => renderDownloadPage({ basePath, baselineVersion: baseline.version })
+        'Download the latest official Windows installer and portable build for NUKRON directly from GitHub Releases. Free, local SQLite storage, no account required.',
+      render: basePath =>
+        renderDownloadPage({
+          basePath,
+          baselineVersion: baseline.version,
+          changelogEntries: baseline.changelog
+        })
     },
     {
       pageId: 'whats-new',
@@ -149,7 +180,7 @@ function buildWebsite() {
       canonicalPath: 'whats-new.html',
       title: "What's New & Release History",
       description:
-        'Explore the official release history, changelog, and latest updates for Ember Universal Launcher, synchronized directly with GitHub Releases.',
+        'Explore the official release history, changelog, and latest updates for NUKRON, synchronized directly with GitHub Releases.',
       render: basePath =>
         renderWhatsNewPage({
           basePath,
@@ -162,9 +193,9 @@ function buildWebsite() {
       file: 'about.html',
       cleanDir: 'about',
       canonicalPath: 'about.html',
-      title: 'About Ember',
+      title: 'About NUKRON',
       description:
-        'Learn about the philosophy behind Ember Universal Launcher: a personal, locally operated home for PC gaming on Windows without accounts or cloud bloat.',
+        'Learn about the philosophy behind NUKRON: a personal, locally operated universe for PC gaming on Windows without accounts or cloud bloat.',
       render: basePath => renderAboutPage({ basePath, baselineVersion: baseline.version })
     },
     {
@@ -172,9 +203,10 @@ function buildWebsite() {
       file: 'faq.html',
       cleanDir: 'faq',
       canonicalPath: 'faq.html',
-      title: 'Frequently Asked Questions',
+      title: 'Documentation, FAQ & Support',
       description:
-        'Answers to common questions about Ember Universal Launcher: local SQLite storage, automatic playtime tracking, Windows game discovery, and updates.',
+        'Documentation and answers to common questions about NUKRON: local SQLite storage, automatic playtime tracking, Windows game discovery, performance overlay, and updates.',
+      extraJsonLd: getFaqJsonLd(),
       render: basePath => renderFaqPage({ basePath, baselineVersion: baseline.version })
     },
     {
@@ -184,7 +216,7 @@ function buildWebsite() {
       canonicalPath: 'privacy.html',
       title: 'Privacy Policy & Terms of Service',
       description:
-        'Official Privacy Policy and Terms of Service for Ember Universal Launcher. Your game library and playtime stay on your PC.',
+        'Official Privacy Policy and Terms of Service for NUKRON. Your game library and playtime stay on your PC.',
       render: basePath => renderPrivacyPage({ basePath, baselineVersion: baseline.version })
     }
   ];
@@ -198,7 +230,8 @@ function buildWebsite() {
       canonicalPath: p.canonicalPath,
       basePath: '.',
       baselineVersion: baseline.version,
-      bodyContent: p.render('.')
+      bodyContent: p.render('.'),
+      extraJsonLd: p.extraJsonLd || null
     });
     fs.writeFileSync(path.join(DIST_DIR, p.file), rootHtml, 'utf8');
 
@@ -213,7 +246,8 @@ function buildWebsite() {
         canonicalPath: p.canonicalPath,
         basePath: '..',
         baselineVersion: baseline.version,
-        bodyContent: p.render('..')
+        bodyContent: p.render('..'),
+        extraJsonLd: p.extraJsonLd || null
       });
       fs.writeFileSync(path.join(subDir, 'index.html'), subHtml, 'utf8');
     }
@@ -223,7 +257,7 @@ function buildWebsite() {
   const notFoundHtml = renderLayout({
     pageId: '404',
     title: 'Page Not Found',
-    description: 'The requested page could not be found on the official Ember Universal Launcher website.',
+    description: 'The requested page could not be found on the official NUKRON website.',
     canonicalPath: '404.html',
     basePath: '.',
     baselineVersion: baseline.version,
@@ -231,12 +265,12 @@ function buildWebsite() {
       <section class="page-hero">
         <div class="container">
           <div class="final-cta-card">
-            <img src="./assets/ember-logo.png" alt="Ember logo" width="56" height="56" class="final-cta-logo">
+            <img src="./assets/nukron-logo.png" alt="NUKRON logo" width="56" height="56" class="final-cta-logo">
             <h1 class="final-cta-headline">Page not found</h1>
             <p class="final-cta-desc">The page you were looking for doesn't exist or has moved.</p>
             <div class="final-cta-actions">
               <a href="./index.html" class="btn btn-primary btn-lg">Return to Home</a>
-              <a href="./download.html" class="btn btn-glass btn-lg">Download Ember</a>
+              <a href="./download.html" class="btn btn-glass btn-lg">Download NUKRON</a>
             </div>
           </div>
         </div>
@@ -299,7 +333,7 @@ Sitemap: ${prodBaseUrl}/sitemap.xml
   fs.writeFileSync(path.join(DIST_DIR, '.nojekyll'), '', 'utf8');
 
   const elapsed = Date.now() - t0;
-  console.log(`[ember-website] Built ${pages.length} pages + static assets into apps/website/dist in ${elapsed}ms (baseline v${baseline.version})`);
+  console.log(`[nukron-website] Built ${pages.length} pages + static assets into apps/website/dist in ${elapsed}ms (baseline v${baseline.version})`);
 }
 
 if (require.main === module) {

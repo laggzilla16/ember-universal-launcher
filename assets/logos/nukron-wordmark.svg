@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 140" width="680" height="140" fill="none">
+  <defs>
+    <linearGradient id="wmBg" x1="8" y1="8" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141E36"/>
+      <stop offset="100%" stop-color="#080C18"/>
+    </linearGradient>
+    <linearGradient id="wmRim" x1="8" y1="8" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#E63946"/>
+    </linearGradient>
+    <linearGradient id="wmBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="wmRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B78"/>
+      <stop offset="100%" stop-color="#E63946"/>
+    </linearGradient>
+    <linearGradient id="wmText" x1="164" y1="36" x2="640" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="68%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#93C5FD"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Emblem -->
+  <rect x="10" y="10" width="120" height="120" rx="30" fill="url(#wmBg)" stroke="url(#wmRim)" stroke-width="2.5"/>
+  <rect x="34" y="32" width="22" height="76" rx="5" fill="url(#wmBlue)"/>
+  <rect x="84" y="32" width="22" height="76" rx="5" fill="url(#wmBlue)"/>
+  <path d="M41 32H58L74 64L99 108H82L66 76L41 32Z" fill="url(#wmRed)"/>
+  <circle cx="70" cy="70" r="3" fill="#F8FAFC"/>
+
+  <!-- Wordmark -->
+  <text x="160" y="88" fill="url(#wmText)" font-family="Unbounded, 'Segoe UI Variable Display', sans-serif" font-size="56" font-weight="800" letter-spacing="8">NUKRON</text>
+  <rect x="162" y="104" width="96" height="3" rx="1.5" fill="url(#wmRim)"/>
+  <text x="272" y="109" fill="#AAB6CC" font-family="Inter, 'Segoe UI', sans-serif" font-size="12" font-weight="600" letter-spacing="3.5">YOUR GAMES. YOUR UNIVERSE.</text>
+</svg>
+

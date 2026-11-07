@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" fill="none">
+  <defs>
+    <radialGradient id="setBlue" cx="18%" cy="15%" r="60%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#090D19" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="setRed" cx="86%" cy="85%" r="55%">
+      <stop offset="0%" stop-color="#E63946" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#090D19" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="setSpectrum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="52%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#E63946"/>
+    </linearGradient>
+    <linearGradient id="setBtnBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="580" rx="22" fill="#090D19"/>
+  <rect width="960" height="580" rx="22" fill="url(#setBlue)"/>
+  <rect width="960" height="580" rx="22" fill="url(#setRed)"/>
+  <rect x="0.75" y="0.75" width="958.5" height="578.5" rx="21.25" stroke="url(#setSpectrum)" stroke-opacity="0.48" stroke-width="1.5"/>
+
+  <!-- Left Panel: Settings > Performance Overlay Tab -->
+  <rect x="28" y="28" width="440" height="524" rx="20" fill="#111827" fill-opacity="0.86" stroke="url(#setSpectrum)" stroke-width="1.5"/>
+  <rect x="52" y="50" width="188" height="34" rx="10" fill="url(#setBtnBlue)"/>
+  <text x="146" y="72" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="700">Performance Overlay</text>
+  <rect x="248" y="50" width="110" height="34" rx="10" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="303" y="72" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">General</text>
+
+  <!-- Enable Toggle -->
+  <rect x="52" y="100" width="392" height="46" rx="12" fill="#172033" fill-opacity="0.75" stroke="#60A5FA" stroke-opacity="0.35"/>
+  <text x="70" y="128" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="700">Enable Performance Overlay</text>
+  <rect x="388" y="112" width="40" height="22" rx="11" fill="#2563EB"/>
+  <circle cx="417" cy="123" r="8" fill="#F8FAFC"/>
+
+  <!-- Layout Selector -->
+  <text x="52" y="172" fill="#AAB6CC" font-family="Unbounded, sans-serif" font-size="11" font-weight="700" letter-spacing="1">OVERLAY LAYOUT</text>
+  <rect x="52" y="182" width="92" height="40" rx="10" fill="#2563EB" fill-opacity="0.24" stroke="#60A5FA" stroke-opacity="0.6"/>
+  <text x="98" y="206" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12" font-weight="700">Vertical</text>
+  <rect x="152" y="182" width="92" height="40" rx="10" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="198" y="206" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12" font-weight="600">Horizontal</text>
+  <rect x="252" y="182" width="92" height="40" rx="10" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="298" y="206" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12" font-weight="600">Compact</text>
+  <rect x="352" y="182" width="92" height="40" rx="10" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="398" y="206" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12" font-weight="600">Expanded</text>
+
+  <!-- Screen Position Selector -->
+  <text x="52" y="250" fill="#AAB6CC" font-family="Unbounded, sans-serif" font-size="11" font-weight="700" letter-spacing="1">SCREEN POSITION &amp; DRAG ANCHOR</text>
+  <rect x="52" y="260" width="190" height="36" rx="10" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="147" y="283" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12">Top Left</text>
+  <rect x="254" y="260" width="190" height="36" rx="10" fill="#2563EB" fill-opacity="0.24" stroke="#60A5FA" stroke-opacity="0.6"/>
+  <text x="349" y="283" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12" font-weight="700">Top Right ●</text>
+
+  <!-- Metric Toggles -->
+  <text x="52" y="324" fill="#AAB6CC" font-family="Unbounded, sans-serif" font-size="11" font-weight="700" letter-spacing="1">DISPLAYED HARDWARE METRICS</text>
+  <rect x="52" y="334" width="392" height="140" rx="12" fill="#172033" fill-opacity="0.6" stroke="#AAB6CC" stroke-opacity="0.18"/>
+  <text x="72" y="362" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">✓ FPS Counter &amp; Frame Time</text>
+  <text x="72" y="390" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">✓ CPU Usage &amp; CPU Temperature</text>
+  <text x="72" y="418" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">✓ GPU Usage &amp; GPU Temperature</text>
+  <text x="72" y="446" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">✓ Dedicated VRAM &amp; System RAM</text>
+
+  <rect x="350" y="492" width="94" height="38" rx="11" fill="url(#setBtnBlue)"/>
+  <text x="397" y="516" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="700">Save</text>
+
+  <!-- Right Panel: General Settings + Theme Switcher + Startup Welcome Toast -->
+  <rect x="492" y="28" width="440" height="524" rx="20" fill="#111827" fill-opacity="0.86" stroke="#60A5FA" stroke-opacity="0.38" stroke-width="1.5"/>
+  <text x="518" y="68" fill="#F8FAFC" font-family="Unbounded, Segoe UI, sans-serif" font-size="18" font-weight="800">General &amp; Customization</text>
+
+  <!-- General Toggles -->
+  <rect x="518" y="88" width="388" height="48" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.3"/>
+  <text x="536" y="117" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="600">Launch NUKRON when Windows starts</text>
+  <rect x="850" y="101" width="40" height="22" rx="11" fill="#2563EB"/>
+  <circle cx="879" cy="112" r="8" fill="#F8FAFC"/>
+
+  <rect x="518" y="146" width="388" height="48" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.3"/>
+  <text x="536" y="175" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="600">Minimize to system tray on close</text>
+  <rect x="850" y="159" width="40" height="22" rx="11" fill="#2563EB"/>
+  <circle cx="879" cy="170" r="8" fill="#F8FAFC"/>
+
+  <rect x="518" y="204" width="388" height="48" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.3"/>
+  <text x="536" y="233" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="600">Show calm startup welcome message</text>
+  <rect x="850" y="217" width="40" height="22" rx="11" fill="#2563EB"/>
+  <circle cx="879" cy="228" r="8" fill="#F8FAFC"/>
+
+  <!-- Startup Welcome Toast Preview -->
+  <text x="518" y="284" fill="#AAB6CC" font-family="Unbounded, sans-serif" font-size="11" font-weight="700" letter-spacing="1">ONCE-PER-SESSION STARTUP QUOTE TOAST</text>
+  <rect x="518" y="296" width="388" height="74" rx="16" fill="#090D19" fill-opacity="0.9" stroke="url(#setSpectrum)" stroke-width="1.5"/>
+  <rect x="536" y="315" width="36" height="36" rx="10" fill="#141E36" stroke="url(#setSpectrum)"/>
+  <text x="586" y="328" fill="#60A5FA" font-family="Unbounded, sans-serif" font-size="10.5" font-weight="800" letter-spacing="2">NUKRON</text>
+  <text x="586" y="349" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13.5" font-weight="600">“Take a breath. The game will wait for you.”</text>
+
+  <!-- Dual Theme Support (Midnight Dark & Daylight Light) -->
+  <text x="518" y="402" fill="#AAB6CC" font-family="Unbounded, sans-serif" font-size="11" font-weight="700" letter-spacing="1">DUAL OPTICAL GLASS THEMES</text>
+  <rect x="518" y="414" width="188" height="114" rx="14" fill="#090D19" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <text x="536" y="442" fill="#F8FAFC" font-family="Unbounded, sans-serif" font-size="12" font-weight="700">Midnight Dark</text>
+  <text x="536" y="462" fill="#AAB6CC" font-family="Consolas, monospace" font-size="11">#090D19 · #111827</text>
+  <rect x="536" y="478" width="68" height="24" rx="7" fill="#2563EB"/>
+  <rect x="612" y="478" width="44" height="24" rx="7" fill="#E63946"/>
+
+  <rect x="718" y="414" width="188" height="114" rx="14" fill="#F1F5F9" stroke="#2563EB" stroke-opacity="0.35"/>
+  <text x="736" y="442" fill="#0F172A" font-family="Unbounded, sans-serif" font-size="12" font-weight="700">Daylight Light</text>
+  <text x="736" y="462" fill="#475569" font-family="Consolas, monospace" font-size="11">#F1F5F9 · #FFFFFF</text>
+  <rect x="736" y="478" width="68" height="24" rx="7" fill="#2563EB"/>
+  <rect x="812" y="478" width="44" height="24" rx="7" fill="#E63946"/>
+</svg>
+

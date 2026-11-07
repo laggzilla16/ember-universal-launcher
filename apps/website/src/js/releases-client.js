@@ -1,15 +1,15 @@
 /**
- * Ember Official Website — Dynamic GitHub Releases & Download Client
+ * NUKRON Official Website — Dynamic GitHub Releases & Download Client
  * Connects directly to https://api.github.com/repos/laggzilla16/ember-universal-launcher/releases
- * Resolves the latest valid Windows installer (.exe), updates version indicators dynamically,
- * powers the live What's New changelog, and provides graceful fallbacks without fake states.
+ * Resolves the latest valid Windows installer (.exe) and portable build, updates version indicators dynamically,
+ * powers the live What's New changelog and Download release notes, and provides graceful fallbacks without fake states.
  */
 (function () {
   'use strict';
 
-  const Utils = window.EmberReleaseUtils;
-  const Baseline = window.EMBER_BASELINE_DATA || {
-    version: '1.4.2',
+  const Utils = window.NukronReleaseUtils;
+  const Baseline = window.NUKRON_BASELINE_DATA || {
+    version: '1.5.0',
     repoUrl: 'https://github.com/laggzilla16/ember-universal-launcher',
     releasesUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases',
     latestReleasePageUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases/latest',
@@ -18,7 +18,7 @@
     changelog: []
   };
 
-  const CACHE_KEY = 'ember_gh_releases_cache_v1';
+  const CACHE_KEY = 'nukron_gh_releases_cache_v2';
   const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   let currentState = {
@@ -140,12 +140,12 @@
     const label = document.getElementById('gh-sync-status-text');
     if (label) label.textContent = text;
     if (dot) {
-      dot.className = mode === 'fallback' ? 'dot-amber' : 'dot-live';
+      dot.className = mode === 'fallback' ? 'dot-blue' : 'dot-live';
     }
   }
 
   /**
-   * Updates all version indicators, installer filenames, release dates, and changelog entries across the page.
+   * Updates all version indicators, installer/portable filenames, release dates, release notes, and changelog entries across the page.
    */
   function applyReleaseStateToDOM(resolved, fromCache) {
     if (!resolved) return;
@@ -154,52 +154,84 @@
     const installerRelease = resolved.latestWithInstaller;
     const displayVersion = primaryRelease ? primaryRelease.version : Baseline.version;
 
-    // 1. Update [data-ember-version]
-    document.querySelectorAll('[data-ember-version]').forEach(el => {
+    // 1. Update [data-nukron-version]
+    document.querySelectorAll('[data-nukron-version]').forEach(el => {
       const currentText = el.textContent.trim();
       const prefix = currentText.startsWith('v') ? 'v' : '';
       el.textContent = `${prefix}${displayVersion}`;
     });
 
-    // 2. Update [data-ember-release-date]
+    // 2. Update [data-nukron-release-date]
     if (primaryRelease && primaryRelease.publishedAt) {
       const formattedDate = Utils.formatReleaseDate(primaryRelease.publishedAt);
-      document.querySelectorAll('[data-ember-release-date]').forEach(el => {
+      document.querySelectorAll('[data-nukron-release-date]').forEach(el => {
         el.textContent = `Released ${formattedDate}`;
       });
     }
 
-    // 3. Update [data-ember-installer-name] and [data-ember-installer-size]
+    // 3. Update [data-nukron-installer-name] and [data-nukron-installer-size]
     if (installerRelease && installerRelease.installer) {
       const inst = installerRelease.installer;
-      document.querySelectorAll('[data-ember-installer-name]').forEach(el => {
+      document.querySelectorAll('[data-nukron-installer-name]').forEach(el => {
         el.textContent = inst.name;
       });
       const sizeStr = Utils.formatBytes(inst.size);
-      document.querySelectorAll('[data-ember-installer-size]').forEach(el => {
+      document.querySelectorAll('[data-nukron-installer-size]').forEach(el => {
         el.textContent = sizeStr ? `${sizeStr} · Verified Windows .exe Installer` : 'Verified Windows .exe Installer';
       });
     }
 
-    // 4. Update Portable link if present
-    if (installerRelease && installerRelease.portable) {
-      document.querySelectorAll('[data-ember-portable-link]').forEach(el => {
-        el.setAttribute('href', installerRelease.portable.url);
-        el.textContent = `Download ${installerRelease.portable.name}`;
+    // 4. Update Portable metadata & link if present
+    const portableAsset =
+      (installerRelease && installerRelease.portable) ||
+      (primaryRelease && primaryRelease.portable) ||
+      null;
+
+    if (portableAsset) {
+      document.querySelectorAll('[data-nukron-portable-name]').forEach(el => {
+        el.textContent = portableAsset.name;
+      });
+      const portSizeStr = Utils.formatBytes(portableAsset.size);
+      document.querySelectorAll('[data-nukron-portable-size]').forEach(el => {
+        el.textContent = portSizeStr ? `${portSizeStr} · Standalone Portable .exe` : 'Standalone Portable .exe';
+      });
+      document.querySelectorAll('[data-nukron-portable-link]').forEach(el => {
+        el.setAttribute('href', portableAsset.url);
       });
     }
 
-    // 5. Update Download page status note
+    // 5. Update Download page status note & release notes
     const dlStatus = document.getElementById('download-page-status');
     if (dlStatus) {
       if (installerRelease && installerRelease.installer) {
         if (resolved.usingPreviousInstaller) {
           dlStatus.innerHTML = `Latest tag <code>v${Utils.escapeHtml(displayVersion)}</code> does not have a setup executable attached yet; ready to provide verified installer from <code>v${Utils.escapeHtml(installerRelease.version)}</code> or open GitHub Releases.`;
         } else {
-          dlStatus.innerHTML = `Verified installer resolved from GitHub Releases: <code>${Utils.escapeHtml(installerRelease.installer.name)}</code>.`;
+          const portNote = portableAsset ? ` and portable build <code>${Utils.escapeHtml(portableAsset.name)}</code>` : '';
+          dlStatus.innerHTML = `Verified installer resolved from GitHub Releases: <code>${Utils.escapeHtml(installerRelease.installer.name)}</code>${portNote}.`;
         }
       } else {
         dlStatus.innerHTML = `Connected to GitHub Releases. Click Download to open the official release assets.`;
+      }
+    }
+
+    const dlNotesBody = document.getElementById('download-release-notes-body');
+    const dlNotesLink = document.getElementById('download-release-gh-link');
+    if (dlNotesBody && primaryRelease && Utils.renderCategorizedReleaseNotes) {
+      const localMap = new Map();
+      if (Array.isArray(Baseline.changelog)) {
+        for (const entry of Baseline.changelog) {
+          localMap.set(Utils.cleanVersion(entry.v), entry.items || []);
+        }
+      }
+      const localItems = localMap.get(primaryRelease.version) || null;
+      dlNotesBody.innerHTML = Utils.renderCategorizedReleaseNotes(
+        localItems,
+        primaryRelease.body,
+        primaryRelease.htmlUrl
+      );
+      if (dlNotesLink && primaryRelease.htmlUrl) {
+        dlNotesLink.setAttribute('href', primaryRelease.htmlUrl);
       }
     }
 
@@ -219,7 +251,7 @@
 
   /**
    * Merges live GitHub API releases with the verified local changelog from renderer/changelog.js
-   * so release notes are always complete, accurate, and never invented.
+   * so release notes are always complete, categorized, accurate, and never invented.
    */
   function renderLiveChangelogTimeline(timelineEl, resolved) {
     const localMap = new Map();
@@ -238,13 +270,14 @@
       const localItems = localMap.get(rel.version) || null;
       merged.push({
         version: rel.version,
-        title: rel.title || `Ember v${rel.version}`,
+        title: (rel.title || `NUKRON v${rel.version}`).replace(/^Ember(?:\s+Universal\s+Launcher)?/i, 'NUKRON'),
         publishedAt: rel.publishedAt,
         prerelease: rel.prerelease,
         htmlUrl: rel.htmlUrl,
         body: rel.body,
         localItems,
-        installer: rel.installer
+        installer: rel.installer,
+        portable: rel.portable
       });
     }
 
@@ -255,13 +288,14 @@
         if (!seenVersions.has(v)) {
           merged.push({
             version: v,
-            title: `Ember v${v}`,
+            title: `NUKRON v${v}`,
             publishedAt: null,
             prerelease: false,
             htmlUrl: `${Baseline.releasesUrl}/tag/v${encodeURIComponent(v)}`,
             body: '',
             localItems: entry.items || [],
-            installer: null
+            installer: null,
+            portable: null
           });
         }
       }
@@ -272,9 +306,21 @@
 
     if (!merged.length) return;
 
+    // Update quick version jump pills if present
+    const jumpPillsEl = document.getElementById('version-jump-pills');
+    if (jumpPillsEl) {
+      jumpPillsEl.innerHTML = merged
+        .map((item, idx) => {
+          const safeId = `release-v${item.version.replace(/\./g, '-')}`;
+          return `<a href="#${Utils.escapeHtml(safeId)}" class="vj-pill${idx === 0 ? ' is-latest' : ''}">v${Utils.escapeHtml(item.version)}${idx === 0 ? ' · Latest' : ''}</a>`;
+        })
+        .join('');
+    }
+
     timelineEl.innerHTML = merged
       .map((item, idx) => {
         const isLatest = idx === 0 && !item.prerelease;
+        const safeId = `release-v${item.version.replace(/\./g, '-')}`;
         const typeAttr = item.prerelease ? 'prerelease' : 'stable';
         const badgeClass = item.prerelease ? 'badge-prerelease' : 'badge-stable';
         const badgeLabel = item.prerelease
@@ -284,17 +330,11 @@
           : 'Published Release';
         const dateStr = item.publishedAt ? Utils.formatReleaseDate(item.publishedAt) : 'Official Release';
 
-        // Prefer GitHub Release Markdown body if non-empty; otherwise use verified changelog.js items
-        let notesHtml = '';
-        if (item.body && item.body.trim().length > 0) {
-          notesHtml = Utils.renderReleaseNotesMarkdown(item.body);
-        } else if (item.localItems && item.localItems.length > 0) {
-          notesHtml = `<ul class="md-list">${item.localItems
-            .map(line => `<li>${Utils.escapeHtml(line)}</li>`)
-            .join('')}</ul>`;
-        } else {
-          notesHtml = `<p class="md-para">Release details available on <a href="${Utils.escapeHtml(item.htmlUrl)}" target="_blank" rel="noopener noreferrer" class="md-link">GitHub Releases ↗</a>.</p>`;
-        }
+        const notesHtml = Utils.renderCategorizedReleaseNotes
+          ? Utils.renderCategorizedReleaseNotes(item.localItems, item.body, item.htmlUrl)
+          : item.body && item.body.trim().length > 0
+          ? Utils.renderReleaseNotesMarkdown(item.body)
+          : '';
 
         const downloadBtnHtml = item.installer
           ? `<a href="${Utils.escapeHtml(item.installer.url)}" class="btn btn-primary btn-sm" download>
@@ -302,31 +342,38 @@
                <span>Download ${Utils.escapeHtml(item.installer.name)}</span>
              </a>`
           : isLatest
-          ? `<button type="button" class="btn btn-primary btn-sm" data-ember-download>
+          ? `<button type="button" class="btn btn-primary btn-sm" data-nukron-download>
                <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 3v10m0 0l-4-4m4 4l4-4M3 16h14"/></svg>
-               <span>Download Installer</span>
+               <span>Download Setup (.exe)</span>
              </button>`
           : '';
 
+        const portableBtnHtml = item.portable
+          ? `<a href="${Utils.escapeHtml(item.portable.url)}" class="btn btn-glass btn-sm" download>
+               <span>Portable (${Utils.escapeHtml(Utils.formatBytes(item.portable.size) || '.exe')})</span>
+             </a>`
+          : '';
+
         return `
-        <article class="changelog-entry${isLatest ? ' is-latest' : ''}" data-release-version="${Utils.escapeHtml(item.version)}" data-release-type="${typeAttr}">
+        <article class="changelog-entry${isLatest ? ' is-latest' : ''}" id="${Utils.escapeHtml(safeId)}" data-release-version="${Utils.escapeHtml(item.version)}" data-release-type="${typeAttr}">
           <div class="ce-meta">
             <span class="ce-version">v${Utils.escapeHtml(item.version)}</span>
             <span class="ce-channel ${badgeClass}">${badgeLabel}</span>
             <span class="ce-date">${Utils.escapeHtml(dateStr)}</span>
           </div>
-          <div class="ce-card">
+          <div class="ce-card ${isLatest ? 'glass-optical' : 'glass-frosted'}">
             <div class="ce-card-head">
               <div>
                 <h2 class="ce-title">${Utils.escapeHtml(item.title)}</h2>
                 <p class="ce-subtitle">${
                   item.installer
                     ? `Installer: ${Utils.escapeHtml(item.installer.name)}${item.installer.size ? ' (' + Utils.formatBytes(item.installer.size) + ')' : ''}`
-                    : 'Official Ember Universal Launcher Release'
+                    : 'Official NUKRON Release'
                 }</p>
               </div>
               <div class="ce-actions">
                 ${downloadBtnHtml}
+                ${portableBtnHtml}
                 <a href="${Utils.escapeHtml(item.htmlUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">
                   GitHub Release ↗
                 </a>
@@ -367,14 +414,14 @@
   }
 
   /**
-   * Handles clicks on any [data-ember-download] button across the website.
+   * Handles clicks on any [data-nukron-download] button across the website.
    */
   async function handleDownloadClick(btn) {
     if (btn) btn.disabled = true;
 
     showDownloadFeedback({
       title: 'Resolving latest Windows installer…',
-      body: 'Checking official Ember GitHub Releases for the latest verified setup executable…',
+      body: 'Checking official NUKRON GitHub Releases for the latest verified setup executable…',
       actionsHtml: ''
     });
 
@@ -402,11 +449,15 @@
       // Start the actual installer download immediately
       triggerBrowserDownload(inst.url);
       const sizeInfo = inst.size ? ` (${Utils.formatBytes(inst.size)})` : '';
+      const portableBtn = rel.portable
+        ? `<a href="${Utils.escapeHtml(rel.portable.url)}" class="btn btn-glass btn-xs" download>Portable Build (.exe)</a>`
+        : '';
       showDownloadFeedback({
-        title: `Downloading Ember v${rel.version}`,
+        title: `Downloading NUKRON v${rel.version}`,
         body: `Started download of <code>${Utils.escapeHtml(inst.name)}</code>${Utils.escapeHtml(sizeInfo)}. If your browser blocked the automatic download prompt, use the direct link below.`,
         actionsHtml: `
           <a href="${Utils.escapeHtml(inst.url)}" class="btn btn-primary btn-xs" download>Direct Installer Link (.exe)</a>
+          ${portableBtn}
           <a href="${Utils.escapeHtml(rel.htmlUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs">Release Notes ↗</a>
         `
       });
@@ -427,13 +478,15 @@
     }
 
     // Case 3: GitHub API unreachable / rate-limited / offline -> Honest fallback to official GitHub Releases
-    const directFallbackInstallerUrl = `${Baseline.releasesUrl}/latest/download/Ember-Launcher-Setup-${Baseline.version}.exe`;
+    const directFallbackInstallerUrl = `${Baseline.releasesUrl}/latest/download/NUKRON-Setup-${Baseline.version}.exe`;
+    const directFallbackPortableUrl = `${Baseline.releasesUrl}/latest/download/NUKRON-Portable-${Baseline.version}.exe`;
     showDownloadFeedback({
       title: 'Unable to reach GitHub Releases API',
       body: `Your browser could not query <code>api.github.com</code> (${Utils.escapeHtml(currentState.errorMessage || 'network or rate limit')}). Use the official GitHub Releases page below to download the latest Windows installer directly.`,
       actionsHtml: `
         <a href="${Utils.escapeHtml(Baseline.latestReleasePageUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-xs">Open Latest GitHub Release ↗</a>
-        <a href="${Utils.escapeHtml(directFallbackInstallerUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs">Try v${Utils.escapeHtml(Baseline.version)} Setup .exe ↗</a>
+        <a href="${Utils.escapeHtml(directFallbackInstallerUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-glass btn-xs">Try v${Utils.escapeHtml(Baseline.version)} Setup .exe ↗</a>
+        <a href="${Utils.escapeHtml(directFallbackPortableUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs">Try Portable .exe ↗</a>
       `
     });
   }
@@ -443,9 +496,9 @@
     // Trigger initial GitHub release sync
     fetchGitHubReleases(false);
 
-    // Delegate [data-ember-download] button clicks
+    // Delegate [data-nukron-download] button clicks
     document.addEventListener('click', e => {
-      const dlBtn = e.target.closest('[data-ember-download]');
+      const dlBtn = e.target.closest('[data-nukron-download]');
       if (dlBtn) {
         e.preventDefault();
         handleDownloadClick(dlBtn);
@@ -484,4 +537,3 @@
     }
   });
 })();
-

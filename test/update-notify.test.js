@@ -4,7 +4,7 @@ const updateNotify = require('../renderer/update-notify.js');
 
 const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-const logoPath = path.join(root, 'renderer', 'assets', 'ember-logo.png');
+const logoPath = path.join(root, 'renderer', 'assets', 'nukron-logo.png');
 
 // 1. Packaging & Identity checks
 assert.strictEqual(updateNotify.APP_ID, pkg.build.appId, 'APP_ID must match package.json build.appId for Windows Toast identity');
@@ -17,8 +17,8 @@ assert.strictEqual(updateNotify.newer('1.4.1', '1.4.1'), false);
 assert.strictEqual(updateNotify.newer('1.4.0', '1.4.1'), false);
 
 const samplePayload = updateNotify.buildNotificationPayload('v1.5.0', logoPath);
-assert.strictEqual(samplePayload.title, 'Ember Launcher');
-assert.strictEqual(samplePayload.body, "A new Ember update is available!\nVersion 1.5.0 is ready. Check out what's new.");
+assert.strictEqual(samplePayload.title, 'NUKRON');
+assert.strictEqual(samplePayload.body, "A new NUKRON update is available!\nVersion 1.5.0 is ready. Check out what's new.");
 assert.strictEqual(samplePayload.icon, logoPath);
 
 // 3. Test harness simulating main.js + renderer state (open normally, minimized to tray, duplicate prevention, click, disabled)
@@ -79,13 +79,13 @@ function simulateUpdateDetected(version) {
   });
 }
 
-// Scenario A: Ember is open normally & a new version (1.4.2) is detected
+// Scenario A: NUKRON is open normally & a new version (1.4.2) is detected
 winState = { visible: true, minimized: false, focused: false };
 let res = simulateUpdateDetected('1.4.2');
 assert.strictEqual(res.notified, true, 'First detection of 1.4.2 should show a notification');
 assert.strictEqual(shownToasts.length, 1);
-assert.strictEqual(shownToasts[0].opts.title, 'Ember Launcher');
-assert.strictEqual(shownToasts[0].opts.body, "A new Ember update is available!\nVersion 1.4.2 is ready. Check out what's new.");
+assert.strictEqual(shownToasts[0].opts.title, 'NUKRON');
+assert.strictEqual(shownToasts[0].opts.body, "A new NUKRON update is available!\nVersion 1.4.2 is ready. Check out what's new.");
 assert.strictEqual(shownToasts[0].opts.icon, logoPath);
 assert.strictEqual(readPersisted(), '1.4.2', 'Last notified version must be persisted');
 assert.strictEqual(downloadStarted, false, 'Notification must not auto-download');
@@ -100,12 +100,12 @@ res = simulateUpdateDetected('1.4.1');
 assert.strictEqual(res.notified, false, 'Current or older version must not trigger a notification');
 assert.strictEqual(shownToasts.length, 1);
 
-// Scenario C: Ember is minimized/hidden to the system tray & a genuinely newer version (1.5.0) is detected
+// Scenario C: NUKRON is minimized/hidden to the system tray & a genuinely newer version (1.5.0) is detected
 winState = { visible: false, minimized: true, focused: false }; // hidden in tray / minimized
 res = simulateUpdateDetected('v1.5.0');
 assert.strictEqual(res.notified, true, 'Genuinely newer version 1.5.0 must trigger a new notification');
 assert.strictEqual(shownToasts.length, 2);
-assert.strictEqual(shownToasts[1].opts.body, "A new Ember update is available!\nVersion 1.5.0 is ready. Check out what's new.");
+assert.strictEqual(shownToasts[1].opts.body, "A new NUKRON update is available!\nVersion 1.5.0 is ready. Check out what's new.");
 assert.strictEqual(readPersisted(), '1.5.0');
 
 // Scenario D: User clicks the notification while Ember is minimized to the system tray

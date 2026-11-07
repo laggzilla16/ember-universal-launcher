@@ -1,6 +1,17 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.0',
+    items: [
+      'Complete rebranding from Ember Universal Launcher to NUKRON ("Your games. Your universe.") across the Windows desktop application, in-game performance overlay, startup quote toast, seamless updater, system tray, and official website.',
+      'New NUKRON visual identity featuring a custom geometric N-prism optical monogram, wordmark, multi-resolution Windows icon, and Electric Blue (#2563EB) + Crimson Red (#E63946) over Deep Midnight (#090D19) palette.',
+      'Snell\'s Law-inspired three-tier Optical Glass design system (Clear Glass, Frosted Glass, and Optical Accent Glass) with realistic light transmission, subtle chromatic edge refraction, specular highlights, and full reduced-motion and reduced-transparency support.',
+      'Official NUKRON website launched in the monorepo with interactive desktop and overlay studios, searchable FAQ, and live GitHub Releases integration that automatically resolves the latest verified Windows installer.',
+      'Seamless in-place upgrade and migration path preserving your entire SQLite game library, playtime history, custom cover art, Windows startup registration, and performance overlay configuration.',
+      'Improved FrameView SDK FPS accuracy by excluding NUKRON and background web browsers from fallback frame rate detection.'
+    ]
+  },
+  {
     v: '1.4.2',
     items: [
       'New: native Windows notifications when an Ember update is available, even when minimized to the system tray. You are notified only once per new version, and clicking the notification brings Ember to the foreground and opens What\'s New without starting the update automatically.',

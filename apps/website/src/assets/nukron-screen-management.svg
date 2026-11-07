@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" fill="none">
+  <defs>
+    <radialGradient id="mgBlue" cx="20%" cy="12%" r="60%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#090D19" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mgRed" cx="85%" cy="88%" r="55%">
+      <stop offset="0%" stop-color="#E63946" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#090D19" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mgSpectrum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="52%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#E63946"/>
+    </linearGradient>
+    <linearGradient id="mgBtnBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="580" rx="22" fill="#090D19"/>
+  <rect width="960" height="580" rx="22" fill="url(#mgBlue)"/>
+  <rect width="960" height="580" rx="22" fill="url(#mgRed)"/>
+  <rect x="0.75" y="0.75" width="958.5" height="578.5" rx="21.25" stroke="url(#mgSpectrum)" stroke-opacity="0.48" stroke-width="1.5"/>
+
+  <!-- Left Panel: Add / Edit Game Optical Modal (#dlg) -->
+  <rect x="28" y="28" width="440" height="524" rx="20" fill="#111827" fill-opacity="0.86" stroke="url(#mgSpectrum)" stroke-width="1.5"/>
+  <text x="54" y="68" fill="#F8FAFC" font-family="Unbounded, Segoe UI, sans-serif" font-size="21" font-weight="800">Add game</text>
+  <rect x="260" y="45" width="184" height="32" rx="10" fill="#2563EB" fill-opacity="0.18" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <text x="352" y="65" text-anchor="middle" fill="#93C5FD" font-family="Inter, sans-serif" font-size="11.5" font-weight="700">Import Windows Apps →</text>
+
+  <!-- Field 1: Game File -->
+  <text x="54" y="106" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Game file (.exe, or ROM/disc image with emulator)</text>
+  <rect x="54" y="114" width="310" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="66" y="136" fill="#F8FAFC" font-family="Consolas, monospace" font-size="11.5">C:\Games\EldenRing\Game\eldenring.exe</text>
+  <rect x="372" y="114" width="72" height="36" rx="10" fill="#172033" stroke="#60A5FA" stroke-opacity="0.35"/>
+  <text x="408" y="136" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12" font-weight="600">Browse</text>
+
+  <!-- Field 2: Name & Group -->
+  <text x="54" y="174" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Display Name</text>
+  <rect x="54" y="182" width="230" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="66" y="204" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12.5" font-weight="600">Elden Ring</text>
+
+  <text x="296" y="174" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Group</text>
+  <rect x="296" y="182" width="148" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#60A5FA" stroke-opacity="0.38"/>
+  <text x="310" y="204" fill="#60A5FA" font-family="Inter, sans-serif" font-size="12.5" font-weight="700">RPG</text>
+
+  <!-- Field 3: Cover Image -->
+  <text x="54" y="242" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Cover image (copied locally to %APPDATA%)</text>
+  <rect x="54" y="250" width="310" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="66" y="272" fill="#AAB6CC" font-family="Consolas, monospace" font-size="11.5">covers\elden-ring-keyart.png</text>
+  <rect x="372" y="250" width="72" height="36" rx="10" fill="#172033" stroke="#60A5FA" stroke-opacity="0.35"/>
+  <text x="408" y="272" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="12" font-weight="600">Browse</text>
+
+  <!-- Field 4: Emulator & Launch Arguments -->
+  <text x="54" y="310" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Emulator (optional) &amp; Launch arguments</text>
+  <rect x="54" y="318" width="220" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="66" y="340" fill="#64748B" font-family="Inter, sans-serif" font-size="11.5">Normal PC game (.exe)</text>
+  <rect x="284" y="318" width="160" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="296" y="340" fill="#93C5FD" font-family="Consolas, monospace" font-size="11.5">-fullscreen -dx12</text>
+
+  <!-- Field 5: Process to Track -->
+  <text x="54" y="378" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="11.5" font-weight="600">Process to track (optional — for multi-launcher games)</text>
+  <rect x="54" y="386" width="390" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="66" y="408" fill="#F8FAFC" font-family="Consolas, monospace" font-size="11.5">eldenring.exe</text>
+
+  <!-- Modal Footer Actions -->
+  <rect x="252" y="492" width="88" height="38" rx="11" fill="#172033" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="296" y="516" text-anchor="middle" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="13" font-weight="600">Cancel</text>
+  <rect x="350" y="492" width="94" height="38" rx="11" fill="url(#mgBtnBlue)"/>
+  <text x="397" y="516" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="700">Save</text>
+
+  <!-- Right Panel: Import Windows Applications Scanner (Get-StartApps AUMIDs) -->
+  <rect x="492" y="28" width="440" height="524" rx="20" fill="#111827" fill-opacity="0.86" stroke="#60A5FA" stroke-opacity="0.38" stroke-width="1.5"/>
+  <text x="518" y="68" fill="#F8FAFC" font-family="Unbounded, Segoe UI, sans-serif" font-size="19" font-weight="800">Import Windows Apps</text>
+  <text x="518" y="92" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12">Store, Xbox &amp; Start Menu games discovered automatically via AUMID.</text>
+
+  <rect x="518" y="108" width="388" height="36" rx="10" fill="#090D19" fill-opacity="0.75" stroke="#AAB6CC" stroke-opacity="0.22"/>
+  <text x="534" y="130" fill="#AAB6CC" font-family="Inter, sans-serif" font-size="12">Search 42 registered Windows applications…</text>
+
+  <!-- App Row 1 -->
+  <rect x="518" y="158" width="388" height="62" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <rect x="534" y="179" width="20" height="20" rx="6" fill="#2563EB"/>
+  <path d="M539 189L543 193L550 185" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="568" y="185" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13.5" font-weight="700">Forza Horizon 5</text>
+  <text x="568" y="204" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Microsoft.624F8B84B80_8wekyb3d8bbwe!ForzaHorizon5</text>
+
+  <!-- App Row 2 -->
+  <rect x="518" y="230" width="388" height="62" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <rect x="534" y="251" width="20" height="20" rx="6" fill="#2563EB"/>
+  <path d="M539 261L543 265L550 257" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="568" y="257" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13.5" font-weight="700">Sea of Thieves</text>
+  <text x="568" y="276" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Microsoft.SeaofThieves_8wekyb3d8bbwe!AthenaClient</text>
+
+  <!-- App Row 3 -->
+  <rect x="518" y="302" width="388" height="62" rx="12" fill="#172033" fill-opacity="0.40" stroke="#AAB6CC" stroke-opacity="0.16"/>
+  <rect x="534" y="323" width="20" height="20" rx="6" fill="#334155"/>
+  <path d="M539 333L543 337L550 329" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="568" y="329" fill="#94A3B8" font-family="Inter, sans-serif" font-size="13.5" font-weight="700">Elden Ring</text>
+  <text x="568" y="348" fill="#64748B" font-family="Inter, sans-serif" font-size="11.5">Already in your library</text>
+
+  <!-- App Row 4 -->
+  <rect x="518" y="374" width="388" height="62" rx="12" fill="#172033" fill-opacity="0.72" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <rect x="534" y="395" width="20" height="20" rx="6" fill="#2563EB"/>
+  <path d="M539 405L543 409L550 401" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="568" y="401" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13.5" font-weight="700">Hollow Knight: Silksong</text>
+  <text x="568" y="420" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">TeamCherry.HollowKnightSilksong_8wekyb3d8bbwe!App</text>
+
+  <!-- Scanner Footer -->
+  <text x="518" y="516" fill="#34D399" font-family="Inter, sans-serif" font-size="12" font-weight="600">● 3 Windows applications selected</text>
+  <rect x="756" y="492" width="150" height="38" rx="11" fill="url(#mgBtnBlue)"/>
+  <text x="831" y="516" text-anchor="middle" fill="#F8FAFC" font-family="Inter, sans-serif" font-size="13" font-weight="700">Import 3 selected</text>
+</svg>
+

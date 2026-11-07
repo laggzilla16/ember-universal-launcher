@@ -1,16 +1,16 @@
 /**
- * Official Ember Universal Launcher Constants & Metadata
+ * Official NUKRON Constants & Metadata
  * Single source of truth for repository URLs, GitHub Releases API endpoints, and installer rules.
  */
-const EMBER_CONSTANTS = {
-  productName: 'Ember',
-  productFullName: 'Ember Universal Launcher',
+const NUKRON_CONSTANTS = {
+  productName: 'NUKRON',
+  productFullName: 'NUKRON',
   desktopPackageName: 'ember-launcher',
   appId: 'local.ember.launcher',
-  tagline: 'Your games. Your space. Your Ember.',
-  supportingHeadline: 'A better home for your PC gaming experience.',
+  tagline: 'Your games. Your universe.',
+  supportingHeadline: 'A precision optical-glass home for your PC gaming universe.',
   description:
-    'Discover a cleaner way to organize, launch, and experience your PC games. Everything you need, in one beautifully designed launcher.',
+    'Organize, launch, and experience every game you own on Windows inside a genuine optical-glass interface—with automatic SQLite playtime tracking and a real-time hardware performance overlay.',
   platform: {
     os: 'Windows 10 / Windows 11 (64-bit)',
     shortOs: 'Windows 10 & 11',
@@ -29,17 +29,19 @@ const EMBER_CONSTANTS = {
     apiAllReleases: 'https://api.github.com/repos/laggzilla16/ember-universal-launcher/releases?per_page=30'
   },
   installer: {
-    setupPrefix: 'Ember-Launcher-Setup-',
-    portablePrefix: 'Ember-Launcher-Portable-',
+    setupPrefix: 'NUKRON-Setup-',
+    legacySetupPrefix: 'Ember-Launcher-Setup-',
+    portablePrefix: 'NUKRON-Portable-',
+    legacyPortablePrefix: 'Ember-Launcher-Portable-',
     allowedExtension: '.exe',
     excludedExtensions: ['.blockmap', '.yml', '.yaml', '.zip', '.tar.gz', '.7z', '.nupkg', '.msi.blockmap']
   }
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = EMBER_CONSTANTS;
+  module.exports = NUKRON_CONSTANTS;
 }
 if (typeof window !== 'undefined') {
-  window.EMBER_CONSTANTS = EMBER_CONSTANTS;
+  window.NUKRON_CONSTANTS = NUKRON_CONSTANTS;
+  window.EMBER_CONSTANTS = NUKRON_CONSTANTS;
 }
-

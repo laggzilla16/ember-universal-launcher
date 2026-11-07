@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="nkBg" x1="40" y1="24" x2="472" y2="488" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141E36"/>
+      <stop offset="48%" stop-color="#0B1020"/>
+      <stop offset="100%" stop-color="#070A14"/>
+    </linearGradient>
+    <linearGradient id="nkRim" x1="32" y1="32" x2="480" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.9"/>
+      <stop offset="32%" stop-color="#2563EB" stop-opacity="0.55"/>
+      <stop offset="68%" stop-color="#E63946" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF5A67" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="nkBlueLeft" x1="128" y1="112" x2="212" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="45%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="nkBlueRight" x1="300" y1="112" x2="384" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="55%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="nkCrimsonCore" x1="150" y1="120" x2="362" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B78"/>
+      <stop offset="50%" stop-color="#E63946"/>
+      <stop offset="100%" stop-color="#BE123C"/>
+    </linearGradient>
+    <radialGradient id="nkBlueGlow" cx="28%" cy="24%" r="58%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nkRedGlow" cx="74%" cy="76%" r="54%">
+      <stop offset="0%" stop-color="#E63946" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#E63946" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="nkCrown" x1="256" y1="28" x2="256" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="url(#nkBg)"/>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="url(#nkBlueGlow)"/>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="url(#nkRedGlow)"/>
+  <line x1="92" y1="256" x2="420" y2="256" stroke="#F8FAFC" stroke-opacity="0.07" stroke-width="2"/>
+  <line x1="256" y1="92" x2="256" y2="420" stroke="#60A5FA" stroke-opacity="0.08" stroke-width="2" stroke-dasharray="6 8"/>
+  <path d="M140 34H372C430.5 34 478 81.5 478 140V168C410 120 336 98 256 98C176 98 102 120 34 168V140C34 81.5 81.5 34 140 34Z" fill="url(#nkCrown)"/>
+  <rect x="52" y="52" width="408" height="408" rx="92" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="2"/>
+  <path d="M124 134C124 121.85 133.85 112 146 112H196C202.63 112 208 117.37 208 124V388C208 394.63 202.63 400 196 400H146C133.85 400 124 390.15 124 378V134Z" fill="url(#nkBlueLeft)"/>
+  <path d="M132 134C132 126.27 138.27 120 146 120H154V392H146C138.27 392 132 385.73 132 378V134Z" fill="#93C5FD" fill-opacity="0.32"/>
+  <path d="M304 124C304 117.37 309.37 112 316 112H366C378.15 112 388 121.85 388 134V378C388 390.15 378.15 400 366 400H316C309.37 400 304 394.63 304 388V124Z" fill="url(#nkBlueRight)"/>
+  <path d="M358 120H366C373.73 120 380 126.27 380 134V378C380 385.73 373.73 392 366 392H358V120Z" fill="#93C5FD" fill-opacity="0.28"/>
+  <path d="M152 112H214L276 232L360 400H298L236 280L152 112Z" fill="url(#nkCrimsonCore)"/>
+  <path d="M202 112H216L276 232L360 400H346L262 232L202 112Z" fill="#FFE4E6" fill-opacity="0.42"/>
+  <polygon points="256,216 284,256 256,296 228,256" fill="#F8FAFC" fill-opacity="0.18"/>
+  <circle cx="256" cy="256" r="6" fill="#F8FAFC" fill-opacity="0.85"/>
+  <rect x="30" y="30" width="452" height="452" rx="110" stroke="url(#nkRim)" stroke-width="5"/>
+</svg>
+

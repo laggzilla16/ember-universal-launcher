@@ -18,24 +18,27 @@ html, body {
 #panel {
   position: relative;
   width: 196px;
-  background: radial-gradient(120% 70% at 18% -12%, #ffb45426, transparent 62%), linear-gradient(150deg, #ffffff18, #ffffff07 55%, #ffffff0d), rgba(14, 15, 19, 0.92);
+  background:
+    radial-gradient(120% 75% at 16% -12%, rgba(37, 99, 235, 0.28), transparent 60%),
+    radial-gradient(110% 75% at 88% 115%, rgba(230, 57, 70, 0.20), transparent 58%),
+    linear-gradient(150deg, rgba(248, 250, 252, 0.085), rgba(23, 32, 51, 0.68) 55%, rgba(9, 13, 25, 0.82));
   border-radius: 16px;
-  box-shadow: inset 0 1px 0 #ffffff33, inset 0 -1px 0 #0000004d, 0 10px 28px rgba(0, 0, 0, 0.65);
+  box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.22), inset 0 -1px 0 rgba(3, 6, 14, 0.55), 0 10px 28px rgba(3, 6, 14, 0.72);
   padding: 12px 0 10px;
   margin: 8px;
   opacity: 0;
   transform: translateY(-6px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   cursor: grab;
 }
 
 #panel:hover {
-  box-shadow: inset 0 1px 0 #ffffff4d, inset 0 -1px 0 #0000004d, 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(255, 138, 43, 0.22);
+  box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.34), inset 0 -1px 0 rgba(3, 6, 14, 0.55), 0 12px 32px rgba(3, 6, 14, 0.80), 0 0 18px rgba(37, 99, 235, 0.28);
 }
 
 #panel.dragging {
   cursor: grabbing;
-  box-shadow: inset 0 1px 0 #ffb45466, 0 16px 38px rgba(0, 0, 0, 0.85), 0 0 22px rgba(255, 122, 26, 0.4);
+  box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.5), 0 16px 38px rgba(3, 6, 14, 0.88), 0 0 24px rgba(37, 99, 235, 0.45);
 }
 
 #panel::before {
@@ -44,7 +47,7 @@ html, body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(140deg, #ffffff8c, #ffffff14 26%, #ffffff08 62%, #ffb46a66);
+  background: linear-gradient(138deg, rgba(96, 165, 250, 0.72), rgba(248, 250, 252, 0.14) 28%, rgba(248, 250, 252, 0.06) 62%, rgba(230, 57, 70, 0.58));
   pointer-events: none;
   -webkit-mask: linear-gradient(#fff, #fff) content-box, linear-gradient(#fff, #fff);
   -webkit-mask-composite: destination-out;
@@ -68,7 +71,7 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 0 12px 9px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(170, 182, 204, 0.14);
 }
 
 .ovl-logo {
@@ -76,7 +79,7 @@ html, body {
   height: 19px;
   flex: none;
   object-fit: contain;
-  filter: drop-shadow(0 0 6px #ff7a1a88);
+  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.55));
   pointer-events: none;
 }
 
@@ -86,7 +89,7 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #ffb454 0%, #ff7a1a 50%, #f0491f 100%);
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 52%, #e63946 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -96,12 +99,12 @@ html, body {
 .ovl-grip {
   font-size: 11px;
   letter-spacing: -1px;
-  color: rgba(165, 159, 152, 0.45);
+  color: rgba(170, 182, 204, 0.45);
   transition: color 0.2s ease;
 }
 
 #panel:hover .ovl-grip {
-  color: rgba(255, 180, 84, 0.85);
+  color: rgba(96, 165, 250, 0.88);
 }
 
 /* Metric rows */
@@ -125,16 +128,16 @@ html, body {
   width: 14px;
   text-align: center;
   flex: none;
-  color: rgba(165, 159, 152, 0.85);
+  color: rgba(170, 182, 204, 0.85);
 }
 
 .metric-fps .metric-icon {
-  color: #ffb454;
+  color: #60a5fa;
 }
 
 .metric-label {
   font-size: 11px;
-  color: #a59f98;
+  color: #aab6cc;
   flex: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -143,7 +146,7 @@ html, body {
 .metric-sub {
   display: none;
   font-size: 10px;
-  color: #8c867f;
+  color: #7c8ba6;
   font-variant-numeric: tabular-nums;
   margin-right: 4px;
 }
@@ -152,7 +155,7 @@ html, body {
   font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  color: #f5efe8;
+  color: #f8fafc;
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
@@ -163,15 +166,15 @@ html, body {
   font-weight: 700;
 }
 
-.metric-value.good { color: #52d69a; }
-.metric-value.warn { color: #ffb454; }
-.metric-value.crit { color: #ff5a5f; }
-.metric-value.na   { color: #a59f98; }
+.metric-value.good { color: #34d399; }
+.metric-value.warn { color: #60a5fa; }
+.metric-value.crit { color: #e63946; }
+.metric-value.na   { color: #aab6cc; }
 
 /* Utilization bar */
 .metric-bar-wrap {
   height: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(170, 182, 204, 0.12);
   border-radius: 3px;
   overflow: hidden;
   margin-left: 20px;
@@ -184,17 +187,17 @@ html, body {
 .metric-bar {
   height: 100%;
   border-radius: 3px;
-  background: #52d69a;
+  background: #34d399;
 }
 
-.metric-bar.good { background: #52d69a; }
-.metric-bar.warn { background: #ffb454; }
-.metric-bar.crit { background: #ff5a5f; }
+.metric-bar.good { background: #34d399; }
+.metric-bar.warn { background: #3b82f6; }
+.metric-bar.crit { background: #e63946; }
 
 /* Divider */
 .ovl-div {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(170, 182, 204, 0.10);
   margin: 3px 12px;
 }
 
@@ -211,8 +214,8 @@ html, body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #52d69a;
-  box-shadow: 0 0 6px #52d69a88;
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.65);
   flex: none;
 }
 
@@ -221,7 +224,7 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #52d69a;
+  color: #34d399;
   opacity: 0.85;
 }
 
@@ -246,7 +249,7 @@ html, body {
 #panel.layout-horizontal .ovl-head {
   padding: 0 10px 0 0;
   border-bottom: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid rgba(170, 182, 204, 0.16);
   gap: 6px;
 }
 
@@ -287,7 +290,7 @@ html, body {
 
 #panel.layout-horizontal .ovl-foot {
   padding: 0 0 0 8px;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(170, 182, 204, 0.16);
 }
 
 #panel.layout-horizontal .live-label {
@@ -327,13 +330,13 @@ html, body {
 
 #panel.layout-compact .metric {
   padding: 2px 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(248, 250, 252, 0.04);
   border-radius: 6px;
 }
 
 #panel.layout-compact .metric-fps {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(255, 180, 84, 0.14), rgba(255, 122, 26, 0.05));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(230, 57, 70, 0.08));
 }
 
 #panel.layout-compact .metric-top {
@@ -378,14 +381,14 @@ html, body {
 
 #panel.layout-expanded .metric {
   padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(248, 250, 252, 0.045);
   border-radius: 10px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(170, 182, 204, 0.10);
 }
 
 #panel.layout-expanded .metric-fps {
-  background: linear-gradient(145deg, rgba(255, 180, 84, 0.16), rgba(232, 64, 31, 0.06));
-  box-shadow: inset 0 0 0 1px rgba(255, 180, 84, 0.24);
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.24), rgba(230, 57, 70, 0.10));
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.34);
   padding: 9px 11px;
 }
 
