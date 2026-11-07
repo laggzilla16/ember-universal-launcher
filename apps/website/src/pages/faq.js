@@ -66,7 +66,7 @@ const FAQ_ITEMS = [
   }
 ];
 
-function renderFaqPage({ basePath = '.', baselineVersion = '1.5.0' }) {
+function renderFaqPage({ basePath = '.', baselineVersion = '1.5.1' }) {
   const faqHtml = FAQ_ITEMS.map((item, idx) => {
     const isOpen = idx < 2;
     return `

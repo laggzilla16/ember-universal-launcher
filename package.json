@@ -1,6 +1,6 @@
 {
   "name": "ember-launcher",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "NUKRON — PC game launcher with automatic playtime tracking and optical-glass performance overlay",
   "main": "main.js",
   "scripts": {

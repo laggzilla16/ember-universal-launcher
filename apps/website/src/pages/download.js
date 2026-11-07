@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.0' }) {
+function renderDownloadPage({ basePath = '.', baselineVersion = '1.5.1' }) {
   return `
   <section class="page-hero download-hero">
     <div class="container">
