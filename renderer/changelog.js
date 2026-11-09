@@ -1,6 +1,15 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.2',
+    items: [
+      'New Smart Gaming Overview on the Dashboard, designed for desktop clarity with NUKRON\'s Optical Glass visual identity.',
+      'Weekly Gaming Statistics: compact weekly summary with inline playtime, session count, and active-day pills alongside a Monday–Sunday daily gaming activity chart.',
+      'Most Played This Month: automatic monthly leaderboard highlighting your most-played games with playtime share, session counts, and one-click quick launch.',
+      'Improved Recently Played section showcasing your 3 most recently played games, featuring an expanded Optical Glass hero card for the most-played game among them.'
+    ]
+  },
+  {
     v: '1.5.1',
     items: [
       'Updated the official NUKRON application emblem and multi-resolution Windows icon across the splash screen, sidebar header, in-game performance overlay, updater window, system tray, and Windows toast notifications.',

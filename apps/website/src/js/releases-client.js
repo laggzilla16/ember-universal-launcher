@@ -9,7 +9,7 @@
 
   const Utils = window.NukronReleaseUtils || window.EmberReleaseUtils;
   const Baseline = window.NUKRON_BASELINE_DATA || window.EMBER_BASELINE_DATA || {
-    version: '1.5.1',
+    version: '1.5.2',
     repoUrl: 'https://github.com/laggzilla16/ember-universal-launcher',
     releasesUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases',
     latestReleasePageUrl: 'https://github.com/laggzilla16/ember-universal-launcher/releases/latest',
