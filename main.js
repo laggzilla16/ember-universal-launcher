@@ -852,7 +852,7 @@ function overlayHide() {
 
 // ---- Background mode: keep running in the system tray after the window is closed
 const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '' }, tray = null, quitting = false;
+let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '', onboardingCompleted: false }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
 const LOGO = fs.existsSync(path.join(__dirname, 'renderer', 'assets', 'nukron-logo.png'))
@@ -1326,6 +1326,7 @@ h('app:settings', s => {
   s = s || {};
   if ('background' in s) appSettings.background = !!s.background;
   if ('showStartupMessage' in s) appSettings.showStartupMessage = !!s.showStartupMessage;
+  if ('onboardingCompleted' in s) appSettings.onboardingCompleted = !!s.onboardingCompleted;
   if ('launchAtStartup' in s && !!s.launchAtStartup !== startupEnabled()) setStartup(s.launchAtStartup);
   appSettings.launchAtStartup = startupEnabled();
   saveAppSettings(); applyTray();
