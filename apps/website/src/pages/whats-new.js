@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.5.1', changelogEntries = [] }) {
+function renderWhatsNewPage({ basePath = '.', baselineVersion = '1.5.2', changelogEntries = [] }) {
   const latestLocal = changelogEntries[0] || { v: baselineVersion, items: [] };
 
   const preRenderedTimeline = changelogEntries

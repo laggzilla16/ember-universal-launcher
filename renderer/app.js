@@ -3,23 +3,197 @@ const S = { games: [], running: {}, sessions: [], view: 'dash', q: '', grp: '', 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const furl = p => 'file:///' + encodeURI(p.replace(/\\/g, '/')).replace(/#/g, '%23').replace(/'/g, '%27');
 const pad = n => String(n).padStart(2, '0');
-const clock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
-const dur = ms => { const m = Math.round(ms / 60000); return m < 1 ? (ms > 0 ? '<1m' : '0m') : m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm'; };
+const safeMs = ms => (Number.isFinite(ms) && ms > 0 ? ms : 0);
+const clock = ms => { const s = Math.max(0, Math.floor(safeMs(ms) / 1000)); return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
+const dur = ms => { const v = safeMs(ms), m = Math.round(v / 60000); return m < 1 ? (v > 0 ? '<1m' : '0m') : m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm'; };
 const cardDur = ms => {
-  const m = Math.round(ms / 60000);
-  if (m < 1) return ms > 0 ? '&lt;1<i>m</i>' : '0<i>m</i>';
+  const v = safeMs(ms), m = Math.round(v / 60000);
+  if (m < 1) return v > 0 ? '&lt;1<i>m</i>' : '0<i>m</i>';
   if (m < 60) return `${m}<i>m</i>`;
   const h = Math.floor(m / 60), rm = pad(m % 60);
   if (h < 24) return `${h}<i>h</i> ${rm}<i>m</i>`;
   return `${Math.floor(h / 24)}<i>d</i> ${h % 24}<i>h</i> ${rm}<i>m</i>`;
 };
-const hue = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
-const ini = n => n.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
-const isRun = g => g.id in S.running;
-const total = g => g.total + (isRun(g) ? Date.now() - S.running[g.id] : 0);
-const art = g => g.cover ? `background-image:url('${furl(g.cover)}')`
-  : `background:linear-gradient(150deg,hsl(${hue(g.name)} 55% 30%),hsl(${(hue(g.name) + 60) % 360} 60% 12%))`;
+const hue = s => [...String(s || '')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
+const ini = n => String(n || '').split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+const isRun = g => !!(g && g.id in S.running);
+const total = g => safeMs(Number(g?.total)) + (isRun(g) ? safeMs(Date.now() - Number(S.running[g.id])) : 0);
+const art = g => g?.cover ? `background-image:url('${furl(g.cover)}')`
+  : `background:linear-gradient(150deg,hsl(${hue(g?.name)} 55% 30%),hsl(${(hue(g?.name) + 60) % 360} 60% 12%))`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const dkey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const monday = d => addDays(d, -((d.getDay() + 6) % 7));
+const sumRows = f => S.stats.reduce((a, r) => f(r) ? a + safeMs(Number(r.ms)) : a, 0);
+const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function relPlayed(ts, now = Date.now()) {
+  const t = Number(ts);
+  if (!Number.isFinite(t) || t <= 0) return 'Never played';
+  const d = new Date(t), today = new Date(now);
+  const dk = dkey(d), tk = dkey(today), yk = dkey(addDays(today, -1));
+  if (dk === tk) {
+    const mins = Math.max(0, Math.floor((now - t) / 60000));
+    if (mins < 2) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    return hrs < 8 ? `${hrs}h ago` : 'Today';
+  }
+  if (dk === yk) return 'Yesterday';
+  const dayDiff = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  if (dayDiff > 1 && dayDiff <= 6) return `${dayDiff}d ago`;
+  return d.toLocaleDateString(undefined, d.getFullYear() === today.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function computeOverview(state = S, now = Date.now()) {
+  const games = (Array.isArray(state?.games) ? state.games : []).filter(g => g && Number.isFinite(Number(g.id)));
+  const running = state?.running && typeof state.running === 'object' ? state.running : {};
+  const byId = new Map(games.map(g => [Number(g.id), g]));
+
+  // Normalize and validate sessions chronologically
+  const sessions = [];
+  for (const s of (Array.isArray(state?.sessions) ? state.sessions : [])) {
+    if (!s || typeof s !== 'object') continue;
+    const g = byId.get(Number(s.game_id));
+    const started = Number(s.started);
+    if (!g || !Number.isFinite(started) || started <= 0 || started > now + 864e5) continue;
+    const live = !!(s.live && (g.id in running));
+    const rawEnd = live ? now : Number(s.ended ?? s.beat ?? started);
+    const ended = Number.isFinite(rawEnd) && rawEnd >= started ? Math.min(rawEnd, now + 864e5) : started;
+    sessions.push({
+      id: s.id ?? `${g.id}-${started}`,
+      game_id: g.id,
+      g,
+      started,
+      ended,
+      ms: Math.max(0, ended - started),
+      live
+    });
+  }
+  for (const [gid, rStartRaw] of Object.entries(running)) {
+    const g = byId.get(Number(gid)), rStart = Number(rStartRaw);
+    if (g && Number.isFinite(rStart) && rStart > 0 && rStart <= now + 864e5 && !sessions.some(x => x.game_id === g.id && x.live)) {
+      sessions.push({ id: `live-${g.id}`, game_id: g.id, g, started: rStart, ended: Math.max(rStart, now), ms: Math.max(0, now - rStart), live: true });
+    }
+  }
+  sessions.sort((a, b) => b.started - a.started || b.ended - a.ended);
+
+  // Build daily split playtime rows (uses pre-split stats when present, or splits normalized sessions)
+  let dailyRows = (Array.isArray(state?.stats) ? state.stats : []).filter(
+    r => r && typeof r.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.day) && byId.has(Number(r.g)) && safeMs(Number(r.ms)) > 0
+  ).map(r => ({ day: r.day, g: Number(r.g), ms: safeMs(Number(r.ms)) }));
+
+  if (!dailyRows.length && sessions.length) {
+    const splitMap = {};
+    for (const s of sessions) {
+      for (let t = s.started; t < s.ended;) {
+        const d = new Date(t), next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+        if (!Number.isFinite(next) || next <= t) break;
+        const k = `${dkey(d)}|${s.game_id}`;
+        splitMap[k] = (splitMap[k] || 0) + Math.min(s.ended, next) - t;
+        t = next;
+      }
+    }
+    dailyRows = Object.entries(splitMap).map(([k, ms]) => { const [day, g] = k.split('|'); return { day, g: +g, ms }; });
+  }
+
+  // 1. Weekly Gaming Statistics (Monday - Sunday of current week)
+  const today = new Date(now), todayKey = dkey(today);
+  const mon = monday(today), sun = addDays(mon, 6), nextMon = addDays(mon, 7);
+  const monMs = mon.getTime(), nextMonMs = nextMon.getTime();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(mon, i), k = dkey(d);
+    const dStart = d.getTime(), dEnd = addDays(d, 1).getTime();
+    const ms = dailyRows.reduce((acc, r) => r.day === k ? acc + r.ms : acc, 0);
+    const daySessions = sessions.filter(s => s.ended > dStart && s.started < dEnd).length;
+    days.push({
+      index: i,
+      key: k,
+      short: DAY_SHORT[i],
+      full: DAY_FULL[i],
+      dateNum: d.getDate(),
+      title: d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
+      ms,
+      sessions: daySessions,
+      now: k === todayKey,
+      future: k > todayKey
+    });
+  }
+  const weekTotalMs = days.reduce((a, d) => a + d.ms, 0);
+  const weekSessions = sessions.filter(s => s.ended > monMs && s.started < nextMonMs);
+  const activeDays = days.filter(d => d.ms > 0).length;
+  const elapsedDays = Math.max(1, Math.min(7, Math.floor((today.getTime() - monMs) / 864e5) + 1));
+  const weekly = {
+    days,
+    totalMs: weekTotalMs,
+    sessionCount: weekSessions.length,
+    activeDays,
+    dailyAvgMs: weekTotalMs / elapsedDays,
+    maxDayMs: Math.max(1, ...days.map(d => d.ms)),
+    rangeLabel: `${mon.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${sun.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+  };
+
+  // 2. Most Played This Month
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthStartKey = dkey(monthStart), monthStartMs = monthStart.getTime();
+  const rollStart = addDays(today, -29), rollStartKey = dkey(rollStart), rollStartMs = rollStart.getTime();
+  const calMap = {}, rollMap = {};
+  for (const r of dailyRows) {
+    if (r.day >= monthStartKey) calMap[r.g] = (calMap[r.g] || 0) + r.ms;
+    if (r.day >= rollStartKey) rollMap[r.g] = (rollMap[r.g] || 0) + r.ms;
+  }
+  const useCal = Object.keys(calMap).length > 0;
+  const activeMap = useCal ? calMap : rollMap;
+  const sinceMs = useCal ? monthStartMs : rollStartMs;
+  const monthLabel = useCal || !Object.keys(rollMap).length
+    ? today.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    : 'Last 30 days';
+
+  const rankedMonth = games.map(g => {
+    const ms = safeMs(activeMap[g.id] || 0);
+    const sessCount = sessions.filter(s => s.game_id === g.id && s.ended > sinceMs).length || (ms > 0 ? 1 : 0);
+    const gTotal = safeMs(Number(g.total)) + ((g.id in running) ? safeMs(now - Number(running[g.id])) : 0);
+    return { g, ms, sessions: sessCount, gTotal };
+  }).filter(x => x.ms > 0).sort((a, b) => b.ms - a.ms || b.gTotal - a.gTotal);
+
+  const totalMonthMs = rankedMonth.reduce((a, x) => a + x.ms, 0);
+  const maxMonthGameMs = rankedMonth[0]?.ms || 1;
+  const monthly = {
+    label: monthLabel,
+    totalMs: totalMonthMs,
+    items: rankedMonth.slice(0, 3).map((x, idx) => ({
+      g: x.g,
+      ms: x.ms,
+      sessions: x.sessions,
+      rank: idx + 1,
+      pct: totalMonthMs > 0 ? Math.max(1, Math.round(x.ms / totalMonthMs * 100)) : 0,
+      barPct: Math.max(4, Math.round(x.ms / maxMonthGameMs * 100))
+    }))
+  };
+
+  // 3. Recently Played (top 3 most recently played games, highlighting the most-played among them)
+  const recent = games.map(g => {
+    const latestSess = sessions.find(s => s.game_id === g.id);
+    const lastTs = Math.max(safeMs(Number(g.last)), latestSess ? latestSess.started : 0);
+    const run = g.id in running;
+    const totalMs = safeMs(Number(g.total)) + (run ? safeMs(now - Number(running[g.id])) : 0);
+    return { g, lastTs, totalMs, run, featured: false, lastLabel: run ? 'Playing now' : (lastTs ? relPlayed(lastTs, now) : '') };
+  }).filter(x => x.lastTs > 0 || x.run)
+    .sort((a, b) => (b.run ? 1 : 0) - (a.run ? 1 : 0) || b.lastTs - a.lastTs)
+    .slice(0, 3);
+
+  if (recent.length) {
+    let bestIdx = 0;
+    for (let i = 1; i < recent.length; i++) {
+      if (recent[i].totalMs > recent[bestIdx].totalMs) bestIdx = i;
+    }
+    recent[bestIdx].featured = true;
+  }
+
+  return { weekly, monthly, recent, totalSessions: sessions.length };
+}
 
 function card(g) {
   const run = isRun(g), t = total(g);
@@ -29,19 +203,106 @@ function card(g) {
     <div class="meta"><h3>${esc(g.name)}</h3><div class="ptime${!run && t <= 0 ? ' zero' : ''}"><svg class="ptime-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path class="ptime-hand" d="M8 4.8V8l2.2 1.4"/></svg><span class="ptime-val" data-t="${g.id}">${run ? clock(t) : cardDur(t)}</span></div></div>
     <div class="acts"><button class="play">${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
 }
+
+function recentCard(item) {
+  const g = item.g || item, run = isRun(g), t = total(g), feat = !!item.featured;
+  const lastLbl = item.lastLabel || (g.last ? relPlayed(g.last) : '');
+  const playSvg = '<svg class="q-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2l8.3 4.8-8.3 4.8z"/></svg>';
+  const starSvg = '<svg class="feat-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l2 4 4.4.6-3.2 3.1.8 4.4L8 11.6l-4 2.1.8-4.4L1.6 6.2 6 5.6z"/></svg>';
+  return `<article class="card recent-card ${feat ? 'featured' : ''} ${run ? 'run' : ''} ${g.missing ? 'missing' : ''}" data-id="${g.id}" tabindex="0">
+    <div class="art" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</div><div class="shade"></div>
+    <div class="card-top">
+      <div class="card-badges">
+        ${feat ? `<span class="feat-badge" title="Most played among your recently played games">${starSvg}Most Played</span>` : ''}
+        ${run ? '<div class="live">Playing</div>' : g.missing ? '<div class="gone" title="Game files not found (uninstalled, moved or drive disconnected). Playtime is kept.">Not installed</div>' : lastLbl ? `<div class="rec-badge" title="Last played ${esc(new Date(item.lastTs || g.last).toLocaleString())}">${esc(lastLbl)}</div>` : ''}
+      </div>
+      ${g.grp ? `<span class="grp-tag">${esc(g.grp)}</span>` : ''}
+    </div>
+    <div class="meta">
+      <h3>${esc(g.name)}</h3>
+      <div class="meta-row">
+        <div class="ptime${!run && t <= 0 ? ' zero' : ''}"><svg class="ptime-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path class="ptime-hand" d="M8 4.8V8l2.2 1.4"/></svg><span class="ptime-val" data-t="${g.id}">${run ? clock(t) : cardDur(t)}</span></div>
+        <span class="qlaunch" aria-hidden="true" title="${run ? 'Running' : g.missing ? 'Locate game' : 'Quick launch ' + esc(g.name)}">${playSvg}${feat ? `<b>${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</b>` : ''}</span>
+      </div>
+    </div>
+    <div class="acts"><button class="play">${playSvg}<span>${run ? 'Running' : g.missing ? 'Locate' : 'Quick Launch'}</span></button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
+}
 const skel = () => `<div class="grid">${'<div class="sk"></div>'.repeat(8)}</div>`;
 
-function dash() {
+function dash(now = Date.now()) {
   const all = S.games.reduce((a, g) => a + total(g), 0);
-  const recent = S.games.filter(g => g.last).sort((a, b) => b.last - a.last).slice(0, 6);
   const rg = S.games.find(isRun);
-  return `<h1>Dashboard</h1><section class="stats">
-    <div class="stat"><b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b><span>hours played</span></div>
-    <div class="stat"><b data-count="${S.games.length}">${S.games.length}</b><span>games in library</span></div>
-    ${rg ? `<div class="stat now"><span>Playing now</span><b data-s="${S.running[rg.id]}">${clock(Date.now() - S.running[rg.id])}</b><span>${esc(rg.name)}</span></div>`
-      : `<div class="stat"><b>—</b><span>nothing running</span></div>`}</section>
-    <h2>Recently played</h2>${recent.length ? `<div class="grid">${recent.map(card).join('')}</div>`
-      : `<div class="empty"><p>Games you play show up here.</p><button class="btn" data-add>Add a game</button></div>`}`;
+  const ov = computeOverview(S, now);
+  const wk = ov.weekly, mp = ov.monthly, recent = ov.recent;
+  const playSvg = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2l8.3 4.8-8.3 4.8z"/></svg>';
+
+  return `<div class="dash-head"><h1>Dashboard</h1><span class="ov-pill"><i class="ov-dot"></i>Smart Gaming Overview</span></div>
+    <section class="stats dash-stats">
+      <div class="stat"><b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b><span>hours played</span></div>
+      <div class="stat"><b data-wk-stat>${dur(wk.totalMs)}</b><span>${wk.sessionCount} session${wk.sessionCount === 1 ? '' : 's'} this week</span></div>
+      <div class="stat"><b data-count="${S.games.length}">${S.games.length}</b><span>games in library</span></div>
+      ${rg ? `<div class="stat now"><span>Playing now</span><b data-s="${S.running[rg.id]}">${clock(now - S.running[rg.id])}</b><span>${esc(rg.name)}</span></div>`
+        : `<div class="stat"><b>—</b><span>nothing running</span></div>`}
+    </section>
+
+    <div class="dash-overview-grid">
+      <section class="panel ov-panel wk-panel" aria-label="Weekly Gaming Statistics">
+        <div class="panel-h wk-head">
+          <div>
+            <h2>Weekly Gaming Statistics</h2>
+            <p class="panel-sub">${esc(wk.rangeLabel)} · Avg ${dur(wk.dailyAvgMs)}/day</p>
+          </div>
+          <div class="wk-pills">
+            <span class="wk-pill"><b data-wk-total>${dur(wk.totalMs)}</b><span>played</span></span>
+            <span class="wk-pill"><b data-wk-sessions>${wk.sessionCount}</b><span>session${wk.sessionCount === 1 ? '' : 's'}</span></span>
+            <span class="wk-pill"><b>${wk.activeDays}/7</b><span>days</span></span>
+          </div>
+        </div>
+        <div class="chart wk-chart">
+          ${wk.days.map(c => `<div class="col ${c.now ? 'now' : ''} ${c.future ? 'future' : ''}" title="${esc(c.title)}: ${dur(c.ms)} (${c.sessions} session${c.sessions === 1 ? '' : 's'})">
+            <span class="v">${c.ms ? dur(c.ms) : (c.now ? '0m' : '')}</span>
+            <div class="b ${c.ms ? '' : 'z'}" style="height:${c.ms ? Math.max(6, Math.round(c.ms / wk.maxDayMs * 56)) : 4}px"></div>
+            <span class="l"><b>${c.short}</b><i>${c.dateNum}</i></span>
+          </div>`).join('')}
+        </div>
+      </section>
+
+      <section class="panel ov-panel mp-panel" aria-label="Most Played This Month">
+        <div class="panel-h">
+          <div>
+            <h2>Most Played This Month</h2>
+            <p class="panel-sub">${esc(mp.label)}${mp.totalMs ? ' · ' + dur(mp.totalMs) + ' tracked' : ''}</p>
+          </div>
+          ${mp.items.length ? `<span class="ov-tag">Top ${mp.items.length}</span>` : ''}
+        </div>
+        ${mp.items.length ? `<div class="mp-list">${mp.items.map(({ g, ms, sessions, rank, pct, barPct }) => {
+          const run = isRun(g);
+          return `<div class="rk mp-row ${rank === 1 ? 'top1' : ''} ${run ? 'is-run' : ''}" data-game-id="${g.id}">
+            <span class="n">${rank}</span>
+            <i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i>
+            <div class="mp-info">
+              <b>${esc(g.name)}</b>
+              <span>${pct}% of month · ${sessions} session${sessions === 1 ? '' : 's'}${g.missing ? ' · not installed' : ''}</span>
+            </div>
+            <em class="mp-dur">${dur(ms)}</em>
+            <button class="mp-play ${run ? 'on' : ''}" data-launch="${g.id}" title="${run ? esc(g.name) + ' is running' : g.missing ? 'Locate ' + esc(g.name) : 'Quick launch ' + esc(g.name)}" aria-label="${run ? 'Running' : 'Quick launch ' + esc(g.name)}">
+              ${run ? '<span class="mp-dot"></span>' : playSvg}
+            </button>
+            <u style="width:${barPct}%"></u>
+          </div>`;
+        }).join('')}</div>`
+        : `<div class="empty ov-empty"><p>No tracked playtime this month yet. Launch a game to see your monthly rankings.</p></div>`}
+      </section>
+    </div>
+
+    <div class="sec-head">
+      <h2>Recently played</h2>
+      <div class="sec-actions">
+        ${S.games.length ? `<button class="sec-link" data-nav="lib">Browse Library →</button>` : ''}
+      </div>
+    </div>
+    ${recent.length ? `<div class="grid recent-grid">${recent.map(recentCard).join('')}</div>`
+      : `<div class="empty"><p>${S.games.length ? 'Games you play show up here with one-click quick launch.' : 'Games you play show up here.'}</p>${S.games.length ? '<button class="btn ghost" data-nav="lib">Open Library</button> ' : ''}<button class="btn" data-add>Add a game</button></div>`}`;
 }
 
 function filtered() {
@@ -62,22 +323,21 @@ function lib() {
 }
 
 function hist() {
-  if (!S.sessions.length) return `<h1>History</h1><div class="empty"><p>Play sessions will be listed here.</p></div>`;
+  const valid = S.sessions.filter(s => s && Number(s.started) > 0 && S.games.some(x => x.id === s.game_id));
+  if (!valid.length) return `<h1>History</h1><div class="empty"><p>Play sessions will be listed here.</p></div>`;
   let day = '';
-  const tf = { hour: '2-digit', minute: '2-digit' };
-  return '<h1>History</h1>' + S.sessions.map(s => {
+  const tf = { hour: '2-digit', minute: '2-digit' }, now = Date.now();
+  return '<h1>History</h1>' + valid.map(s => {
     const g = S.games.find(x => x.id === s.game_id); if (!g) return '';
+    const live = !!(s.live && isRun(g));
+    const ended = live ? Math.max(s.started, now) : Math.max(s.started, Number(s.ended) || s.started);
     const d = new Date(s.started).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
     const head = d !== day ? `<h2>${esc(day = d)}</h2>` : '';
-    return head + `<div class="row"><i style="${art(g)}"></i><div><b>${esc(g.name)}</b><span>${new Date(s.started).toLocaleTimeString([], tf)} – ${s.live ? 'now' : new Date(s.ended).toLocaleTimeString([], tf)}</span></div>
-      ${s.live ? `<em class="on" data-s="${s.started}">${clock(Date.now() - s.started)}</em>` : `<em>${dur(s.ended - s.started)}</em>`}</div>`;
+    return head + `<div class="row"><i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i><div><b>${esc(g.name)}</b><span>${new Date(s.started).toLocaleTimeString([], tf)} – ${live ? 'now' : new Date(ended).toLocaleTimeString([], tf)}</span></div>
+      ${live ? `<em class="on" data-s="${s.started}">${clock(now - s.started)}</em>` : `<em>${dur(ended - s.started)}</em>`}</div>`;
   }).join('');
 }
 
-const dkey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-const monday = d => addDays(d, -((d.getDay() + 6) % 7));
-const sumRows = f => S.stats.reduce((a, r) => f(r) ? a + r.ms : a, 0);
 function statsView() {
   const today = new Date(), tk = dkey(today), mk = dkey(monday(today));
   const tDay = sumRows(r => r.day === tk), tWeek = sumRows(r => r.day >= mk), l7 = sumRows(r => r.day >= dkey(addDays(today, -6)));
@@ -94,7 +354,7 @@ function statsView() {
   }
   const max = Math.max(1, ...cols.map(c => c.ms));
   const n = S.rank === 'all' ? 0 : +S.rank, since = n ? dkey(addDays(today, -(n - 1))) : '', per = {};
-  if (n) S.stats.forEach(r => { if (r.day >= since) per[r.g] = (per[r.g] || 0) + r.ms; });
+  if (n) S.stats.forEach(r => { if (r.day >= since) per[r.g] = (per[r.g] || 0) + safeMs(Number(r.ms)); });
   const ranked = S.games.map(g => ({ g, ms: n ? (per[g.id] || 0) : total(g) })).filter(x => x.ms > 0).sort((a, b) => b.ms - a.ms);
   const sum = ranked.reduce((a, x) => a + x.ms, 0);
   const seg = (attr, cur, items) => `<div class="seg">${items.map(([v, t]) => `<button data-${attr}="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
@@ -105,7 +365,7 @@ function statsView() {
     <div class="panel"><div class="panel-h"><h2>Playtime</h2>${seg('sm', S.smode, [['daily', 'Daily'], ['weekly', 'Weekly']])}</div>
       <div class="chart">${cols.map(c => `<div class="col ${c.now ? 'now' : ''}" title="${esc(c.t)}: ${dur(c.ms)}"><span class="v">${c.ms ? dur(c.ms) : ''}</span><div class="b ${c.ms ? '' : 'z'}" style="height:${c.ms ? Math.max(6, c.ms / max * 150) : 4}px"></div><span class="l">${c.l}</span></div>`).join('')}</div></div>
     <div class="panel"><div class="panel-h"><h2>Most played</h2>${seg('rk', S.rank, [['7', '7 days'], ['30', '30 days'], ['all', 'All time']])}</div>
-      ${ranked.length ? ranked.slice(0, 10).map(({ g, ms }, i) => `<div class="rk"><span class="n">${i + 1}</span><i style="${art(g)}"></i>
+      ${ranked.length ? ranked.slice(0, 10).map(({ g, ms }, i) => `<div class="rk"><span class="n">${i + 1}</span><i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i>
         <div><b>${esc(g.name)}</b><span>${Math.round(ms / sum * 100)}% of playtime${g.missing ? ' · not installed' : ''}</span></div><em>${dur(ms)}</em><u style="width:${Math.max(2, ms / ranked[0].ms * 100)}%"></u></div>`).join('')
       : '<div class="empty"><p>No playtime recorded in this period yet.</p></div>'}</div>`;
 }
@@ -157,8 +417,14 @@ $('#bar').addEventListener('click', async e => {
   }
 });
 
-async function load() { const d = await api.games(); S.games = d.games; S.running = d.running; }
-async function go(v) { S.view = v; if (v === 'hist') S.sessions = await api.sessions(); if (v === 'stats') await loadStats(); render(); }
+async function load() {
+  const [d, stats, sessions] = await Promise.all([api.games(), api.stats(), api.sessions()]);
+  S.games = Array.isArray(d?.games) ? d.games : [];
+  S.running = d?.running && typeof d.running === 'object' ? d.running : {};
+  S.stats = Array.isArray(stats) ? stats : [];
+  S.sessions = Array.isArray(sessions) ? sessions : [];
+}
+async function go(v) { S.view = v; await load(); render(); }
 function toast(m) { const t = document.createElement('div'); t.textContent = m; $('#toast').append(t); setTimeout(() => t.remove(), 5000); }
 
 async function launch(g, c) {
@@ -452,6 +718,12 @@ api.on('overlay:settings-updated', s => {
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
 $('#view').addEventListener('click', e => {
   if (e.target.closest('[data-add]')) return edit();
+  const nav = e.target.closest('[data-nav]'); if (nav) return go(nav.dataset.nav);
+  const ql = e.target.closest('[data-launch]');
+  if (ql) {
+    const g = S.games.find(x => x.id == ql.dataset.launch);
+    if (g) return launch(g, ql.closest('.card, .rk, .tl-item') || ql);
+  }
   const sm = e.target.closest('[data-sm]'); if (sm) { S.smode = sm.dataset.sm; return render(false, true); }
   const rk = e.target.closest('[data-rk]'); if (rk) { S.rank = rk.dataset.rk; return render(false, true); }
   const gr = e.target.closest('[data-grp]'); if (gr) { S.grp = gr.dataset.grp; return render(false); }
@@ -462,11 +734,11 @@ $('#view').addEventListener('click', e => {
 $('#view').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('card')) e.target.click(); });
 $('#view').addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; $('#grid').innerHTML = gridHtml(); } });
 $('#view').addEventListener('change', e => { if (e.target.id === 'sort') { S.sort = e.target.value; $('#grid').innerHTML = gridHtml(); } });
-api.on('run', async () => { await load(); if (S.view === 'hist') S.sessions = await api.sessions(); if (S.view === 'stats') await loadStats(); render(false); });
-window.addEventListener('focus', async () => { // pick up reinstalled / reconnected games
-  if (!S.loaded || $('#dlg').open || S.view === 'stats') return; await load(); render(false);
+api.on('run', async () => { await load(); render(false, false); });
+window.addEventListener('focus', async () => { // pick up reinstalled / reconnected games and updated stats
+  if (!S.loaded || $('#dlg').open) return; await load(); render(false, false);
 });
-setInterval(async () => { if (S.view === 'stats' && Object.keys(S.running).length && !$('#dlg').open) { await loadStats(); render(false); } }, 30000);
+setInterval(async () => { if ((S.view === 'stats' || S.view === 'dash' || S.view === 'hist') && Object.keys(S.running).length && !$('#dlg').open) { await load(); render(false, false); } }, 30000);
 api.on('toast', toast);
 
 const vf = v => String(v).replace(/\.0$/, '');

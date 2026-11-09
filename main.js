@@ -953,7 +953,8 @@ function initDb() {
       grp TEXT DEFAULT '', added INTEGER);
     CREATE TABLE IF NOT EXISTS sessions(id INTEGER PRIMARY KEY, game_id INTEGER NOT NULL,
       started INTEGER NOT NULL, ended INTEGER, beat INTEGER);
-    CREATE INDEX IF NOT EXISTS s_game ON sessions(game_id);`);
+    CREATE INDEX IF NOT EXISTS s_game ON sessions(game_id);
+    CREATE INDEX IF NOT EXISTS s_started ON sessions(started);`);
   // Backward-compatible migration: Windows (AUMID) apps. Existing rows get '' = classic exe/emulator launch.
   const cols = db.prepare('PRAGMA table_info(games)').all().map(c => c.name);
   if (!cols.includes('aumid')) db.exec("ALTER TABLE games ADD COLUMN aumid TEXT DEFAULT ''");
@@ -1139,21 +1140,36 @@ function finish(id, discard, msg) {
 
 const h = (c, f) => ipcMain.handle(c, (_, ...a) => f(...a));
 h('games', () => (refreshStartIds(), {
-  games: all(`SELECT g.*, COALESCE((SELECT SUM(ended-started) FROM sessions WHERE game_id=g.id AND ended IS NOT NULL),0) total,
-    (SELECT MAX(started) FROM sessions WHERE game_id=g.id) last FROM games g`).map(g => ({ ...g, missing: g.method === 'aumid' ? !!startIds && !startIds.has(g.aumid.toLowerCase()) : !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe)) })),
+  games: all(`SELECT g.*, COALESCE((SELECT SUM(MAX(0, ended-started)) FROM sessions WHERE game_id=g.id AND ended IS NOT NULL AND started>0),0) total,
+    (SELECT MAX(started) FROM sessions WHERE game_id=g.id AND started>0) last FROM games g`).map(g => ({ ...g, missing: g.method === 'aumid' ? !!startIds && !startIds.has(g.aumid.toLowerCase()) : !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe)) })),
   running: Object.fromEntries([...active].map(([i, s]) => [i, s.started]))
 }));
-h('sessions', () => all(`SELECT s.id, s.game_id, s.started, COALESCE(s.ended,s.beat) ended, s.ended IS NULL live
-  FROM sessions s ORDER BY s.started DESC LIMIT 300`));
+h('sessions', () => {
+  const now = Date.now();
+  return all(`SELECT s.id, s.game_id, s.started, MAX(s.started, COALESCE(s.ended, s.beat, s.started)) ended, s.ended IS NULL live
+    FROM sessions s INNER JOIN games g ON g.id=s.game_id WHERE s.started>0 ORDER BY s.started DESC LIMIT 300`).map(s => {
+    const live = !!(s.live && active.has(s.game_id));
+    return {
+      ...s,
+      live,
+      ended: live ? Math.max(s.started, now) : Math.max(s.started, Number(s.ended) || s.started)
+    };
+  });
+});
 // Per-day, per-game playtime for the last 120 days; sessions crossing midnight are split between days.
 const pad2 = n => String(n).padStart(2, '0');
 h('stats', () => {
-  const rows = all('SELECT game_id g, started s, ended e, beat b FROM sessions WHERE COALESCE(ended,beat,started) >= ?', Date.now() - 120 * 864e5);
-  const out = {}, now = Date.now();
+  const now = Date.now();
+  const rows = all('SELECT s.id, s.game_id g, s.started s, s.ended e, s.beat b FROM sessions s INNER JOIN games gm ON gm.id=s.game_id WHERE s.started>0 AND COALESCE(s.ended,s.beat,s.started) >= ?', now - 120 * 864e5);
+  const out = {};
   for (const r of rows) {
-    const end = r.e ?? (active.has(r.g) ? now : (r.b ?? r.s));
-    for (let t = r.s; t < end;) {
+    const start = Number(r.s);
+    if (!Number.isFinite(start) || start <= 0 || start > now + 864e5) continue;
+    const rawEnd = r.e != null ? Number(r.e) : (active.has(r.g) ? now : Number(r.b ?? start));
+    const end = Number.isFinite(rawEnd) ? Math.max(start, Math.min(rawEnd, now + 864e5)) : start;
+    for (let t = start; t < end;) {
       const d = new Date(t), next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+      if (!Number.isFinite(next) || next <= t) break;
       const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}|${r.g}`;
       out[k] = (out[k] || 0) + Math.min(end, next) - t; t = next;
     }
