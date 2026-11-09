@@ -5,9 +5,12 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "predist": "node build/prepare-installer.js",
     "dist": "electron-builder --win --publish never",
     "dev:desktop": "electron .",
+    "prebuild:desktop": "node build/prepare-installer.js",
     "build:desktop": "electron-builder --win --publish never",
+    "test:installer": "node test/installer.test.js",
     "dev:website": "node apps/website/scripts/dev.js",
     "build:website": "node apps/website/scripts/build.js",
     "preview:website": "node apps/website/scripts/dev.js --dist",
@@ -38,7 +41,11 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "NUKRON",
-      "artifactName": "NUKRON-Setup-${version}.${ext}"
+      "artifactName": "NUKRON-Setup-${version}.${ext}",
+      "include": "build/installer.nsh",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/uninstallerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp"
     },
     "publish": [
       {
@@ -52,6 +59,7 @@
     }
   },
   "dependencies": {
+    "driver.js": "1.11.0",
     "electron-updater": "^6.6.2"
   }
 }

@@ -59,7 +59,8 @@ function computeOverview(state = S, now = Date.now()) {
     const started = Number(s.started);
     if (!g || !Number.isFinite(started) || started <= 0 || started > now + 864e5) continue;
     const live = !!(s.live && (g.id in running));
-    const rawEnd = live ? now : Number(s.ended ?? s.beat ?? started);
+    const rawEnd = live ? now : Number(s.ended ?? s.beat ?? 0);
+    if (!live && (!Number.isFinite(rawEnd) || rawEnd <= started)) continue;
     const ended = Number.isFinite(rawEnd) && rawEnd >= started ? Math.min(rawEnd, now + 864e5) : started;
     sessions.push({
       id: s.id ?? `${g.id}-${started}`,
@@ -107,7 +108,7 @@ function computeOverview(state = S, now = Date.now()) {
     const d = addDays(mon, i), k = dkey(d);
     const dStart = d.getTime(), dEnd = addDays(d, 1).getTime();
     const ms = dailyRows.reduce((acc, r) => r.day === k ? acc + r.ms : acc, 0);
-    const daySessions = sessions.filter(s => s.ended > dStart && s.started < dEnd).length;
+    const daySessions = sessions.filter(s => s.ended > dStart && s.started < dEnd).length || (ms > 0 ? 1 : 0);
     days.push({
       index: i,
       key: k,
@@ -204,12 +205,13 @@ function card(g) {
     <div class="acts"><button class="play">${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
 }
 
-function recentCard(item) {
+function recentCard(item, idx = 0) {
   const g = item.g || item, run = isRun(g), t = total(g), feat = !!item.featured;
   const lastLbl = item.lastLabel || (g.last ? relPlayed(g.last) : '');
   const playSvg = '<svg class="q-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2l8.3 4.8-8.3 4.8z"/></svg>';
   const starSvg = '<svg class="feat-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l2 4 4.4.6-3.2 3.1.8 4.4L8 11.6l-4 2.1.8-4.4L1.6 6.2 6 5.6z"/></svg>';
-  return `<article class="card recent-card ${feat ? 'featured' : ''} ${run ? 'run' : ''} ${g.missing ? 'missing' : ''}" data-id="${g.id}" tabindex="0">
+  const actLabel = run ? 'Running' : g.missing ? 'Locate' : 'Quick Launch';
+  return `<article class="card recent-card ${feat ? 'featured' : ''} ${run ? 'run' : ''} ${g.missing ? 'missing' : ''}" style="--i:${idx}" data-id="${g.id}" tabindex="0">
     <div class="art" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</div><div class="shade"></div>
     <div class="card-top">
       <div class="card-badges">
@@ -222,10 +224,12 @@ function recentCard(item) {
       <h3>${esc(g.name)}</h3>
       <div class="meta-row">
         <div class="ptime${!run && t <= 0 ? ' zero' : ''}"><svg class="ptime-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path class="ptime-hand" d="M8 4.8V8l2.2 1.4"/></svg><span class="ptime-val" data-t="${g.id}">${run ? clock(t) : cardDur(t)}</span></div>
-        <span class="qlaunch" aria-hidden="true" title="${run ? 'Running' : g.missing ? 'Locate game' : 'Quick launch ' + esc(g.name)}">${playSvg}${feat ? `<b>${run ? 'Running' : g.missing ? 'Locate' : 'Play'}</b>` : ''}</span>
+        <div class="rec-acts">
+          <button class="ico rec-edit" type="button" data-edit title="Edit ${esc(g.name)}" aria-label="Edit ${esc(g.name)}">⋯</button>
+          <button class="qlaunch ${run ? 'is-on' : ''}" type="button" title="${run ? esc(g.name) + ' is running' : g.missing ? 'Locate ' + esc(g.name) : 'Quick Launch ' + esc(g.name)}" aria-label="${actLabel} ${esc(g.name)}">${playSvg}<b>${actLabel}</b></button>
+        </div>
       </div>
-    </div>
-    <div class="acts"><button class="play">${playSvg}<span>${run ? 'Running' : g.missing ? 'Locate' : 'Quick Launch'}</span></button><button class="ico" data-edit title="Edit">⋯</button></div></article>`;
+    </div></article>`;
 }
 const skel = () => `<div class="grid">${'<div class="sk"></div>'.repeat(8)}</div>`;
 
@@ -238,11 +242,31 @@ function dash(now = Date.now()) {
 
   return `<div class="dash-head"><h1>Dashboard</h1><span class="ov-pill"><i class="ov-dot"></i>Smart Gaming Overview</span></div>
     <section class="stats dash-stats">
-      <div class="stat"><b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b><span>hours played</span></div>
-      <div class="stat"><b data-wk-stat>${dur(wk.totalMs)}</b><span>${wk.sessionCount} session${wk.sessionCount === 1 ? '' : 's'} this week</span></div>
-      <div class="stat"><b data-count="${S.games.length}">${S.games.length}</b><span>games in library</span></div>
-      ${rg ? `<div class="stat now"><span>Playing now</span><b data-s="${S.running[rg.id]}">${clock(now - S.running[rg.id])}</b><span>${esc(rg.name)}</span></div>`
-        : `<div class="stat"><b>—</b><span>nothing running</span></div>`}
+      <div class="stat">
+        <div class="stat-top"><span class="stat-kicker">Total Playtime</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.6V8l2.4 1.5"/></svg></i></div>
+        <b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b>
+        <span>hours played</span>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-kicker">Weekly Activity</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2.5 12.5V8.5M6.2 12.5V4.5M9.8 12.5V6.8M13.5 12.5V3.5"/></svg></i></div>
+        <b data-wk-stat>${dur(wk.totalMs)}</b>
+        <span>${wk.sessionCount} session${wk.sessionCount === 1 ? '' : 's'} this week</span>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-kicker">Collection</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="2.2" y="2.2" width="4.8" height="4.8" rx="1.2"/><rect x="9" y="2.2" width="4.8" height="4.8" rx="1.2"/><rect x="2.2" y="9" width="4.8" height="4.8" rx="1.2"/><rect x="9" y="9" width="4.8" height="4.8" rx="1.2"/></svg></i></div>
+        <b data-count="${S.games.length}">${S.games.length}</b>
+        <span>games in library</span>
+      </div>
+      ${rg ? `<div class="stat now">
+        <div class="stat-top"><span class="stat-kicker">Playing now</span><i class="stat-ico live-ico" aria-hidden="true"><span class="stat-live-dot"></span></i></div>
+        <b data-s="${S.running[rg.id]}">${clock(now - S.running[rg.id])}</b>
+        <span>${esc(rg.name)}</span>
+      </div>`
+        : `<div class="stat idle">
+        <div class="stat-top"><span class="stat-kicker">Session Status</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><polygon points="5.2,3.8 12.2,8 5.2,12.2"/></svg></i></div>
+        <b>—</b>
+        <span>nothing running</span>
+      </div>`}
     </section>
 
     <div class="dash-overview-grid">
@@ -258,12 +282,22 @@ function dash(now = Date.now()) {
             <span class="wk-pill"><b>${wk.activeDays}/7</b><span>days</span></span>
           </div>
         </div>
-        <div class="chart wk-chart">
-          ${wk.days.map(c => `<div class="col ${c.now ? 'now' : ''} ${c.future ? 'future' : ''}" title="${esc(c.title)}: ${dur(c.ms)} (${c.sessions} session${c.sessions === 1 ? '' : 's'})">
-            <span class="v">${c.ms ? dur(c.ms) : (c.now ? '0m' : '')}</span>
-            <div class="b ${c.ms ? '' : 'z'}" style="height:${c.ms ? Math.max(6, Math.round(c.ms / wk.maxDayMs * 56)) : 4}px"></div>
-            <span class="l"><b>${c.short}</b><i>${c.dateNum}</i></span>
-          </div>`).join('')}
+        <div class="chart wk-chart" role="list" aria-label="Daily playtime from Monday to Sunday">
+          <div class="wk-grid" aria-hidden="true"><i></i><i></i><i></i></div>
+          ${wk.days.map((c, idx) => {
+            const active = c.ms > 0;
+            const sessTxt = `${c.sessions} session${c.sessions === 1 ? '' : 's'}`;
+            const barH = active ? Math.max(10, Math.round(c.ms / wk.maxDayMs * 78)) : 4;
+            return `<div class="col ${active ? 'active' : 'inactive'} ${c.now ? 'now' : ''} ${c.future ? 'future' : ''}" style="--i:${idx}" role="listitem" tabindex="0" title="${esc(c.title)}: ${dur(c.ms)} (${sessTxt})">
+              <div class="wk-tip" role="tooltip" aria-hidden="true">
+                <b>${esc(c.title)}${c.now ? ' · Today' : ''}</b>
+                <span><em>${active ? dur(c.ms) : '0m'}</em> · ${sessTxt}</span>
+              </div>
+              <span class="v">${active ? dur(c.ms) : (c.now ? '0m' : '—')}</span>
+              <div class="b-track"><div class="b ${active ? '' : 'z'}" style="height:${barH}px"></div></div>
+              <span class="l"><b>${c.short}</b><i>${c.dateNum}</i></span>
+            </div>`;
+          }).join('')}
         </div>
       </section>
 
@@ -275,13 +309,16 @@ function dash(now = Date.now()) {
           </div>
           ${mp.items.length ? `<span class="ov-tag">Top ${mp.items.length}</span>` : ''}
         </div>
-        ${mp.items.length ? `<div class="mp-list">${mp.items.map(({ g, ms, sessions, rank, pct, barPct }) => {
+        ${mp.items.length ? `<div class="mp-list">${mp.items.map(({ g, ms, sessions, rank, pct, barPct }, idx) => {
           const run = isRun(g);
-          return `<div class="rk mp-row ${rank === 1 ? 'top1' : ''} ${run ? 'is-run' : ''}" data-game-id="${g.id}">
-            <span class="n">${rank}</span>
+          return `<div class="rk mp-row ${rank === 1 ? 'top1' : `rank${rank}`} ${run ? 'is-run' : ''}" style="--i:${idx}" data-game-id="${g.id}">
+            <span class="n" title="Rank #${rank}">${rank}</span>
             <i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i>
             <div class="mp-info">
-              <b>${esc(g.name)}</b>
+              <div class="mp-title-row">
+                <b>${esc(g.name)}</b>
+                ${rank === 1 ? '<span class="mp-crown" title="Most played game this month">#1</span>' : ''}
+              </div>
               <span>${pct}% of month · ${sessions} session${sessions === 1 ? '' : 's'}${g.missing ? ' · not installed' : ''}</span>
             </div>
             <em class="mp-dur">${dur(ms)}</em>
@@ -450,6 +487,16 @@ function openDlg(d) {
   resetDlgScroll(d);
 }
 
+const onboarding = typeof NukronOnboarding !== 'undefined'
+  ? NukronOnboarding.createOnboardingController({
+      document,
+      storage: localStorage,
+      api,
+      setView: v => { S.view = v; render(false); $('#view')?.classList.remove('in'); },
+      openAddGameDialog: () => edit()
+    })
+  : null;
+
 function edit(g) {
   const d = $('#dlg'), isNew = !g;
   g = g || { name: '', exe: '', args: '', emulator: '', cover: '', track: '', grp: '' };
@@ -466,7 +513,10 @@ function edit(g) {
     <div class="end">${isNew ? '' : '<button class="btn danger" id="del">Remove</button>'}<button class="btn ghost" id="cancel">Cancel</button><button class="btn" id="save">Save</button></div></div>`;
   const v = id => (d.querySelector('#f-' + id)?.value ?? '').trim();
   d.onclick = async e => {
-    if (e.target.id === 'to-import') return importDlg();
+    if (e.target.id === 'to-import') {
+      if (onboarding?.isActive()) return;
+      return importDlg();
+    }
 
     const b = e.target.closest('[data-f]');
     if (b) {
@@ -474,15 +524,22 @@ function edit(g) {
       d.querySelector('#f-' + b.dataset.f).value = p;
       if (b.dataset.f === 'exe' && !v('name')) d.querySelector('#f-name').value = p.split(/[\\\/]/).pop().replace(/\.[^.]+$/, '');
     }
-    if (e.target.id === 'cancel') d.close();
+    if (e.target.id === 'cancel') {
+      d.close();
+      onboarding?.notifyGameSavedOrClosed();
+    }
     if (e.target.id === 'del') {
       if (e.target.dataset.sure) { await api.remove(g.id); d.close(); await load(); return render(false); }
       e.target.dataset.sure = 1; e.target.textContent = 'Click again to delete history too';
     }
     if (e.target.id === 'save') {
-      if (!aum && !v('exe')) return toast('Choose a game file first.');
+      if (!aum && !v('exe')) {
+        d.querySelector('#f-exe')?.focus();
+        return toast('Choose a game file first.');
+      }
       await api.save({ ...g, name: v('name'), exe: v('exe'), cover: v('cover'), grp: v('grp'), emulator: v('emulator'), args: v('args'), track: v('track') });
       d.close(); await load(); render(false);
+      onboarding?.notifyGameSavedOrClosed();
     }
   };
   openDlg(d);
@@ -616,9 +673,20 @@ async function openSettings() {
         ${tog('s-welcome', app0.showStartupMessage !== false, 'Show startup message')}
       </div>
       <p class="tog-note">When on, a small quote fades in for a few seconds in the corner of your screen the first time NUKRON starts with Windows. Shown once per Windows session, never over fullscreen games.</p>
+      <h3 class="tog-head">Onboarding</h3>
+      <div class="tog-section">
+        <div class="tog-row settings-action-row">
+          <div class="settings-action-copy">
+            <span>Interactive Setup Guide</span>
+            <small class="tog-sub">Walk through adding games, customizing artwork, and exploring the dashboard.</small>
+          </div>
+          <button type="button" class="btn ghost replay-btn" id="replay-tutorial" data-replay-tutorial>Replay Tutorial</button>
+        </div>
+      </div>
     </div>
 
     <div class="end">
+      <button type="button" class="btn ghost replay-btn replay-footer-btn" id="replay-tutorial-footer" data-replay-tutorial>Replay Tutorial</button>
       <button class="btn ghost" id="cancel">Cancel</button>
       <button class="btn" id="save-settings">Save</button>
     </div>
@@ -686,6 +754,15 @@ async function openSettings() {
       await collectAndApply();
       return;
     }
+    if (e.target.closest('[data-replay-tutorial]')) {
+      overlaySettingsCache = await api.overlaySettings(initialOverlay);
+      await api.appSettings(initialApp);
+      S.overlayOn = overlaySettingsCache.enabled;
+      bar();
+      d.close();
+      onboarding?.start({ force: true });
+      return;
+    }
     if (e.target.id === 'cancel') {
       overlaySettingsCache = await api.overlaySettings(initialOverlay);
       await api.appSettings(initialApp);
@@ -717,7 +794,11 @@ api.on('overlay:settings-updated', s => {
 
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
 $('#view').addEventListener('click', e => {
-  if (e.target.closest('[data-add]')) return edit();
+  if (e.target.closest('[data-add]')) {
+    edit();
+    onboarding?.notifyAddGameClicked();
+    return;
+  }
   const nav = e.target.closest('[data-nav]'); if (nav) return go(nav.dataset.nav);
   const ql = e.target.closest('[data-launch]');
   if (ql) {
@@ -734,11 +815,11 @@ $('#view').addEventListener('click', e => {
 $('#view').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('card')) e.target.click(); });
 $('#view').addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; $('#grid').innerHTML = gridHtml(); } });
 $('#view').addEventListener('change', e => { if (e.target.id === 'sort') { S.sort = e.target.value; $('#grid').innerHTML = gridHtml(); } });
-api.on('run', async () => { await load(); render(false, false); });
+api.on('run', async () => { await load(); if (!onboarding?.isActive()) render(false, false); });
 window.addEventListener('focus', async () => { // pick up reinstalled / reconnected games and updated stats
-  if (!S.loaded || $('#dlg').open) return; await load(); render(false, false);
+  if (!S.loaded || $('#dlg').open || onboarding?.isActive()) return; await load(); render(false, false);
 });
-setInterval(async () => { if ((S.view === 'stats' || S.view === 'dash' || S.view === 'hist') && Object.keys(S.running).length && !$('#dlg').open) { await load(); render(false, false); } }, 30000);
+setInterval(async () => { if ((S.view === 'stats' || S.view === 'dash' || S.view === 'hist') && Object.keys(S.running).length && !$('#dlg').open && !onboarding?.isActive()) { await load(); render(false, false); } }, 30000);
 api.on('toast', toast);
 
 const vf = v => String(v).replace(/\.0$/, '');
@@ -762,7 +843,12 @@ function welcome() {
   d.onclick = e => {
     const l = e.target.closest('[data-l]');
     if (l) { d.oncancel = null; return showLegal(l.dataset.l, true); }
-    if (e.target.id === 'ok') { localStorage.setItem('accepted', LEGAL.rev); d.oncancel = null; d.close(); }
+    if (e.target.id === 'ok') {
+      localStorage.setItem('accepted', LEGAL.rev);
+      d.oncancel = null;
+      d.close();
+      setTimeout(() => onboarding?.maybeStartAuto(), 250);
+    }
   };
   openDlg(d);
 }
@@ -790,7 +876,7 @@ function showNews() {
   d.addEventListener('click', e => {
     const was = downOutside; downOutside = false;
     if (!was || !outside(e) || !d.open) return;
-    if (d.oncancel) return; // mandatory dialogs (welcome / terms acceptance) can't be dismissed
+    if (d.oncancel || onboarding?.isActive()) return; // mandatory dialogs or active onboarding tour can't be dismissed by outside click
     const c = d.querySelector('#save-settings') && d.querySelector('#cancel');
     c ? c.click() : d.close(); // Settings: Cancel also reverts live-previewed changes
   });
@@ -838,10 +924,14 @@ api.on('update:focus', u => {
 });
 api.version().then(v => {
   $('#ver').textContent = 'v' + vf(v.v);
-  // Show What's New once after an update (fresh installs see the welcome dialog instead)
+  // Show What's New once after an update (fresh installs see the welcome / onboarding flow instead)
   const seen = localStorage.getItem('seenVersion');
   localStorage.setItem('seenVersion', v.v);
-  if (seen !== v.v && localStorage.getItem('accepted') === LEGAL.rev) setTimeout(() => { if (!$('#dlg').open) showNews(); }, 2500);
+  if (seen !== v.v && localStorage.getItem('accepted') === LEGAL.rev) {
+    setTimeout(() => {
+      if (!$('#dlg').open && !onboarding?.isActive() && (!onboarding || onboarding.isCompleted())) showNews();
+    }, 2500);
+  }
 });
 $('#ver').onclick = () => { toast('Checking for updates…'); api.checkUpdate(); };
 
@@ -873,6 +963,7 @@ api.winIsMax().then(syncMaxState);
   S.loaded = true; render();
   $('#splash').classList.add('hide'); setTimeout(() => $('#splash').remove(), 800);
   if (localStorage.getItem('accepted') !== LEGAL.rev) setTimeout(welcome, 700);
+  else setTimeout(() => onboarding?.maybeStartAuto(), 750);
   // Sync overlay state
   const os = await api.overlayGetSettings();
   overlaySettingsCache = os;
