@@ -27,7 +27,7 @@ namespace NukronSetup
         public string PluginsDir = "";
         public string DefaultDir = "";
         public string InstallDir = "";
-        public string Version = "1.5.2";
+        public string Version = "1.5.3";
         public string ProductName = "NUKRON";
         public string AppFilename = "NUKRON";
         public string AppExe = "NUKRON.exe";

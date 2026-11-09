@@ -13,7 +13,7 @@ const mainSrc = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
 // 1. Verify Driver.js dependency, vendor assets, and HTML/Settings wiring
 {
   assert(pkg.dependencies && pkg.dependencies['driver.js'], 'driver.js must be installed in package.json dependencies');
-  assert.strictEqual(pkg.version, '1.5.2', 'Application version must remain unchanged');
+  assert.strictEqual(pkg.version, '1.5.3', 'Application version must match 1.5.3');
   assert(fs.existsSync(path.join(root, 'renderer', 'vendor', 'driver.css')), 'renderer/vendor/driver.css must exist');
   assert(fs.existsSync(path.join(root, 'renderer', 'vendor', 'driver.js.iife.js')), 'renderer/vendor/driver.js.iife.js must exist');
   assert(indexHtml.includes('vendor/driver.css'), 'index.html must include driver.css');

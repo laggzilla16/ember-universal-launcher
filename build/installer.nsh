@@ -26,8 +26,11 @@
       WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "AppExe" "${APP_EXECUTABLE_FILENAME}"
       WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "AppDataDir" "$APPDATA\${APP_FILENAME}"
 
-      SectionGetSize ${INSTALL_SECTION_ID} $0
-      WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "EstimatedSizeKB" "$0"
+      !ifdef ESTIMATED_SIZE
+        WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "EstimatedSizeKB" "${ESTIMATED_SIZE}"
+      !else
+        WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "EstimatedSizeKB" "188000"
+      !endif
 
       StrCpy $1 "0"
       !ifndef INSTALL_MODE_PER_ALL_USERS

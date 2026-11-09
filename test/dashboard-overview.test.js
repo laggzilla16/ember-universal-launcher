@@ -191,13 +191,13 @@ const h = createOverviewHarness();
   assert.strictEqual(liveOv.recent[0].g.id, 2, 'Currently running game must be prioritized first in Recently Played');
 }
 
-// 4. Verify update version comparison for 1.5.2
+// 4. Verify update version comparison for 1.5.3
 {
   const updateNotify = require('../renderer/update-notify.js');
-  assert.strictEqual(updateNotify.newer('1.5.2', '1.5.1'), true);
-  assert.strictEqual(updateNotify.newer('v1.5.2', '1.5.1'), true);
-  assert.strictEqual(updateNotify.newer('1.5.2', '1.5.2'), false);
-  assert.strictEqual(updateNotify.newer('1.5.1', '1.5.2'), false);
+  assert.strictEqual(updateNotify.newer('1.5.3', '1.5.2'), true);
+  assert.strictEqual(updateNotify.newer('v1.5.3', '1.5.2'), true);
+  assert.strictEqual(updateNotify.newer('1.5.3', '1.5.3'), false);
+  assert.strictEqual(updateNotify.newer('1.5.2', '1.5.3'), false);
 }
 
 console.log('dashboard-overview tests passed!');

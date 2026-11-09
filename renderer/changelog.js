@@ -1,15 +1,24 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
-    v: '1.5.2',
+    v: '1.5.3',
     items: [
       'Redesigned the Windows installer into a custom NUKRON Optical Glass setup wizard with a 5-step guided installation flow (Welcome, Installation Directory with live disk space telemetry, Optional Settings for Desktop/Start Menu shortcuts and Windows startup, animated Progress tracking, and Completion screen with one-click launch).',
       'New interactive first-time onboarding guide powered by Driver.js with NUKRON Optical Glass tooltips, walking new users through adding a game (.exe), configuring game details and artwork, exploring the Game Library, and using the Smart Gaming Dashboard — plus a Replay Tutorial option in Settings.',
-      'New Smart Gaming Overview on the Dashboard, refined with NUKRON\'s Optical Glass visual identity, consistent surface hierarchy, and smooth section transitions.',
+      'Refined the Smart Gaming Overview on the Dashboard with NUKRON\'s Optical Glass visual identity, consistent surface hierarchy, and smooth section transitions.',
       'Polished Dashboard statistic cards with clearer typographic hierarchy, Optical Glass icon badges, and subtle hover highlights.',
       'Weekly Gaming Statistics: improved Monday–Sunday activity chart with subtle reference gridlines, a clean baseline, distinct inactive-day markers, staggered bar animations, and detailed daily playtime and session tooltips.',
       'Most Played This Month: refined ranking cards with a highlighted #1 rank treatment, rank badges, animated multi-stop gradient progress indicators, and one-click quick launch.',
       'Recently Played: interactive game artwork cards with consistent proportions, smooth hover zoom, refined activity and category badges, and hover-revealed quick launch controls.'
+    ]
+  },
+  {
+    v: '1.5.2',
+    items: [
+      'New Smart Gaming Overview on the Dashboard, designed for desktop clarity with NUKRON\'s Optical Glass visual identity.',
+      'Weekly Gaming Statistics: compact weekly summary with inline playtime, session count, and active-day pills alongside a Monday–Sunday daily gaming activity chart.',
+      'Most Played This Month: automatic monthly leaderboard highlighting your most-played games with playtime share, session counts, and one-click quick launch.',
+      'Improved Recently Played section showcasing your 3 most recently played games, featuring an expanded Optical Glass hero card for the most-played game among them.'
     ]
   },
   {
