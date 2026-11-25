@@ -1,8 +1,10 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage, Notification } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, screen, Tray, nativeImage, Notification, globalShortcut } = require('electron');
 const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
 const updateNotify = require('./renderer/update-notify.js');
+const detectLib = require('./detect.js');
+const trayModel = require('./tray-model.js');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
@@ -852,7 +854,7 @@ function overlayHide() {
 
 // ---- Background mode: keep running in the system tray after the window is closed
 const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '', onboardingCompleted: false }, tray = null, quitting = false;
+let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, autoDetect: true, hotkeyEnabled: true, hotkey: trayModel.DEFAULT_HOTKEY, lastNotifiedVersion: '', onboardingCompleted: false }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
 const LOGO = fs.existsSync(path.join(__dirname, 'renderer', 'assets', 'nukron-logo.png'))
@@ -916,9 +918,86 @@ function maybeShowWelcome() {
 function applyTray() {
   if (appSettings.background && !tray) {
     tray = new Tray(trayIcon()); tray.setToolTip('NUKRON');
-    tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open NUKRON', click: showMain }, { type: 'separator' }, { label: 'Quit NUKRON', click: () => app.quit() }]));
+    tray.on('right-click', () => { try { tray.popUpContextMenu(buildTrayMenu()); } catch {} }); // fresh menu each time, works with the window hidden
     tray.on('click', showMain);
   } else if (!appSettings.background && tray) { tray.destroy(); tray = null; }
+}
+
+// ---- Tray menu, quick-launch popup and global hotkey (all work with the main window hidden)
+let libCache = null, libAt = 0, uiTheme = 'dark', quickWin = null, quickReady = false, registeredHotkey = null;
+function libraryGames() {
+  if (!libCache || Date.now() - libAt > 2000) {
+    libCache = db.prepare(`SELECT g.id,g.name,g.exe,g.emulator,g.cover,g.grp,g.added,g.method,g.aumid,
+      (SELECT MAX(started) FROM sessions WHERE game_id=g.id AND started>0) last FROM games g`).all().map(g => ({ ...g, missing: isMissing(g) }));
+    libAt = Date.now();
+  }
+  return libCache;
+}
+function todayPlaytime(now = Date.now()) {
+  const d = new Date(now), start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const rows = db.prepare('SELECT game_id,started,ended,beat FROM sessions WHERE started>0 AND COALESCE(ended,beat,started)>=?').all(start);
+  return trayModel.todayMs(rows, now, new Set(active.keys()));
+}
+function notifyShell(body) { // native notification: visible even when the window is hidden in the tray
+  try { new Notification({ title: 'NUKRON', body: String(body), icon: LOGO }).show(); } catch {}
+  send('toast', String(body));
+}
+async function launchFromShell(id) {
+  libCache = null;
+  try { const r = await launch(id); if (r && !r.ok) notifyShell(r.error || 'Could not start the game.'); }
+  catch (e) { notifyShell('Could not start the game: ' + e.message); }
+}
+function buildTrayMenu() {
+  libCache = null;
+  const now = Date.now(), m = trayModel.buildTrayModel({ games: libraryGames(), running: Object.fromEntries([...active].map(([i, s]) => [i, s.started])), today: todayPlaytime(now), now });
+  return Menu.buildFromTemplate([
+    { label: m.session, enabled: false },
+    { label: m.today, enabled: false },
+    { type: 'separator' },
+    { label: 'Recently played', enabled: false },
+    ...(m.recent.length ? m.recent.map(r => ({ label: r.label + (r.running ? '  (running)' : ''), enabled: !r.running, click: () => launchFromShell(r.id) }))
+      : [{ label: 'No games played yet', enabled: false }]),
+    { type: 'separator' },
+    { label: 'Open NUKRON', click: showMain },
+    { label: 'Quit NUKRON', click: () => app.quit() } // before-quit ends active sessions with the normal logic
+  ]);
+}
+function createQuickWin() {
+  quickReady = false;
+  quickWin = new BrowserWindow({
+    width: 580, height: 480, frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
+    skipTaskbar: true, alwaysOnTop: true, show: false, hasShadow: false, fullscreenable: false,
+    webPreferences: { preload: path.join(__dirname, 'renderer', 'quick-preload.js'), contextIsolation: true, sandbox: true }
+  });
+  quickWin.setAlwaysOnTop(true, 'pop-up-menu');
+  quickWin.loadFile(path.join(__dirname, 'renderer', 'quick.html'));
+  quickWin.webContents.once('did-finish-load', () => { quickReady = true; if (quickWin && quickWin.isVisible()) quickWin.webContents.send('quick:open'); });
+  quickWin.on('blur', () => { if (quickWin && !quickWin.isDestroyed()) quickWin.hide(); }); // close on blur
+  quickWin.on('closed', () => { quickWin = null; quickReady = false; });
+}
+function showQuick() {
+  if (quitting) return;
+  if (!quickWin || quickWin.isDestroyed()) createQuickWin();
+  const wa = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea, [w, h] = quickWin.getSize();
+  quickWin.setPosition(Math.round(wa.x + (wa.width - w) / 2), Math.round(wa.y + Math.max(24, wa.height * 0.16)));
+  libCache = null;
+  quickWin.show(); quickWin.focus();
+  if (quickReady) quickWin.webContents.send('quick:open');
+}
+function toggleQuick() { if (quickWin && !quickWin.isDestroyed() && quickWin.isVisible()) quickWin.hide(); else showQuick(); }
+// Registers the configured hotkey. Returns an error message, or null on success / when disabled. Never throws.
+// If the new shortcut cannot be registered, the previous one is restored.
+function applyHotkey() {
+  const want = appSettings.hotkeyEnabled !== false ? trayModel.normalizeAccelerator(appSettings.hotkey) : null;
+  if (want === registeredHotkey) return appSettings.hotkeyEnabled !== false && !want ? 'That shortcut is not valid. Use Ctrl or Alt plus a key.' : null;
+  const prev = registeredHotkey;
+  if (prev) { try { globalShortcut.unregister(prev); } catch {} registeredHotkey = null; }
+  if (!want) return null;
+  let ok = false;
+  try { ok = globalShortcut.register(want, toggleQuick); } catch {}
+  if (ok) { registeredHotkey = want; return null; }
+  if (prev) { try { if (globalShortcut.register(prev, toggleQuick)) registeredHotkey = prev; } catch {} }
+  return `Could not use ${want} for quick launch. Another app may already use it. Choose a different shortcut in Settings > General.`;
 }
 
 function migrateLegacyUserData() {
@@ -960,6 +1039,9 @@ function initDb() {
   if (!cols.includes('aumid')) db.exec("ALTER TABLE games ADD COLUMN aumid TEXT DEFAULT ''");
   if (!cols.includes('method')) db.exec("ALTER TABLE games ADD COLUMN method TEXT DEFAULT ''");
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS g_aumid ON games(aumid) WHERE aumid<>''"); // no duplicate imports
+  // Additive migration: where a session came from ('launcher' = started in NUKRON, 'detected' = auto-detected). Old rows default to 'launcher'.
+  const scols = db.prepare('PRAGMA table_info(sessions)').all().map(c => c.name);
+  if (!scols.includes('source')) db.exec("ALTER TABLE sessions ADD COLUMN source TEXT DEFAULT 'launcher'");
   // Crash recovery: sessions left open are closed at their last heartbeat.
   db.prepare('UPDATE sessions SET ended=MAX(started,COALESCE(beat,started)) WHERE ended IS NULL').run();
 }
@@ -967,7 +1049,7 @@ const all = (sql, ...p) => JSON.parse(JSON.stringify(db.prepare(sql).all(...p)))
 const send = (ch, ...a) => { if (win && !win.isDestroyed()) win.webContents.send(ch, ...a); };
 
 // Lists [pid, executablePath] of every running process (uses fast native Toolhelp32 helper, with PowerShell fallback).
-const scan = async () => {
+const scan = async (daemonOnly) => { // daemonOnly: never fall back to the slow PowerShell scan (used by the background watcher)
   const daemon = await ensurePerfDaemon();
   if (daemon && !daemon.killed) {
     const res = await new Promise(resolve => {
@@ -982,6 +1064,7 @@ const scan = async () => {
     });
     if (Array.isArray(res) && res.length > 0) return res;
   }
+  if (daemonOnly) return null;
   return new Promise(res => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
     'Get-CimInstance Win32_Process -Property ProcessId,ExecutablePath | Where-Object ExecutablePath | ForEach-Object { "$($_.ProcessId)|$($_.ExecutablePath)" }'],
     { windowsHide: true, maxBuffer: 1 << 25 },
@@ -1061,11 +1144,12 @@ async function launchAumid(g) {
   } finally { pending.delete(g.id); }
 }
 
-function startSession(id, g, exeKey, match, child) {
+function startSession(id, g, exeKey, match, child, source = 'launcher') {
+  if (active.has(id)) return { ok: true }; // one tracker per game, always
   const childPid = child && child.pid ? Number(child.pid) : 0;
-  child.unref();
+  if (child) child.unref();
   const now = Date.now();
-  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat) VALUES(?,?,?)').run(id, now, now).lastInsertRowid);
+  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat,source) VALUES(?,?,?,?)').run(id, now, now, source).lastInsertRowid);
   const pids = new Set();
   if (childPid > 0 && g.method !== 'aumid') pids.add(childPid);
   const st = { sid, started: now, last: now, seen: false, busy: false, exe: exeKey, match, aumid: g.method === 'aumid', pids };
@@ -1095,6 +1179,40 @@ function launch(id) {
   catch (e) { return { ok: false, error: e.message }; }
   child.on('error', e => finish(id, true, `Could not start ${g.name}: ${e.message}. If it needs admin rights, run NUKRON as administrator.`));
   return startSession(id, g, exe.toLowerCase(), matcher(g), child);
+}
+
+// ---- Auto-detect games started outside NUKRON (Steam, Riot Client, shortcuts). One shared timer on the same POLL
+// interval and native scan; sessions go through startSession, so the single-tracker-per-game guard applies.
+const isMissing = g => g.method === 'aumid' ? !!startIds && !startIds.has(String(g.aumid).toLowerCase()) : !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe));
+let detGames = null, detGamesAt = 0, detTimer = null;
+const invalidateDetect = () => { detGames = null; };
+const ownExes = () => new Set([process.execPath, process.env.PORTABLE_EXECUTABLE_FILE].filter(Boolean).map(p => p.toLowerCase()));
+const detector = detectLib.createDetector({
+  enabled: () => appSettings.autoDetect !== false && !quitting,
+  scan: () => scan(true),
+  getGames: () => {
+    if (!detGames || Date.now() - detGamesAt > 10000) {
+      detGames = db.prepare('SELECT id,exe,emulator,track,method,aumid FROM games').all().map(g => ({ ...g, track: g.track || '', missing: isMissing(g) }));
+      detGamesAt = Date.now();
+    }
+    return detGames;
+  },
+  isActive: id => active.has(id),
+  isPending: id => pending.has(id),
+  ignore: (() => { const own = ownExes(); return p => own.has(p) || /[\\/]ember(?:perf|\s)?helper[^\\/]*\.exe$/i.test(p); })(),
+  start: id => {
+    const g = db.prepare('SELECT * FROM games WHERE id=?').get(id);
+    if (!g || active.has(id) || pending.has(id)) return false;
+    const aum = g.method === 'aumid';
+    const r = startSession(id, g, aum ? '' : (g.emulator || g.exe).toLowerCase(), aum ? aumidMatcher(g, []) : matcher(g), null, 'detected');
+    if (r.ok) send('toast', `NUKRON detected ${g.name} and started tracking it.`);
+    return r.ok;
+  }
+});
+function applyDetector() {
+  const on = appSettings.autoDetect !== false;
+  if (on && !detTimer) detTimer = setInterval(() => detector.run(), POLL);
+  else if (!on && detTimer) { clearInterval(detTimer); detTimer = null; }
 }
 
 async function tick(id) {
@@ -1146,7 +1264,7 @@ h('games', () => (refreshStartIds(), {
 }));
 h('sessions', () => {
   const now = Date.now();
-  return all(`SELECT s.id, s.game_id, s.started, MAX(s.started, COALESCE(s.ended, s.beat, s.started)) ended, s.ended IS NULL live
+  return all(`SELECT s.id, s.game_id, s.started, COALESCE(s.source,'launcher') source, MAX(s.started, COALESCE(s.ended, s.beat, s.started)) ended, s.ended IS NULL live
     FROM sessions s INNER JOIN games g ON g.id=s.game_id WHERE s.started>0 ORDER BY s.started DESC LIMIT 300`).map(s => {
     const live = !!(s.live && active.has(s.game_id));
     return {
@@ -1180,12 +1298,14 @@ h('save', g => {
   const v = [(g.name || '').trim() || path.parse(g.exe).name || g.aumid || '', g.exe || '', g.args || '', g.emulator || '', g.cover || '', g.track || '', g.grp || ''];
   if (g.id) db.prepare('UPDATE games SET name=?,exe=?,args=?,emulator=?,cover=?,track=?,grp=? WHERE id=?').run(...v, g.id);
   else db.prepare('INSERT INTO games(name,exe,args,emulator,cover,track,grp,added) VALUES(?,?,?,?,?,?,?,?)').run(...v, Date.now());
+  invalidateDetect();
   return true;
 });
 h('remove', id => {
   finish(id, false);
   db.prepare('DELETE FROM sessions WHERE game_id=?').run(id);
   db.prepare('DELETE FROM games WHERE id=?').run(id);
+  invalidateDetect();
   return true;
 });
 h('launch', id => launch(id));
@@ -1205,9 +1325,11 @@ h('import:add', list => {
     if (!validAumid(aumid) || (startIds && !startIds.has(aumid.toLowerCase())) || has.get(aumid)) { skipped++; continue; }
     try { ins.run(name, '', '', '', '', '', '', Date.now(), aumid, 'aumid'); added++; } catch { skipped++; }
   }
+  invalidateDetect();
   return { added, skipped };
 });
 h('theme', t => {
+  uiTheme = t === 'light' ? 'light' : 'dark';
   const c = t === 'light' ? '#f1f5f9' : '#090d19';
   if (win && !win.isDestroyed()) win.setBackgroundColor(c);
 });
@@ -1327,11 +1449,33 @@ h('app:settings', s => {
   if ('background' in s) appSettings.background = !!s.background;
   if ('showStartupMessage' in s) appSettings.showStartupMessage = !!s.showStartupMessage;
   if ('onboardingCompleted' in s) appSettings.onboardingCompleted = !!s.onboardingCompleted;
+  if ('autoDetect' in s) appSettings.autoDetect = !!s.autoDetect;
+  if ('hotkeyEnabled' in s) appSettings.hotkeyEnabled = !!s.hotkeyEnabled;
+  let badHotkey = false;
+  if ('hotkey' in s) { const n = trayModel.normalizeAccelerator(s.hotkey); if (n) appSettings.hotkey = n; else badHotkey = true; }
   if ('launchAtStartup' in s && !!s.launchAtStartup !== startupEnabled()) setStartup(s.launchAtStartup);
   appSettings.launchAtStartup = startupEnabled();
-  saveAppSettings(); applyTray();
-  return currentAppSettings();
+  const hotkeyError = badHotkey ? 'That shortcut is not valid. Use Ctrl or Alt plus a key.' : applyHotkey();
+  if (hotkeyError && registeredHotkey) appSettings.hotkey = registeredHotkey; // keep showing the shortcut that really works
+  saveAppSettings(); applyTray(); applyDetector();
+  return { ...currentAppSettings(), ...(hotkeyError ? { hotkeyError } : {}) };
 });
+
+// ---- Quick-launch popup IPC (only the popup window may call these)
+const fromQuick = e => !!quickWin && !quickWin.isDestroyed() && e.sender === quickWin.webContents;
+const relLabel = ts => { const t = Number(ts); return t > 0 ? 'Last played ' + new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Never played'; };
+ipcMain.handle('quick:list', (e, query) => {
+  if (!fromQuick(e)) return null;
+  const q = typeof query === 'string' ? query.slice(0, 100) : '';
+  return { theme: uiTheme, games: trayModel.popupList(libraryGames(), q).map(g => ({ id: g.id, name: g.name, cover: g.cover || '', grp: g.grp || '', running: active.has(g.id), lastLabel: relLabel(g.last) })) };
+});
+ipcMain.handle('quick:launch', async (e, id) => {
+  if (!fromQuick(e) || !Number.isInteger(id) || id <= 0) return false;
+  quickWin.hide();
+  await launchFromShell(id);
+  return true;
+});
+ipcMain.handle('quick:close', e => { if (fromQuick(e)) quickWin.hide(); });
 
 h('overlay:show', () => {
   overlayShowIfEnabled();
@@ -1504,6 +1648,9 @@ h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) she
 app.on('second-instance', (_e, argv) => { if (!(argv || []).includes(HIDDEN_ARG)) showMain(); });
 app.on('before-quit', () => {
   quitting = true;
+  if (detTimer) { clearInterval(detTimer); detTimer = null; }
+  try { globalShortcut.unregisterAll(); } catch {}
+  if (quickWin && !quickWin.isDestroyed()) quickWin.destroy();
   if (dragInterval) { clearInterval(dragInterval); dragInterval = null; }
   if (tray) { tray.destroy(); tray = null; }
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
@@ -1523,7 +1670,8 @@ app.whenReady().then(() => {
     frame: false, titleBarStyle: 'hidden',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });
-  applyTray();
+  applyTray(); applyDetector();
+  const hkErr = applyHotkey(); if (hkErr) setTimeout(() => notifyShell(hkErr), 3000); // never crash if the shortcut is taken
   win.on('maximize', () => send('win:max', true));
   win.on('unmaximize', () => send('win:max', false));
   // Closing the window hides it to the tray when background mode is on; otherwise the app really quits

@@ -103,6 +103,8 @@ npm run test:website
 - **Launch & Track**: click a game card to launch. A session starts at launch and ends 15 seconds after the last matching process exits.
 - **Performance Overlay**: toggle the in-game hardware HUD from the active session bar or configure layouts (`Vertical`, `Horizontal`, `Compact`, `Expanded`), sizes (`Small`, `Medium`, `Large`), screen position, and metrics (`FPS`, `CPU`, `GPU`, `VRAM`, `RAM`, `CPU °C`, `GPU °C`) in **Settings > Performance Overlay**.
 - **Startup & System Tray**: configure *Launch NUKRON when Windows starts*, *Minimize to system tray*, and *Show startup message* under **Settings > General**.
+- **Tray menu**: right-click the tray icon to see the current session, today's playtime, your 5 most recently played installed games (click to launch), *Open NUKRON*, and *Quit NUKRON* (quitting ends active sessions exactly like closing the app). The tray icon exists while *Minimize to system tray* is on.
+- **Quick-launch hotkey**: press `Ctrl+Alt+N` (change or disable it in **Settings > General**) to open a small search popup. Type to filter, `Up`/`Down` to select, `Enter` to launch, `Esc` or clicking away to close. If another app already owns the shortcut, NUKRON tells you and keeps running.
 
 ### How Playtime Tracking Works
 - One tracker per game, so double-clicking or launching twice never creates a second timer.
@@ -110,6 +112,7 @@ npm run test:website
 - A heartbeat is written to SQLite every poll. If the app or PC shuts down unexpectedly mid-game, the session is closed at the last heartbeat on next start.
 - If nothing matching appears within 90 seconds of launching, the session is discarded and you are notified why.
 - Failed process scans never end a session.
+- **Auto-detect (Settings > General, on by default):** games started outside NUKRON (Steam, Riot Client, desktop shortcuts) are noticed on the same 4-second check and tracked automatically. They are marked *Auto-detected* in History (`sessions.source = 'detected'`). A process counts when it is the game's exact `.exe`, lives in a folder used only by that game, matches *Process to track*, or is an emulator used by only one game. Ambiguous matches (several games for one process, shared emulators or folders) and *Not installed* games are skipped, and the one-tracker-per-game rule prevents double counting with launches from NUKRON. If a game is already running when NUKRON starts, tracking begins when it is first detected.
 - Closing NUKRON while a game runs ends that session at that moment (unless minimized to the system tray); the game itself keeps running.
 - Games whose files are uninstalled, moved, or on a disconnected drive stay in the library marked *Not installed* with all playtime, history, and statistics preserved. Click *Locate* to relink them. Only **Remove** deletes a game's history.
 

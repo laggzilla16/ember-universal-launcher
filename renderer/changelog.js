@@ -1,6 +1,14 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.4',
+    items: [
+      'Auto-detect games launched outside NUKRON (Steam, Riot Client, desktop shortcuts): matching library games are tracked automatically on the same 4-second local process scan without duplicate sessions, marked "Auto-detected" in History, and configurable in Settings > General (on by default).',
+      'System tray as a first-class control center: right-click the tray icon to view your active session and elapsed time, today\'s playtime, and your 5 most recently played installed games (click to launch), alongside Open NUKRON and Quit NUKRON.',
+      'Global quick-launch hotkey (default Ctrl+Alt+N, configurable or toggleable in Settings > General): opens an Optical Glass search-as-you-type popup from anywhere to launch installed games with keyboard navigation, even when NUKRON is hidden in the tray.'
+    ]
+  },
+  {
     v: '1.5.3',
     items: [
       'Redesigned the Windows installer into a custom NUKRON Optical Glass setup wizard with a 5-step guided installation flow (Welcome, Installation Directory with live disk space telemetry, Optional Settings for Desktop/Start Menu shortcuts and Windows startup, animated Progress tracking, and Completion screen with one-click launch).',
