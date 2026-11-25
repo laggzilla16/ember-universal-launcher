@@ -1,6 +1,14 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.4',
+    items: [
+      'Auto-detect games launched outside NUKRON (Steam, Riot Client, desktop shortcuts): matching library games are tracked automatically on the same 4-second local process scan without duplicate sessions, marked "Auto-detected" in History, and configurable in Settings > General (on by default).',
+      'System tray as a first-class control center: right-click the tray icon to view your active session and elapsed time, today\'s playtime, and your 5 most recently played installed games (click to launch), alongside Open NUKRON and Quit NUKRON.',
+      'Global quick-launch hotkey (default Ctrl+Alt+N, configurable or toggleable in Settings > General): opens an Optical Glass search-as-you-type popup from anywhere to launch installed games with keyboard navigation, even when NUKRON is hidden in the tray.'
+    ]
+  },
+  {
     v: '1.5.3',
     items: [
       'Redesigned the Windows installer into a custom NUKRON Optical Glass setup wizard with a 5-step guided installation flow (Welcome, Installation Directory with live disk space telemetry, Optional Settings for Desktop/Start Menu shortcuts and Windows startup, animated Progress tracking, and Completion screen with one-click launch).',
@@ -9,8 +17,6 @@ const CHANGELOG = [
       'Polished Dashboard statistic cards with clearer typographic hierarchy, Optical Glass icon badges, and subtle hover highlights.',
       'Weekly Gaming Statistics: improved Monday–Sunday activity chart with subtle reference gridlines, a clean baseline, distinct inactive-day markers, staggered bar animations, and detailed daily playtime and session tooltips.',
       'Most Played This Month: refined ranking cards with a highlighted #1 rank treatment, rank badges, animated multi-stop gradient progress indicators, and one-click quick launch.',
-      'Auto-detect games launched outside NUKRON (Steam, Riot Client, shortcuts): matching library games are tracked automatically, marked "Auto-detected" in History, and can be turned off in Settings > General.',
-      'Tray as a control center: right-click the tray icon for your current session, today\'s playtime, your 5 most recent games (click to launch), Open and Quit. New global quick-launch hotkey (default Ctrl+Alt+N, configurable or off in Settings > General) opens a glass search popup to launch any installed game, even with NUKRON hidden.',
       'Recently Played: interactive game artwork cards with consistent proportions, smooth hover zoom, refined activity and category badges, and hover-revealed quick launch controls.'
     ]
   },
