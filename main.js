@@ -3,6 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { spawn, execFile } = require('child_process');
 const path = require('path'), fs = require('fs');
 const updateNotify = require('./renderer/update-notify.js');
+const detectLib = require('./detect.js');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
@@ -852,7 +853,7 @@ function overlayHide() {
 
 // ---- Background mode: keep running in the system tray after the window is closed
 const APP_SETTINGS_PATH = () => path.join(app.getPath('userData'), 'app-settings.json');
-let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, lastNotifiedVersion: '', onboardingCompleted: false }, tray = null, quitting = false;
+let appSettings = { background: true, launchAtStartup: false, showStartupMessage: true, autoDetect: true, lastNotifiedVersion: '', onboardingCompleted: false }, tray = null, quitting = false;
 function loadAppSettings() { try { appSettings = { ...appSettings, ...JSON.parse(fs.readFileSync(APP_SETTINGS_PATH(), 'utf8')) }; } catch {} }
 function saveAppSettings() { try { fs.writeFileSync(APP_SETTINGS_PATH(), JSON.stringify(appSettings, null, 2)); } catch {} }
 const LOGO = fs.existsSync(path.join(__dirname, 'renderer', 'assets', 'nukron-logo.png'))
@@ -960,6 +961,9 @@ function initDb() {
   if (!cols.includes('aumid')) db.exec("ALTER TABLE games ADD COLUMN aumid TEXT DEFAULT ''");
   if (!cols.includes('method')) db.exec("ALTER TABLE games ADD COLUMN method TEXT DEFAULT ''");
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS g_aumid ON games(aumid) WHERE aumid<>''"); // no duplicate imports
+  // Additive migration: where a session came from ('launcher' = started in NUKRON, 'detected' = auto-detected). Old rows default to 'launcher'.
+  const scols = db.prepare('PRAGMA table_info(sessions)').all().map(c => c.name);
+  if (!scols.includes('source')) db.exec("ALTER TABLE sessions ADD COLUMN source TEXT DEFAULT 'launcher'");
   // Crash recovery: sessions left open are closed at their last heartbeat.
   db.prepare('UPDATE sessions SET ended=MAX(started,COALESCE(beat,started)) WHERE ended IS NULL').run();
 }
@@ -967,7 +971,7 @@ const all = (sql, ...p) => JSON.parse(JSON.stringify(db.prepare(sql).all(...p)))
 const send = (ch, ...a) => { if (win && !win.isDestroyed()) win.webContents.send(ch, ...a); };
 
 // Lists [pid, executablePath] of every running process (uses fast native Toolhelp32 helper, with PowerShell fallback).
-const scan = async () => {
+const scan = async (daemonOnly) => { // daemonOnly: never fall back to the slow PowerShell scan (used by the background watcher)
   const daemon = await ensurePerfDaemon();
   if (daemon && !daemon.killed) {
     const res = await new Promise(resolve => {
@@ -982,6 +986,7 @@ const scan = async () => {
     });
     if (Array.isArray(res) && res.length > 0) return res;
   }
+  if (daemonOnly) return null;
   return new Promise(res => execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
     'Get-CimInstance Win32_Process -Property ProcessId,ExecutablePath | Where-Object ExecutablePath | ForEach-Object { "$($_.ProcessId)|$($_.ExecutablePath)" }'],
     { windowsHide: true, maxBuffer: 1 << 25 },
@@ -1061,11 +1066,12 @@ async function launchAumid(g) {
   } finally { pending.delete(g.id); }
 }
 
-function startSession(id, g, exeKey, match, child) {
+function startSession(id, g, exeKey, match, child, source = 'launcher') {
+  if (active.has(id)) return { ok: true }; // one tracker per game, always
   const childPid = child && child.pid ? Number(child.pid) : 0;
-  child.unref();
+  if (child) child.unref();
   const now = Date.now();
-  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat) VALUES(?,?,?)').run(id, now, now).lastInsertRowid);
+  const sid = Number(db.prepare('INSERT INTO sessions(game_id,started,beat,source) VALUES(?,?,?,?)').run(id, now, now, source).lastInsertRowid);
   const pids = new Set();
   if (childPid > 0 && g.method !== 'aumid') pids.add(childPid);
   const st = { sid, started: now, last: now, seen: false, busy: false, exe: exeKey, match, aumid: g.method === 'aumid', pids };
@@ -1095,6 +1101,40 @@ function launch(id) {
   catch (e) { return { ok: false, error: e.message }; }
   child.on('error', e => finish(id, true, `Could not start ${g.name}: ${e.message}. If it needs admin rights, run NUKRON as administrator.`));
   return startSession(id, g, exe.toLowerCase(), matcher(g), child);
+}
+
+// ---- Auto-detect games started outside NUKRON (Steam, Riot Client, shortcuts). One shared timer on the same POLL
+// interval and native scan; sessions go through startSession, so the single-tracker-per-game guard applies.
+const isMissing = g => g.method === 'aumid' ? !!startIds && !startIds.has(String(g.aumid).toLowerCase()) : !fs.existsSync(g.emulator || g.exe) || (!!g.emulator && !fs.existsSync(g.exe));
+let detGames = null, detGamesAt = 0, detTimer = null;
+const invalidateDetect = () => { detGames = null; };
+const ownExes = () => new Set([process.execPath, process.env.PORTABLE_EXECUTABLE_FILE].filter(Boolean).map(p => p.toLowerCase()));
+const detector = detectLib.createDetector({
+  enabled: () => appSettings.autoDetect !== false && !quitting,
+  scan: () => scan(true),
+  getGames: () => {
+    if (!detGames || Date.now() - detGamesAt > 10000) {
+      detGames = db.prepare('SELECT id,exe,emulator,track,method,aumid FROM games').all().map(g => ({ ...g, track: g.track || '', missing: isMissing(g) }));
+      detGamesAt = Date.now();
+    }
+    return detGames;
+  },
+  isActive: id => active.has(id),
+  isPending: id => pending.has(id),
+  ignore: (() => { const own = ownExes(); return p => own.has(p) || /[\\/]ember(?:perf|\s)?helper[^\\/]*\.exe$/i.test(p); })(),
+  start: id => {
+    const g = db.prepare('SELECT * FROM games WHERE id=?').get(id);
+    if (!g || active.has(id) || pending.has(id)) return false;
+    const aum = g.method === 'aumid';
+    const r = startSession(id, g, aum ? '' : (g.emulator || g.exe).toLowerCase(), aum ? aumidMatcher(g, []) : matcher(g), null, 'detected');
+    if (r.ok) send('toast', `NUKRON detected ${g.name} and started tracking it.`);
+    return r.ok;
+  }
+});
+function applyDetector() {
+  const on = appSettings.autoDetect !== false;
+  if (on && !detTimer) detTimer = setInterval(() => detector.run(), POLL);
+  else if (!on && detTimer) { clearInterval(detTimer); detTimer = null; }
 }
 
 async function tick(id) {
@@ -1146,7 +1186,7 @@ h('games', () => (refreshStartIds(), {
 }));
 h('sessions', () => {
   const now = Date.now();
-  return all(`SELECT s.id, s.game_id, s.started, MAX(s.started, COALESCE(s.ended, s.beat, s.started)) ended, s.ended IS NULL live
+  return all(`SELECT s.id, s.game_id, s.started, COALESCE(s.source,'launcher') source, MAX(s.started, COALESCE(s.ended, s.beat, s.started)) ended, s.ended IS NULL live
     FROM sessions s INNER JOIN games g ON g.id=s.game_id WHERE s.started>0 ORDER BY s.started DESC LIMIT 300`).map(s => {
     const live = !!(s.live && active.has(s.game_id));
     return {
@@ -1180,12 +1220,14 @@ h('save', g => {
   const v = [(g.name || '').trim() || path.parse(g.exe).name || g.aumid || '', g.exe || '', g.args || '', g.emulator || '', g.cover || '', g.track || '', g.grp || ''];
   if (g.id) db.prepare('UPDATE games SET name=?,exe=?,args=?,emulator=?,cover=?,track=?,grp=? WHERE id=?').run(...v, g.id);
   else db.prepare('INSERT INTO games(name,exe,args,emulator,cover,track,grp,added) VALUES(?,?,?,?,?,?,?,?)').run(...v, Date.now());
+  invalidateDetect();
   return true;
 });
 h('remove', id => {
   finish(id, false);
   db.prepare('DELETE FROM sessions WHERE game_id=?').run(id);
   db.prepare('DELETE FROM games WHERE id=?').run(id);
+  invalidateDetect();
   return true;
 });
 h('launch', id => launch(id));
@@ -1205,6 +1247,7 @@ h('import:add', list => {
     if (!validAumid(aumid) || (startIds && !startIds.has(aumid.toLowerCase())) || has.get(aumid)) { skipped++; continue; }
     try { ins.run(name, '', '', '', '', '', '', Date.now(), aumid, 'aumid'); added++; } catch { skipped++; }
   }
+  invalidateDetect();
   return { added, skipped };
 });
 h('theme', t => {
@@ -1327,9 +1370,10 @@ h('app:settings', s => {
   if ('background' in s) appSettings.background = !!s.background;
   if ('showStartupMessage' in s) appSettings.showStartupMessage = !!s.showStartupMessage;
   if ('onboardingCompleted' in s) appSettings.onboardingCompleted = !!s.onboardingCompleted;
+  if ('autoDetect' in s) appSettings.autoDetect = !!s.autoDetect;
   if ('launchAtStartup' in s && !!s.launchAtStartup !== startupEnabled()) setStartup(s.launchAtStartup);
   appSettings.launchAtStartup = startupEnabled();
-  saveAppSettings(); applyTray();
+  saveAppSettings(); applyTray(); applyDetector();
   return currentAppSettings();
 });
 
@@ -1504,6 +1548,7 @@ h('open', url => { if (String(url).startsWith(`https://github.com/${REPO}`)) she
 app.on('second-instance', (_e, argv) => { if (!(argv || []).includes(HIDDEN_ARG)) showMain(); });
 app.on('before-quit', () => {
   quitting = true;
+  if (detTimer) { clearInterval(detTimer); detTimer = null; }
   if (dragInterval) { clearInterval(dragInterval); dragInterval = null; }
   if (tray) { tray.destroy(); tray = null; }
   for (const [id, st] of active) { if (st.seen) st.last = Date.now(); finish(id, !st.seen); }
@@ -1523,7 +1568,7 @@ app.whenReady().then(() => {
     frame: false, titleBarStyle: 'hidden',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });
-  applyTray();
+  applyTray(); applyDetector();
   win.on('maximize', () => send('win:max', true));
   win.on('unmaximize', () => send('win:max', false));
   // Closing the window hides it to the tray when background mode is on; otherwise the app really quits

@@ -110,6 +110,7 @@ npm run test:website
 - A heartbeat is written to SQLite every poll. If the app or PC shuts down unexpectedly mid-game, the session is closed at the last heartbeat on next start.
 - If nothing matching appears within 90 seconds of launching, the session is discarded and you are notified why.
 - Failed process scans never end a session.
+- **Auto-detect (Settings > General, on by default):** games started outside NUKRON (Steam, Riot Client, desktop shortcuts) are noticed on the same 4-second check and tracked automatically. They are marked *Auto-detected* in History (`sessions.source = 'detected'`). A process counts when it is the game's exact `.exe`, lives in a folder used only by that game, matches *Process to track*, or is an emulator used by only one game. Ambiguous matches (several games for one process, shared emulators or folders) and *Not installed* games are skipped, and the one-tracker-per-game rule prevents double counting with launches from NUKRON. If a game is already running when NUKRON starts, tracking begins when it is first detected.
 - Closing NUKRON while a game runs ends that session at that moment (unless minimized to the system tray); the game itself keeps running.
 - Games whose files are uninstalled, moved, or on a disconnected drive stay in the library marked *Not installed* with all playtime, history, and statistics preserved. Click *Locate* to relink them. Only **Remove** deletes a game's history.
 

@@ -28,6 +28,7 @@
       "preload.js",
       "preload-updater.js",
       "welcome.js",
+      "detect.js",
       "renderer/**"
     ],
     "win": {

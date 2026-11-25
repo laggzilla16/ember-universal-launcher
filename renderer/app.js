@@ -370,7 +370,7 @@ function hist() {
     const ended = live ? Math.max(s.started, now) : Math.max(s.started, Number(s.ended) || s.started);
     const d = new Date(s.started).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
     const head = d !== day ? `<h2>${esc(day = d)}</h2>` : '';
-    return head + `<div class="row"><i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i><div><b>${esc(g.name)}</b><span>${new Date(s.started).toLocaleTimeString([], tf)} – ${live ? 'now' : new Date(ended).toLocaleTimeString([], tf)}</span></div>
+    return head + `<div class="row"><i class="art-thumb" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</i><div><b>${esc(g.name)}</b><span>${new Date(s.started).toLocaleTimeString([], tf)} – ${live ? 'now' : new Date(ended).toLocaleTimeString([], tf)}</span>${s.source === 'detected' ? '<small class="src-tag" title="NUKRON noticed this game running and started tracking it automatically">Auto-detected</small>' : ''}</div>
       ${live ? `<em class="on" data-s="${s.started}">${clock(now - s.started)}</em>` : `<em>${dur(ended - s.started)}</em>`}</div>`;
   }).join('');
 }
@@ -673,6 +673,10 @@ async function openSettings() {
         ${tog('s-welcome', app0.showStartupMessage !== false, 'Show startup message')}
       </div>
       <p class="tog-note">When on, a small quote fades in for a few seconds in the corner of your screen the first time NUKRON starts with Windows. Shown once per Windows session, never over fullscreen games.</p>
+      <div class="tog-section">
+        ${tog('s-detect', app0.autoDetect !== false, 'Auto-detect games launched outside NUKRON')}
+      </div>
+      <p class="tog-note">When on, NUKRON notices library games started from Steam, Riot Client, desktop shortcuts or anywhere else, and tracks their playtime automatically. Games marked Not installed are ignored. Everything is checked locally on this PC.</p>
       <h3 class="tog-head">Onboarding</h3>
       <div class="tog-section">
         <div class="tog-row settings-action-row">
@@ -773,7 +777,7 @@ async function openSettings() {
     }
     if (e.target.id === 'save-settings') {
       const get = id => !!d.querySelector('#' + id)?.checked;
-      await api.appSettings({ background: get('s-bg'), launchAtStartup: get('s-startup'), showStartupMessage: get('s-welcome') });
+      await api.appSettings({ background: get('s-bg'), launchAtStartup: get('s-startup'), showStartupMessage: get('s-welcome'), autoDetect: get('s-detect') });
       await collectAndApply();
       d.close();
       toast('Settings saved.');

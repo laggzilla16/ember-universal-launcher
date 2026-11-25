@@ -9,6 +9,7 @@ const CHANGELOG = [
       'Polished Dashboard statistic cards with clearer typographic hierarchy, Optical Glass icon badges, and subtle hover highlights.',
       'Weekly Gaming Statistics: improved Monday–Sunday activity chart with subtle reference gridlines, a clean baseline, distinct inactive-day markers, staggered bar animations, and detailed daily playtime and session tooltips.',
       'Most Played This Month: refined ranking cards with a highlighted #1 rank treatment, rank badges, animated multi-stop gradient progress indicators, and one-click quick launch.',
+      'Auto-detect games launched outside NUKRON (Steam, Riot Client, shortcuts): matching library games are tracked automatically, marked "Auto-detected" in History, and can be turned off in Settings > General.',
       'Recently Played: interactive game artwork cards with consistent proportions, smooth hover zoom, refined activity and category badges, and hover-revealed quick launch controls.'
     ]
   },
