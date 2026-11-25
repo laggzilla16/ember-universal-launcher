@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; font-src 'self'; img-src file: data:">
+<title>NUKRON Quick Launch</title>
+<link rel="stylesheet" href="quick.css"></head>
+<body>
+<div class="qk" id="qk">
+  <div class="qk-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="q" placeholder="Search your games" autocomplete="off" spellcheck="false" aria-label="Search games"><kbd>Esc</kbd></div>
+  <div class="qk-list" id="list" role="listbox"></div>
+  <div class="qk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> select</span><span><kbd>Enter</kbd> launch</span></div>
+</div>
+<script src="quick.js"></script>
+</body></html>

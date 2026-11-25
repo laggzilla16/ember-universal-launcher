@@ -677,6 +677,11 @@ async function openSettings() {
         ${tog('s-detect', app0.autoDetect !== false, 'Auto-detect games launched outside NUKRON')}
       </div>
       <p class="tog-note">When on, NUKRON notices library games started from Steam, Riot Client, desktop shortcuts or anywhere else, and tracks their playtime automatically. Games marked Not installed are ignored. Everything is checked locally on this PC.</p>
+      <div class="tog-section">
+        ${tog('s-hotkey', app0.hotkeyEnabled !== false, 'Quick-launch hotkey')}
+        <div class="tog-row hk-row"><span>Shortcut</span><span class="hk-wrap"><input id="s-hotkey" class="hk-input" readonly value="${esc(app0.hotkey || 'Ctrl+Alt+N')}" title="Click, then press the keys you want" aria-label="Quick-launch shortcut"><button type="button" class="btn ghost" id="hk-reset">Reset</button></span></div>
+      </div>
+      <p class="tog-note">Press the shortcut anywhere to open a small search popup and launch a game, even when NUKRON is hidden in the tray. Click the shortcut box and press a new combination (it needs Ctrl or Alt) to change it. Turn this off to free the shortcut.</p>
       <h3 class="tog-head">Onboarding</h3>
       <div class="tog-section">
         <div class="tog-row settings-action-row">
@@ -736,6 +741,23 @@ async function openSettings() {
     cb.onchange = () => collectAndApply();
   });
 
+  // Shortcut recorder: click the box, press a combination
+  const hkIn = d.querySelector('#s-hotkey');
+  const hkKey = e => {
+    if (/^Key[A-Z]$/.test(e.code)) return e.code.slice(3);
+    if (/^Digit\d$/.test(e.code)) return e.code.slice(5);
+    if (/^F([1-9]|1\d|2[0-4])$/.test(e.code)) return e.code;
+    return { Space: 'Space', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Tab: 'Tab', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown', Insert: 'Insert', Delete: 'Delete' }[e.code] || '';
+  };
+  if (hkIn) hkIn.onkeydown = e => {
+    if (e.key === 'Tab' && !e.ctrlKey && !e.altKey) return; // keep keyboard navigation
+    e.preventDefault(); e.stopPropagation();
+    const key = hkKey(e); if (!key) return;
+    if (!e.ctrlKey && !e.altKey) return toast('Use Ctrl or Alt together with a key.');
+    hkIn.value = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', key].filter(Boolean).join('+');
+  };
+  const hkReset = d.querySelector('#hk-reset'); if (hkReset) hkReset.onclick = () => { hkIn.value = 'Ctrl+Alt+N'; };
+
   d.onclick = async e => {
     const lBtn = e.target.closest('[data-layout]');
     if (lBtn) {
@@ -777,8 +799,9 @@ async function openSettings() {
     }
     if (e.target.id === 'save-settings') {
       const get = id => !!d.querySelector('#' + id)?.checked;
-      await api.appSettings({ background: get('s-bg'), launchAtStartup: get('s-startup'), showStartupMessage: get('s-welcome'), autoDetect: get('s-detect') });
       await collectAndApply();
+      const res = await api.appSettings({ background: get('s-bg'), launchAtStartup: get('s-startup'), showStartupMessage: get('s-welcome'), autoDetect: get('s-detect'), hotkeyEnabled: get('s-hotkey'), hotkey: d.querySelector('#s-hotkey')?.value || 'Ctrl+Alt+N' });
+      if (res && res.hotkeyError) { const hk = d.querySelector('#s-hotkey'); if (hk) hk.value = res.hotkey; return toast(res.hotkeyError); } // stay open so another shortcut can be chosen
       d.close();
       toast('Settings saved.');
     }

@@ -103,6 +103,8 @@ npm run test:website
 - **Launch & Track**: click a game card to launch. A session starts at launch and ends 15 seconds after the last matching process exits.
 - **Performance Overlay**: toggle the in-game hardware HUD from the active session bar or configure layouts (`Vertical`, `Horizontal`, `Compact`, `Expanded`), sizes (`Small`, `Medium`, `Large`), screen position, and metrics (`FPS`, `CPU`, `GPU`, `VRAM`, `RAM`, `CPU °C`, `GPU °C`) in **Settings > Performance Overlay**.
 - **Startup & System Tray**: configure *Launch NUKRON when Windows starts*, *Minimize to system tray*, and *Show startup message* under **Settings > General**.
+- **Tray menu**: right-click the tray icon to see the current session, today's playtime, your 5 most recently played installed games (click to launch), *Open NUKRON*, and *Quit NUKRON* (quitting ends active sessions exactly like closing the app). The tray icon exists while *Minimize to system tray* is on.
+- **Quick-launch hotkey**: press `Ctrl+Alt+N` (change or disable it in **Settings > General**) to open a small search popup. Type to filter, `Up`/`Down` to select, `Enter` to launch, `Esc` or clicking away to close. If another app already owns the shortcut, NUKRON tells you and keeps running.
 
 ### How Playtime Tracking Works
 - One tracker per game, so double-clicking or launching twice never creates a second timer.

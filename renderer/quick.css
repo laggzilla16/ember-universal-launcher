@@ -1,0 +1,45 @@
+/* NUKRON quick-launch popup: Optical Glass (same tokens as styles.css) */
+@font-face { font-family: "Unbounded"; src: url("fonts/unbounded.woff2") format("woff2"); font-weight: 200 900; }
+@font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; }
+:root {
+  --f-ui: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --tx: #f8fafc; --mu: #aab6cc; --a1: #2563eb; --a2: #e63946; --a3: #60a5fa; --ok: #34d399;
+  --line: rgba(170, 182, 204, 0.22); --line-soft: rgba(170, 182, 204, 0.12);
+  --card: radial-gradient(120% 80% at 12% -10%, rgba(37, 99, 235, 0.24), transparent 58%), radial-gradient(110% 80% at 90% 115%, rgba(230, 57, 70, 0.16), transparent 56%), rgba(17, 24, 39, 0.92);
+  --field: rgba(9, 13, 25, 0.5); --hover: rgba(37, 99, 235, 0.18);
+  --rim: rgba(96, 165, 250, 0.3); --shadow: 0 14px 38px rgba(3, 6, 14, .6);
+}
+[data-theme=light] {
+  --tx: #0f172a; --mu: #51607a; --line: rgba(51, 65, 85, 0.2); --line-soft: rgba(51, 65, 85, 0.1);
+  --card: radial-gradient(120% 80% at 12% -10%, rgba(37, 99, 235, 0.14), transparent 58%), radial-gradient(110% 80% at 90% 115%, rgba(230, 57, 70, 0.08), transparent 56%), rgba(241, 245, 249, 0.95);
+  --field: rgba(255, 255, 255, 0.7); --hover: rgba(37, 99, 235, 0.12); --rim: rgba(37, 99, 235, 0.3); --shadow: 0 14px 38px rgba(15, 23, 42, .25);
+}
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; font-family: var(--f-ui); color: var(--tx) }
+body { padding: 12px }
+.qk {
+  height: 100%; display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; position: relative;
+  background: var(--card); border: 1px solid var(--rim); box-shadow: inset 0 1px 0 rgba(248, 250, 252, .18), var(--shadow);
+  opacity: 0; transform: translateY(-6px) scale(.985); transition: opacity .14s ease, transform .14s ease
+}
+.qk.in { opacity: 1; transform: none }
+.qk::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #60a5fa, #2563eb 52%, #e63946); z-index: 1 }
+.qk-search { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-soft) }
+.qk-search svg { width: 18px; height: 18px; fill: none; stroke: var(--a3); stroke-width: 2; stroke-linecap: round; flex: none }
+.qk-search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--tx); font: 500 16px var(--f-ui) }
+.qk-search input::placeholder { color: var(--mu) }
+kbd { font: 600 10.5px var(--f-ui); color: var(--mu); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; background: var(--field); margin-right: 4px }
+.qk-list { flex: 1; overflow-y: auto; padding: 8px }
+.qk-list::-webkit-scrollbar { width: 8px } .qk-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px }
+.qk-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent }
+.qk-row.on { background: var(--hover); border-color: var(--rim) }
+.qk-art { width: 40px; height: 40px; border-radius: 10px; flex: none; background-size: cover; background-position: center; display: grid; place-items: center; font-style: normal }
+.qk-art span { font: 700 13px "Unbounded", var(--f-ui); color: #f8fafc; opacity: .9 }
+.qk-row div { flex: 1; min-width: 0 }
+.qk-row b { display: block; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.qk-row span { color: var(--mu); font-size: 12px }
+.qk-row em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--mu); opacity: 0; transition: opacity .12s }
+.qk-row.on em { opacity: 1; color: var(--a3) }
+.qk-row em.qk-live { opacity: 1; color: var(--ok) }
+.qk-empty { padding: 36px 16px; text-align: center; color: var(--mu); font-size: 13px }
+.qk-foot { display: flex; gap: 16px; padding: 9px 16px; border-top: 1px solid var(--line-soft); color: var(--mu); font-size: 11.5px }

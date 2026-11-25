@@ -29,6 +29,7 @@
       "preload-updater.js",
       "welcome.js",
       "detect.js",
+      "tray-model.js",
       "renderer/**"
     ],
     "win": {

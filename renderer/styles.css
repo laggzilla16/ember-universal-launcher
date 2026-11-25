@@ -1133,6 +1133,13 @@ h2 {
   color: var(--ok)
 }
 
+.hk-wrap { display: flex; align-items: center; gap: 8px }
+.hk-input {
+  width: 150px; text-align: center; cursor: pointer; padding: 7px 10px; border-radius: 10px;
+  background: var(--field); border: 1px solid var(--line); color: var(--tx); font: 600 13px var(--f-ui)
+}
+.hk-input:focus { outline: 0; border-color: var(--a3); box-shadow: 0 0 0 3px var(--ring) }
+
 .src-tag {
   display: inline-block;
   margin-left: 8px;
