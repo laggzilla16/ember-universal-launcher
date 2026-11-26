@@ -30,6 +30,7 @@
       "welcome.js",
       "detect.js",
       "tray-model.js",
+      "startup.js",
       "renderer/**"
     ],
     "win": {

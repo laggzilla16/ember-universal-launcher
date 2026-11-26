@@ -5,6 +5,7 @@ const path = require('path'), fs = require('fs');
 const updateNotify = require('./renderer/update-notify.js');
 const detectLib = require('./detect.js');
 const trayModel = require('./tray-model.js');
+const startupLib = require('./startup.js');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
@@ -880,11 +881,13 @@ function loginOpts() {
   const args = app.isPackaged ? [HIDDEN_ARG] : [app.getAppPath(), HIDDEN_ARG];
   return { path: exe, args };
 }
-function startupEnabled() { try { return !!app.getLoginItemSettings(loginOpts()).openAtLogin; } catch { return false; } }
-function setStartup(on) {
-  try { app.setLoginItemSettings({ ...loginOpts(), openAtLogin: !!on }); } catch {}
-  return startupEnabled();
-}
+const startupMgr = startupLib.createStartupManager({
+  getOpts: loginOpts,
+  getLoginItem: opts => app.getLoginItemSettings(opts),
+  setLoginItem: opts => app.setLoginItemSettings(opts)
+});
+function startupEnabled() { try { return startupMgr.isEnabled(); } catch { return false; } }
+function setStartup(on) { try { return startupMgr.setEnabled(on); } catch { return startupEnabled(); } }
 function currentAppSettings() { return { ...appSettings, launchAtStartup: startupEnabled() }; }
 // ---- Startup welcome: a small, non-interactive toast shown once per Windows session on auto-start
 const welcome = require('./welcome.js');

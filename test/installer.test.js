@@ -131,7 +131,7 @@ async function runTests() {
   const installRegKey = `HKCU\\Software\\${appGuid}`;
   const uninstallRegKey = `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${appGuid}`;
   const runRegKey = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
-  const runValueName = 'electron.app.NUKRON';
+  const runValueName = 'local.ember.launcher';
 
   // Snapshot any pre-existing registry values so we restore user state afterwards
   const prevInstallLoc = queryRegValue(installRegKey, 'InstallLocation');
