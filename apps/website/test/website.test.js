@@ -102,8 +102,9 @@ for (const q of requiredFaqQuestions) {
   assert(faqHtml.includes(q), `FAQ page missing question: "${q}"`);
 }
 const downloadHtml = fs.readFileSync(path.join(DIST_DIR, 'download.html'), 'utf8');
-assert(downloadHtml.includes('NUKRON-Setup-1.5.4.exe'), 'Download page must reference NUKRON-Setup-1.5.4.exe');
+assert(downloadHtml.includes('NUKRON-Setup-1.5.5.exe'), 'Download page must reference NUKRON-Setup-1.5.5.exe');
 const whatsNewHtml = fs.readFileSync(path.join(DIST_DIR, 'whats-new.html'), 'utf8');
+assert(whatsNewHtml.includes('NUKRON v1.5.5'), 'What\'s New page must include NUKRON v1.5.5');
 assert(whatsNewHtml.includes('NUKRON v1.5.4'), 'What\'s New page must include NUKRON v1.5.4');
 assert(whatsNewHtml.includes('NUKRON v1.5.3'), 'What\'s New page must include NUKRON v1.5.3');
 assert(whatsNewHtml.includes('NUKRON v1.5.2'), 'What\'s New page must include NUKRON v1.5.2');

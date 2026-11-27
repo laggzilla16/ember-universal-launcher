@@ -174,16 +174,22 @@ function computeOverview(state = S, now = Date.now()) {
     }))
   };
 
-  // 3. Recently Played (top 3 most recently played games, highlighting the most-played among them)
-  const recent = games.map(g => {
+  // 3. Recently Played / hero / one-click row: installed games only ("Not installed" games stay in the Library)
+  const inst = games.filter(g => !g.missing);
+  const info = inst.map(g => {
     const latestSess = sessions.find(s => s.game_id === g.id);
     const lastTs = Math.max(safeMs(Number(g.last)), latestSess ? latestSess.started : 0);
     const run = g.id in running;
     const totalMs = safeMs(Number(g.total)) + (run ? safeMs(now - Number(running[g.id])) : 0);
     return { g, lastTs, totalMs, run, featured: false, lastLabel: run ? 'Playing now' : (lastTs ? relPlayed(lastTs, now) : '') };
-  }).filter(x => x.lastTs > 0 || x.run)
-    .sort((a, b) => (b.run ? 1 : 0) - (a.run ? 1 : 0) || b.lastTs - a.lastTs)
-    .slice(0, 3);
+  });
+  const byAdded = (a, b) => (Number(b.g.added) || 0) - (Number(a.g.added) || 0) || String(a.g.name).localeCompare(String(b.g.name));
+  const recentAll = info.filter(x => x.lastTs > 0 || x.run)
+    .sort((a, b) => (b.run ? 1 : 0) - (a.run ? 1 : 0) || b.lastTs - a.lastTs);
+  const recent = recentAll.slice(0, 3);
+  const hero = recentAll[0] ? { ...recentAll[0] } : (info.slice().sort(byAdded)[0] ? { ...info.slice().sort(byAdded)[0] } : null);
+  const quick = info.slice().sort((a, b) => (b.run ? 1 : 0) - (a.run ? 1 : 0) || b.lastTs - a.lastTs || byAdded(a, b));
+  const lastPlayed = recentAll.find(x => x.lastTs > 0) || null;
 
   if (recent.length) {
     let bestIdx = 0;
@@ -193,7 +199,7 @@ function computeOverview(state = S, now = Date.now()) {
     recent[bestIdx].featured = true;
   }
 
-  return { weekly, monthly, recent, totalSessions: sessions.length };
+  return { weekly, monthly, recent, hero, quick, lastPlayed, totalSessions: sessions.length };
 }
 
 function card(g) {
@@ -233,6 +239,60 @@ function recentCard(item, idx = 0) {
 }
 const skel = () => `<div class="grid">${'<div class="sk"></div>'.repeat(8)}</div>`;
 
+// "8 days ago", "yesterday", "just now"
+function agoText(ts, now = Date.now()) {
+  const t = Number(ts);
+  if (!Number.isFinite(t) || t <= 0) return '';
+  const mins = Math.max(0, Math.floor((now - t) / 60000));
+  if (mins < 2) return 'just now';
+  if (mins < 60) return `${mins} minutes ago`;
+  const today = new Date(now), d = new Date(t);
+  const days = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  if (days <= 0) { const h = Math.floor(mins / 60); return `${h} hour${h === 1 ? '' : 's'} ago`; }
+  if (days === 1) return 'yesterday';
+  if (days < 60) return `${days} days ago`;
+  const mo = Math.floor(days / 30);
+  return mo < 24 ? `${mo} months ago` : `${Math.floor(days / 365)} years ago`;
+}
+const PLAY_ICO = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2l8.3 4.8-8.3 4.8z"/></svg>';
+const OVL_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h2l1.5 4L12 7l1.5 5L15 8h2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// "Continue playing" hero: the running game, else the most recently played installed game
+function heroHtml(ov, now = Date.now()) {
+  const x = ov.hero;
+  if (!x) return `<section class="hero-empty" aria-label="Continue playing"><div class="empty"><p>${S.games.length ? 'None of your games are installed on this PC right now. Locate them from the Library.' : 'Games you play show up here.'}</p>${S.games.length ? '<button class="btn ghost" data-nav="lib">Open Library</button> ' : ''}<button class="btn" data-add>Add a game</button></div></section>`;
+  const g = x.g, run = isRun(g);
+  const meta = [run ? 'Playing now' : x.lastTs > 0 ? `Last played ${agoText(x.lastTs, now)}` : 'Never played', x.totalMs > 0 ? `${dur(x.totalMs)} total playtime` : '', g.grp ? esc(g.grp) : '']
+    .filter(Boolean).map(m => `<span>${m}</span>`).join('');
+  const act = run
+    ? `<span class="hero-timer" data-s="${S.running[g.id]}" title="Current session">${clock(now - S.running[g.id])}</span>
+       <button type="button" class="ovl-btn hero-ovl${S.overlayOn ? ' on' : ''}" data-ovl title="${S.overlayOn ? 'Hide performance overlay' : 'Show performance overlay'}" aria-label="Toggle performance overlay">${OVL_ICO}<span>Overlay</span></button>`
+    : `<button type="button" class="hero-play" data-launch="${g.id}" aria-label="Play ${esc(g.name)}">${PLAY_ICO}<b>Play</b></button>`;
+  return `<section class="hero${run ? ' run' : ''}" aria-label="${run ? 'Now playing' : 'Continue playing'}" data-game-id="${g.id}">
+    <div class="hero-art" style="${art(g)}">${g.cover ? '' : `<span>${esc(ini(g.name))}</span>`}</div><div class="hero-shade"></div>
+    <div class="hero-body">
+      <span class="hero-kicker">${run ? '<i class="hero-dot"></i>Playing now' : 'Continue playing'}</span>
+      <h2>${esc(g.name)}</h2>
+      <div class="hero-meta">${meta}</div>
+      <div class="hero-act">${act}</div>
+    </div></section>`;
+}
+
+// One-click row: every installed game ("Not installed" games are never listed here)
+function quickRowHtml(ov) {
+  if (!ov.quick.length) return '';
+  return `<div class="sec-head qrow-head"><h2>Your games</h2><div class="sec-actions"><button class="sec-link" data-nav="lib">Browse Library →</button></div></div>
+    <div class="qrow" role="list" aria-label="Installed games">${ov.quick.map(({ g, run }) => `<button type="button" class="qtile${run ? ' run' : ''}" role="listitem" data-launch="${g.id}" title="${run ? esc(g.name) + ' is running' : 'Play ' + esc(g.name)}" aria-label="${run ? 'Running: ' : 'Play '}${esc(g.name)}"><span class="qart" style="${art(g)}">${g.cover ? '' : `<span class="qini">${esc(ini(g.name))}</span>`}${run ? '<span class="qlive">Playing</span>' : ''}<span class="qplay">${PLAY_ICO}</span></span><span class="qname">${esc(g.name)}</span></button>`).join('')}</div>`;
+}
+
+// Replaces the empty weekly chart: never a blank chart as primary content
+function emptyWeekHtml(ov, now = Date.now()) {
+  const lp = ov.lastPlayed;
+  return `<div class="wk-empty"><b class="wk-empty-t">No playtime this week yet</b>${lp
+    ? `<p>Last played ${agoText(lp.lastTs, now)}: <b>${esc(lp.g.name)}</b></p><button class="btn" data-launch="${lp.g.id}" aria-label="Play ${esc(lp.g.name)}">Play</button>`
+    : '<p>Play a game to start your weekly chart.</p>'}</div>`;
+}
+
 function dash(now = Date.now()) {
   const all = S.games.reduce((a, g) => a + total(g), 0);
   const rg = S.games.find(isRun);
@@ -240,34 +300,26 @@ function dash(now = Date.now()) {
   const wk = ov.weekly, mp = ov.monthly, recent = ov.recent;
   const playSvg = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3.2l8.3 4.8-8.3 4.8z"/></svg>';
 
-  return `<div class="dash-head"><h1>Dashboard</h1><span class="ov-pill"><i class="ov-dot"></i>Smart Gaming Overview</span></div>
-    <section class="stats dash-stats">
-      <div class="stat">
-        <div class="stat-top"><span class="stat-kicker">Total Playtime</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.6V8l2.4 1.5"/></svg></i></div>
-        <b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b>
-        <span>hours played</span>
+  const strip = `<section class="sstrip" aria-label="Overview">
+      <div class="ss"><span class="stat-kicker">Total Playtime</span><b data-all data-count="${all / 3.6e6}" data-dec="1">${(all / 3.6e6).toFixed(1)}</b><span>hours played</span></div>
+      <div class="ss"><span class="stat-kicker">Weekly Activity</span><b data-wk-stat>${dur(wk.totalMs)}</b><span>${wk.sessionCount} session${wk.sessionCount === 1 ? '' : 's'} this week</span></div>
+      <div class="ss"><span class="stat-kicker">Collection</span><b data-count="${S.games.length}">${S.games.length}</b><span>games in library</span></div>
+      ${rg ? `<div class="ss now"><span class="stat-kicker"><i class="stat-live-dot"></i>Playing now</span><b data-s="${S.running[rg.id]}">${clock(now - S.running[rg.id])}</b><span>${esc(rg.name)}</span></div>`
+        : `<div class="ss idle"><span class="stat-kicker">Session Status</span><b>—</b><span>nothing running</span></div>`}
+    </section>`;
+  return `<h1 class="sr-only">Dashboard</h1>
+    ${heroHtml(ov, now)}
+    ${quickRowHtml(ov)}
+    ${strip}
+
+    <div class="sec-head">
+      <h2>Recently played</h2>
+      <div class="sec-actions">
+        ${S.games.length ? `<button class="sec-link" data-nav="lib">Browse Library →</button>` : ''}
       </div>
-      <div class="stat">
-        <div class="stat-top"><span class="stat-kicker">Weekly Activity</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2.5 12.5V8.5M6.2 12.5V4.5M9.8 12.5V6.8M13.5 12.5V3.5"/></svg></i></div>
-        <b data-wk-stat>${dur(wk.totalMs)}</b>
-        <span>${wk.sessionCount} session${wk.sessionCount === 1 ? '' : 's'} this week</span>
-      </div>
-      <div class="stat">
-        <div class="stat-top"><span class="stat-kicker">Collection</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="2.2" y="2.2" width="4.8" height="4.8" rx="1.2"/><rect x="9" y="2.2" width="4.8" height="4.8" rx="1.2"/><rect x="2.2" y="9" width="4.8" height="4.8" rx="1.2"/><rect x="9" y="9" width="4.8" height="4.8" rx="1.2"/></svg></i></div>
-        <b data-count="${S.games.length}">${S.games.length}</b>
-        <span>games in library</span>
-      </div>
-      ${rg ? `<div class="stat now">
-        <div class="stat-top"><span class="stat-kicker">Playing now</span><i class="stat-ico live-ico" aria-hidden="true"><span class="stat-live-dot"></span></i></div>
-        <b data-s="${S.running[rg.id]}">${clock(now - S.running[rg.id])}</b>
-        <span>${esc(rg.name)}</span>
-      </div>`
-        : `<div class="stat idle">
-        <div class="stat-top"><span class="stat-kicker">Session Status</span><i class="stat-ico" aria-hidden="true"><svg viewBox="0 0 16 16"><polygon points="5.2,3.8 12.2,8 5.2,12.2"/></svg></i></div>
-        <b>—</b>
-        <span>nothing running</span>
-      </div>`}
-    </section>
+    </div>
+    ${recent.length ? `<div class="grid recent-grid">${recent.map(recentCard).join('')}</div>`
+      : `<div class="empty"><p>${S.games.length ? 'Games you play show up here with one-click quick launch.' : 'Games you play show up here.'}</p>${S.games.length ? '<button class="btn ghost" data-nav="lib">Open Library</button> ' : ''}<button class="btn" data-add>Add a game</button></div>`}
 
     <div class="dash-overview-grid">
       <section class="panel ov-panel wk-panel" aria-label="Weekly Gaming Statistics">
@@ -282,7 +334,7 @@ function dash(now = Date.now()) {
             <span class="wk-pill"><b>${wk.activeDays}/7</b><span>days</span></span>
           </div>
         </div>
-        <div class="chart wk-chart" role="list" aria-label="Daily playtime from Monday to Sunday">
+        ${wk.totalMs > 0 ? `<div class="chart wk-chart" role="list" aria-label="Daily playtime from Monday to Sunday">
           <div class="wk-grid" aria-hidden="true"><i></i><i></i><i></i></div>
           ${wk.days.map((c, idx) => {
             const active = c.ms > 0;
@@ -298,7 +350,7 @@ function dash(now = Date.now()) {
               <span class="l"><b>${c.short}</b><i>${c.dateNum}</i></span>
             </div>`;
           }).join('')}
-        </div>
+        </div>` : emptyWeekHtml(ov, now)}
       </section>
 
       <section class="panel ov-panel mp-panel" aria-label="Most Played This Month">
@@ -318,8 +370,9 @@ function dash(now = Date.now()) {
               <div class="mp-title-row">
                 <b>${esc(g.name)}</b>
                 ${rank === 1 ? '<span class="mp-crown" title="Most played game this month">#1</span>' : ''}
+                ${g.missing ? '<span class="mp-gone" title="Game files not found. Playtime is kept. Use Locate in the Library.">Not installed</span>' : ''}
               </div>
-              <span>${pct}% of month · ${sessions} session${sessions === 1 ? '' : 's'}${g.missing ? ' · not installed' : ''}</span>
+              <span>${pct}% of month · ${sessions} session${sessions === 1 ? '' : 's'}</span>
             </div>
             <em class="mp-dur">${dur(ms)}</em>
             <button class="mp-play ${run ? 'on' : ''}" data-launch="${g.id}" title="${run ? esc(g.name) + ' is running' : g.missing ? 'Locate ' + esc(g.name) : 'Quick launch ' + esc(g.name)}" aria-label="${run ? 'Running' : 'Quick launch ' + esc(g.name)}">
@@ -330,16 +383,7 @@ function dash(now = Date.now()) {
         }).join('')}</div>`
         : `<div class="empty ov-empty"><p>No tracked playtime this month yet. Launch a game to see your monthly rankings.</p></div>`}
       </section>
-    </div>
-
-    <div class="sec-head">
-      <h2>Recently played</h2>
-      <div class="sec-actions">
-        ${S.games.length ? `<button class="sec-link" data-nav="lib">Browse Library →</button>` : ''}
-      </div>
-    </div>
-    ${recent.length ? `<div class="grid recent-grid">${recent.map(recentCard).join('')}</div>`
-      : `<div class="empty"><p>${S.games.length ? 'Games you play show up here with one-click quick launch.' : 'Games you play show up here.'}</p>${S.games.length ? '<button class="btn ghost" data-nav="lib">Open Library</button> ' : ''}<button class="btn" data-add>Add a game</button></div>`}`;
+    </div>`;
 }
 
 function filtered() {
@@ -827,6 +871,11 @@ $('#view').addEventListener('click', e => {
     return;
   }
   const nav = e.target.closest('[data-nav]'); if (nav) return go(nav.dataset.nav);
+  const ovb = e.target.closest('[data-ovl]');
+  if (ovb) {
+    api.overlayToggle().then(on => { S.overlayOn = !!on; ovb.classList.toggle('on', S.overlayOn); ovb.title = S.overlayOn ? 'Hide performance overlay' : 'Show performance overlay'; bar(); });
+    return;
+  }
   const ql = e.target.closest('[data-launch]');
   if (ql) {
     const g = S.games.find(x => x.id == ql.dataset.launch);

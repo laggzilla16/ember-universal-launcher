@@ -1,13 +1,13 @@
 {
   "name": "ember-launcher",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "NUKRON — PC game launcher with automatic playtime tracking and optical-glass performance overlay",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node -e \"delete process.env.ELECTRON_RUN_AS_NODE;const{spawn}=require('child_process');spawn(require('electron'),['.',...process.argv.slice(1)],{stdio:'inherit'}).on('exit',c=>process.exit(c??0))\" --",
     "predist": "node build/prepare-installer.js",
     "dist": "electron-builder --win --publish never",
-    "dev:desktop": "electron .",
+    "dev:desktop": "node -e \"delete process.env.ELECTRON_RUN_AS_NODE;const{spawn}=require('child_process');spawn(require('electron'),['.',...process.argv.slice(1)],{stdio:'inherit'}).on('exit',c=>process.exit(c??0))\" --",
     "prebuild:desktop": "node build/prepare-installer.js",
     "build:desktop": "electron-builder --win --publish never",
     "test:installer": "node test/installer.test.js",
@@ -30,6 +30,7 @@
       "welcome.js",
       "detect.js",
       "tray-model.js",
+      "startup.js",
       "renderer/**"
     ],
     "win": {

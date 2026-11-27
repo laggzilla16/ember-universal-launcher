@@ -1,11 +1,19 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.5',
+    items: [
+      'Fixed Windows startup registration for elevated ("Run as administrator") runs and compatibility-flagged executables, automatically repairing broken or legacy startup entries.',
+      'Improved startup reliability by guarding tray and database initialization, resolving window HTML paths explicitly, and ensuring the main window opens normally if the system tray is unavailable.'
+    ]
+  },
+  {
     v: '1.5.4',
     items: [
       'Auto-detect games launched outside NUKRON (Steam, Riot Client, desktop shortcuts): matching library games are tracked automatically on the same 4-second local process scan without duplicate sessions, marked "Auto-detected" in History, and configurable in Settings > General (on by default).',
       'System tray as a first-class control center: right-click the tray icon to view your active session and elapsed time, today\'s playtime, and your 5 most recently played installed games (click to launch), alongside Open NUKRON and Quit NUKRON.',
-      'Global quick-launch hotkey (default Ctrl+Alt+N, configurable or toggleable in Settings > General): opens an Optical Glass search-as-you-type popup from anywhere to launch installed games with keyboard navigation, even when NUKRON is hidden in the tray.'
+      'Global quick-launch hotkey (default Ctrl+Alt+N, configurable or toggleable in Settings > General): opens an Optical Glass search-as-you-type popup from anywhere to launch installed games with keyboard navigation, even when NUKRON is hidden in the tray.',
+      'Action-first Dashboard: new "Continue playing" hero card (with live session timer and overlay toggle when running), a one-click scrollable row of installed games, a compact stat strip, cleaner empty-week prompts, and status badges for uninstalled games in monthly rankings.'
     ]
   },
   {

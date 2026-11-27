@@ -14,7 +14,7 @@ const createOverviewHarness = () => {
   const slice = appSrc.slice(0, stopIdx);
   const fn = new Function(
     'api',
-    `${slice}\nreturn { S, dur, cardDur, clock, relPlayed, computeOverview, dash, recentCard, card, hist, statsView };`
+    `${slice}\nreturn { S, dur, cardDur, clock, relPlayed, agoText, computeOverview, dash, recentCard, card, hist, statsView };`
   );
   return fn({ stats: async () => [], games: async () => ({ games: [], running: {} }), sessions: async () => [] });
 };
@@ -44,13 +44,16 @@ const h = createOverviewHarness();
   assert(emptyHtml.includes('Recently played'));
   assert(!emptyHtml.includes('Gaming Activity Timeline'), 'Gaming Activity Timeline must not be rendered on the dashboard');
   assert(
-    emptyHtml.indexOf('Weekly Gaming Statistics') < emptyHtml.indexOf('Recently played'),
-    'Weekly Gaming Statistics must appear above Recently played'
+    emptyHtml.indexOf('Weekly Gaming Statistics') > emptyHtml.indexOf('Recently played'),
+    'Weekly Gaming Statistics must sit below the fold, after Recently played'
   );
   assert(
-    emptyHtml.indexOf('Most Played This Month') < emptyHtml.indexOf('Recently played'),
-    'Most Played This Month must appear above Recently played'
+    emptyHtml.indexOf('Most Played This Month') > emptyHtml.indexOf('Recently played'),
+    'Most Played This Month must sit below the fold, after Recently played'
   );
+  assert(emptyHtml.includes('data-add'), 'Empty dashboard must offer Add a game');
+  assert(emptyHtml.includes('Play a game to start your weekly chart'), 'Empty week must show a helpful message, not a blank chart');
+  assert(!emptyHtml.includes('wk-chart'), 'Empty week must not render a blank chart');
 }
 
 // 2. Test SQLite database queries, 3 most recently played limit & malformed/incomplete session resilience
@@ -169,8 +172,13 @@ const h = createOverviewHarness();
   assert(html.includes('data-launch="1"'));
   assert(html.includes('data-launch="2"'));
   assert(!html.includes('Gaming Activity Timeline'));
-  assert(html.indexOf('Weekly Gaming Statistics') < html.indexOf('Recently played'));
-  assert(html.indexOf('Most Played This Month') < html.indexOf('Recently played'));
+  assert(html.indexOf('Weekly Gaming Statistics') > html.indexOf('Recently played'));
+  assert(html.indexOf('Most Played This Month') > html.indexOf('Recently played'));
+  assert(html.indexOf('class="hero') < html.indexOf('class="qrow"') && html.indexOf('class="qrow"') < html.indexOf('class="sstrip"') && html.indexOf('class="sstrip"') < html.indexOf('Recently played'),
+    'Order: hero, one-click row, stat strip, recently played');
+  assert(html.includes('hero-play') && html.includes('data-launch="1"'), 'Hero must offer a big Play button for the most recent game');
+  assert(html.includes('Last played yesterday') === false && /Last played (just now|\d+ (minutes|hours) ago|yesterday|\d+ days ago)/.test(html), 'Hero must show "Last played X ago"');
+  assert(html.includes('hours played') && html.includes('this week') && html.includes('games in library'));
 
   // 3. Verify midnight-crossing session splitting & live running session handling
   const monLate = new Date(2026, 10, 9, 23, 0, 0, 0).getTime(); // Mon 11:00 PM -> Tue 1:00 AM (1h Mon + 1h Tue)
@@ -189,6 +197,78 @@ const h = createOverviewHarness();
   assert.strictEqual(liveOv.weekly.days[2].ms, 30 * 60000, 'Live running session should allocate 30m to Wednesday');
   assert.strictEqual(liveOv.weekly.sessionCount, 2, 'Both completed and live sessions this week must be counted');
   assert.strictEqual(liveOv.recent[0].g.id, 2, 'Currently running game must be prioritized first in Recently Played');
+}
+
+// 3b. Action-first dashboard: hero, one-click row, Not installed handling, empty week, running state
+{
+  const hr = 3600 * 1000, now = new Date(2026, 10, 25, 12, 0, 0, 0).getTime();
+  const day = 24 * hr;
+  const G = (id, name, o) => ({ id, name, exe: 'C:\\g\\' + id + '.exe', cover: '', grp: '', total: 0, last: null, added: id, missing: false, method: '', aumid: '', ...o });
+  const games = [
+    G(1, 'Old Favourite', { total: 5 * hr, last: now - 20 * day }),
+    G(2, 'Gone Game', { total: 9 * hr, last: now - 10 * day, missing: true }), // most recent, but not installed
+    G(3, 'Fresh Install', { added: 99 }),
+    G(4, 'Mid Game', { total: 2 * hr, last: now - 12 * day })
+  ];
+  const sessions = [
+    { id: 1, game_id: 1, started: now - 20 * day, ended: now - 20 * day + hr, live: false },
+    { id: 2, game_id: 2, started: now - 10 * day, ended: now - 10 * day + hr, live: false },
+    { id: 3, game_id: 4, started: now - 12 * day, ended: now - 12 * day + hr, live: false }
+  ];
+  const base = { games, running: {}, stats: [], sessions };
+  const ov = h.computeOverview(base, now);
+
+  // hero = most recently played INSTALLED game; Not installed games never appear in hero / row / recent
+  assert.strictEqual(ov.hero.g.name, 'Mid Game', 'Hero must skip Not installed games');
+  assert.deepStrictEqual(ov.recent.map(r => r.g.name), ['Mid Game', 'Old Favourite'], 'Recently played must exclude Not installed games');
+  assert.deepStrictEqual(ov.quick.map(q => q.g.name), ['Mid Game', 'Old Favourite', 'Fresh Install'], 'One-click row: installed only, recent first, never-played last');
+  assert(!ov.quick.some(q => q.g.missing));
+  assert.strictEqual(ov.lastPlayed.g.name, 'Mid Game');
+
+  Object.assign(h.S, { ...base, view: 'dash', overlayOn: false });
+  let html = h.dash(now);
+  assert(!/qtile[^>]*data-launch="2"/.test(html) && !html.includes('Play Gone Game'), 'Not installed games must not get Play tiles');
+  assert(html.includes('Last played 12 days ago'), 'Hero must say how long ago it was played');
+  assert(html.includes('2h 00m total playtime'), 'Hero must show total playtime');
+  assert(html.includes('class="wk-empty"') && !html.includes('wk-chart'), 'Empty week must replace the blank chart');
+  assert(html.includes('Last played 12 days ago: <b>Mid Game</b>'), 'Empty week must point to the last played game');
+  assert(/class="btn" data-launch="4"/.test(html), 'Empty week message must have a Play button');
+
+  // never played anything: hero falls back to the most recently added installed game
+  const fresh = h.computeOverview({ games: [G(1, 'A', { added: 1 }), G(2, 'B', { added: 5 }), G(3, 'C', { missing: true, added: 9 })], running: {}, stats: [], sessions: [] }, now);
+  assert.strictEqual(fresh.hero.g.name, 'B');
+  assert.strictEqual(fresh.hero.lastTs, 0);
+  assert.strictEqual(fresh.recent.length, 0);
+  Object.assign(h.S, { games: [G(2, 'B', { added: 5 })], running: {}, stats: [], sessions: [] });
+  html = h.dash(now);
+  assert(html.includes('Never played') && html.includes('hero-play'));
+  assert(html.includes('Play a game to start your weekly chart'));
+
+  // only uninstalled games: no hero, no row, helpful empty state
+  Object.assign(h.S, { games: [G(1, 'Gone', { missing: true })], running: {}, stats: [], sessions: [] });
+  html = h.dash(now);
+  assert(!html.includes('hero-play') && !html.includes('class="qrow"') && html.includes('data-nav="lib"'));
+
+  // running game: live timer + overlay toggle instead of Play
+  Object.assign(h.S, { ...base, running: { 1: now - 90 * 1000 }, overlayOn: true });
+  html = h.dash(now);
+  const heroHtml = html.slice(html.indexOf('<section class="hero'), html.indexOf('class="qrow"'));
+  assert(heroHtml.includes('hero run') && heroHtml.includes('Old Favourite'), 'Running game becomes the hero');
+  assert(heroHtml.includes('hero-timer') && heroHtml.includes('0:01:30'), 'Hero shows the live session timer');
+  assert(heroHtml.includes('data-ovl') && heroHtml.includes('hero-ovl on'), 'Hero shows the overlay toggle');
+  assert(!heroHtml.includes('hero-play'), 'Hero hides Play while running');
+  assert(html.includes('qtile run'), 'Running game is marked in the one-click row');
+
+  // Top-3 rows: status badge, no text glued into the subtitle
+  const monthState = { games, running: {}, sessions: [], stats: [{ day: '2026-11-20', g: 2, ms: 3 * hr }, { day: '2026-11-21', g: 4, ms: hr }] };
+  Object.assign(h.S, monthState);
+  html = h.dash(now);
+  assert(html.includes('<span class="mp-gone"') && !html.includes('· not installed'), 'Top-3 rows use a badge for Not installed games');
+
+  // agoText wording
+  assert.strictEqual(h.agoText(now - 8 * day, now), '8 days ago');
+  assert.strictEqual(h.agoText(now - day, now), 'yesterday');
+  assert.strictEqual(h.agoText(now - 5 * 60000, now), '5 minutes ago');
 }
 
 // 4. Verify update version comparison for 1.5.3

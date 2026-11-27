@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderAboutPage({ basePath = '.', baselineVersion = '1.5.4' }) {
+function renderAboutPage({ basePath = '.', baselineVersion = '1.5.5' }) {
   return `
   <section class="page-hero about-hero">
     <div class="container">

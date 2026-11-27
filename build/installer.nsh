@@ -56,7 +56,10 @@
         WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "DesktopShortcutDefault" "1"
       ${EndIf}
 
-      ReadRegStr $4 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}"
+      ReadRegStr $4 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_ID}"
+      ${If} $4 == ""
+        ReadRegStr $4 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}"
+      ${EndIf}
       ${If} $4 != ""
         WriteINIStr "$PLUGINSDIR\ui-init.ini" "Init" "LaunchAtStartupDefault" "1"
       ${Else}
@@ -119,12 +122,14 @@
         !endif
       ${EndIf}
 
-      # 3. Apply Launch at Windows Startup preference from Step 3
+      # 3. Apply Launch at Windows Startup preference from Step 3 (matches Electron's AppUserModelId key)
       ReadINIStr $0 "$PLUGINSDIR\ui-choice.ini" "Setup" "LaunchAtStartup"
+      DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}"
+      DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.Ember Launcher"
       ${If} $0 == "1"
-        WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}" '"$appExe" "--hidden"'
+        WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_ID}" '"$appExe" --hidden'
       ${ElseIf} $0 == "0"
-        DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}"
+        DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_ID}"
       ${EndIf}
 
       # Refresh Windows shell icons
