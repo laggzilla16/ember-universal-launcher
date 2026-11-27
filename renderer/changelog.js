@@ -1,6 +1,13 @@
 // What's New entries, newest first. `v` should match package.json's version.
 const CHANGELOG = [
   {
+    v: '1.5.5',
+    items: [
+      'Fixed Windows startup registration for elevated ("Run as administrator") runs and compatibility-flagged executables, automatically repairing broken or legacy startup entries.',
+      'Improved startup reliability by guarding tray and database initialization, resolving window HTML paths explicitly, and ensuring the main window opens normally if the system tray is unavailable.'
+    ]
+  },
+  {
     v: '1.5.4',
     items: [
       'Auto-detect games launched outside NUKRON (Steam, Riot Client, desktop shortcuts): matching library games are tracked automatically on the same 4-second local process scan without duplicate sessions, marked "Auto-detected" in History, and configurable in Settings > General (on by default).',

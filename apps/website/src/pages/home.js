@@ -1,6 +1,6 @@
 const { constants } = require('../../../../packages/shared');
 
-function renderHomePage({ basePath = '.', baselineVersion = '1.5.4' }) {
+function renderHomePage({ basePath = '.', baselineVersion = '1.5.5' }) {
   return `
   <!-- =====================================================================
        SECTION 1 — HERO

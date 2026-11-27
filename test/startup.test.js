@@ -68,4 +68,22 @@ assert.strictEqual(buildTaskCommand({ path: 'C:\\dev\\electron.exe', args: ['D:\
   assert.strictEqual(mgr.isEnabled(), false);
 }
 
+// 4. heal() repairs PCA Compatibility Assistant\Store taint & legacy Run keys even when HKCU\Run is already enabled
+{
+  const cmds = [];
+  const exe = 'D:\\ember\\dist\\win-unpacked\\NUKRON.exe';
+  const mgr = createStartupManager({
+    platform: 'win32',
+    getOpts: () => ({ path: exe, args: ['--hidden'] }),
+    getLoginItem: () => ({ openAtLogin: true }),
+    setLoginItem: () => {},
+    isElevatedFn: () => false,
+    runCmd: (bin, args) => { cmds.push([bin, args]); return { ok: false, out: '' }; }
+  });
+  assert.strictEqual(mgr.isEnabled(), true);
+  assert.strictEqual(mgr.heal(), true);
+  assert.ok(cmds.some(([b, a]) => b === 'reg.exe' && a[0] === 'delete' && a.includes(exe)), 'clears PCA Compatibility Assistant\\Store entry on heal');
+  assert.ok(cmds.some(([b, a]) => b === 'reg.exe' && a[0] === 'delete' && a.includes(LEGACY_RUN_VALUES[0])), 'cleans legacy Ember Run key on heal');
+}
+
 console.log('startup tests passed!');

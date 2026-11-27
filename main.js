@@ -826,7 +826,7 @@ function createOverlayWin() {
   });
   overlayWin.setAlwaysOnTop(true, 'screen-saver');
   overlayWin.setIgnoreMouseEvents(true, { forward: true });
-  overlayWin.loadFile('renderer/overlay.html');
+  overlayWin.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
   overlayWin.webContents.on('did-finish-load', () => {
     if (!overlayWin || overlayWin.isDestroyed()) return;
     overlayWin.webContents.send('settings', overlaySettings);
@@ -929,6 +929,7 @@ function applyTray() {
 // ---- Tray menu, quick-launch popup and global hotkey (all work with the main window hidden)
 let libCache = null, libAt = 0, uiTheme = 'dark', quickWin = null, quickReady = false, registeredHotkey = null;
 function libraryGames() {
+  if (!db) return [];
   if (!libCache || Date.now() - libAt > 2000) {
     libCache = db.prepare(`SELECT g.id,g.name,g.exe,g.emulator,g.cover,g.grp,g.added,g.method,g.aumid,
       (SELECT MAX(started) FROM sessions WHERE game_id=g.id AND started>0) last FROM games g`).all().map(g => ({ ...g, missing: isMissing(g) }));
@@ -937,6 +938,7 @@ function libraryGames() {
   return libCache;
 }
 function todayPlaytime(now = Date.now()) {
+  if (!db) return 0;
   const d = new Date(now), start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const rows = db.prepare('SELECT game_id,started,ended,beat FROM sessions WHERE started>0 AND COALESCE(ended,beat,started)>=?').all(start);
   return trayModel.todayMs(rows, now, new Set(active.keys()));
@@ -1663,17 +1665,20 @@ app.on('before-quit', () => {
 });
 app.whenReady().then(() => {
   if (!gotLock) return;
-  initDb();
   loadOverlaySettings(); loadAppSettings();
-  if (appSettings.launchAtStartup && !startupEnabled()) setStartup(true); // preserve startup registration across exe rename (Ember -> NUKRON)
-  appSettings.launchAtStartup = startupEnabled(); // OS registration is the source of truth
+  try { applyTray(); } catch (e) { console.error('Failed to create tray:', e); }
+  try { initDb(); } catch (e) { console.error('Failed to initialize database:', e); }
+  try {
+    if (appSettings.launchAtStartup) startupMgr.heal(); // preserve & repair startup registration without risking tray startup
+    appSettings.launchAtStartup = startupEnabled(); // OS registration is the source of truth
+  } catch {}
   Menu.setApplicationMenu(null);
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 520, backgroundColor: '#090d19', show: false, icon: LOGO,
     frame: false, titleBarStyle: 'hidden',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true }
   });
-  applyTray(); applyDetector();
+  applyDetector();
   const hkErr = applyHotkey(); if (hkErr) setTimeout(() => notifyShell(hkErr), 3000); // never crash if the shortcut is taken
   win.on('maximize', () => send('win:max', true));
   win.on('unmaximize', () => send('win:max', false));
@@ -1683,10 +1688,10 @@ app.whenReady().then(() => {
     if (appSettings.background && !quitting) { e.preventDefault(); win.hide(); }
     else app.quit();
   });
-  win.loadFile('renderer/index.html');
+  win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   // Auto-start launches hidden in the tray, but only if the tray is enabled (otherwise the window would be unreachable).
   checkPendingUpdate();
-  win.once('ready-to-show', () => { if (!holdMain && !flow && !(startedHidden && appSettings.background)) win.show(); createOverlayWin(); });
+  win.once('ready-to-show', () => { if (!holdMain && !flow && !(startedHidden && appSettings.background && tray)) win.show(); createOverlayWin(); });
   maybeShowWelcome();
   initUpdates();
   setTimeout(() => checkUpdates(false), 6000);

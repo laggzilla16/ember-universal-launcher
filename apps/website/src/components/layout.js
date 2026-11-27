@@ -10,7 +10,7 @@ function renderLayout({
   description,
   canonicalPath = '',
   basePath = '.',
-  baselineVersion = '1.5.4',
+  baselineVersion = '1.5.5',
   bodyContent
 }) {
   const fullTitle =
